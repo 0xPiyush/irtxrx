@@ -197,6 +197,7 @@ export function encodeDaikin176Raw(data: Uint8Array, repeat = 0): number[] {
 export function decodeDaikin176(
   timings: number[],
   offset: number = 0,
+  headerOptional: boolean = false,
 ): Daikin176State | null {
   let pos = offset;
 
@@ -208,6 +209,7 @@ export function decodeDaikin176(
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
     true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+    headerOptional,
   );
   if (!section1) return null;
   pos += section1.used;

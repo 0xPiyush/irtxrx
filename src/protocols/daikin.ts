@@ -311,6 +311,7 @@ function skipLeader(
 export function decodeDaikinESP(
   timings: number[],
   offset: number = 0,
+  headerOptional: boolean = false,
 ): DaikinESPState | null {
   // Skip leader if present.
   let pos = skipLeader(timings, offset);
@@ -323,6 +324,7 @@ export function decodeDaikinESP(
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, FOOTER_GAP,
     true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+    headerOptional,
   );
   if (!s1) return null;
   pos += s1.used;

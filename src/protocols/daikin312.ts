@@ -34,6 +34,7 @@ const STATE_LENGTH = 39;
 const SECTION1_LEN = 20;
 const HEADER_BITS = 5;
 const UNUSED_TIME = 0x600;
+const DAIKIN312_TOLERANCE = 30;
 
 // ---------------------------------------------------------------------------
 // State interface
@@ -267,6 +268,7 @@ function skipLeader(
     BIT_MARK, ZERO_SPACE,             // zeroMark, zeroSpace
     BIT_MARK, HDR_GAP,               // footerMark, gap
     true,                             // atLeast for gap
+    DAIKIN312_TOLERANCE,
   );
   return result ? offset + result.used : offset;
 }
@@ -307,6 +309,7 @@ function getFieldLE(
 export function decodeDaikin312(
   timings: number[],
   offset: number = 0,
+  headerOptional: boolean = false,
 ): Daikin312State | null {
   // Skip leader if present.
   let pos = skipLeader(timings, offset);
@@ -318,7 +321,8 @@ export function decodeDaikin312(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, SECTION_GAP,
-    true, undefined, undefined, false,
+    true, DAIKIN312_TOLERANCE, undefined, false,
+    headerOptional,
   );
   if (!s1) return null;
   pos += s1.used;
@@ -331,7 +335,7 @@ export function decodeDaikin312(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, SECTION_GAP,
-    true, undefined, undefined, false,
+    true, DAIKIN312_TOLERANCE, undefined, false,
   );
   if (!s2) return null;
 

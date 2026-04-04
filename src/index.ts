@@ -24,6 +24,7 @@ export {
   matchData,
   matchGeneric,
   matchGenericBytes,
+  decode,
   kTolerance,
   kMarkExcess,
 } from "./decode.js";
@@ -31,6 +32,11 @@ export type {
   MatchDataResult,
   MatchGenericResult,
   MatchGenericBytesResult,
+  DecodeResult,
+  DecodeOptions,
+  ProtocolName,
+  BrandName,
+  ProtocolType,
 } from "./decode.js";
 export { encodeNEC, sendNEC, decodeNEC } from "./protocols/nec.js";
 export type { NECDecodeResult } from "./protocols/nec.js";

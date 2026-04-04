@@ -34,6 +34,7 @@ const GAP = LDR_MARK + LDR_SPACE; // 35204
 const STATE_LENGTH = 39;
 const SECTION1_LEN = 20;
 const UNUSED_TIME = 0x600;
+const DAIKIN2_TOLERANCE = 30;
 
 // ---------------------------------------------------------------------------
 // State interface
@@ -285,6 +286,7 @@ function getFieldLE(
 export function decodeDaikin2(
   timings: number[],
   offset: number = 0,
+  headerOptional: boolean = false,
 ): Daikin2State | null {
   let pos = offset;
 
@@ -296,6 +298,7 @@ export function decodeDaikin2(
     BIT_MARK, ZERO_SPACE,             // zeroMark, zeroSpace (unused, 0 bits)
     0, 0,                             // no footer
     true,                             // atLeast
+    DAIKIN2_TOLERANCE,
   );
   if (leader) pos += leader.used;
 
@@ -306,7 +309,8 @@ export function decodeDaikin2(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    true, undefined, undefined, false,
+    true, DAIKIN2_TOLERANCE, undefined, false,
+    headerOptional,
   );
   if (!s1) return null;
   pos += s1.used;
@@ -319,7 +323,7 @@ export function decodeDaikin2(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    true, undefined, undefined, false,
+    true, DAIKIN2_TOLERANCE, undefined, false,
   );
   if (!s2) return null;
 

@@ -212,22 +212,25 @@ export function matchGeneric(
   tolerance: number = kTolerance,
   excess: number = kMarkExcess,
   msbFirst: boolean = true,
+  headerOptional: boolean = false,
 ): MatchGenericResult | null {
   let pos = offset;
   const end = offset + remaining;
 
-  // Header mark
-  if (headerMark) {
-    if (pos >= end) return null;
-    if (!matchMark(timings[pos]!, headerMark, tolerance, excess)) return null;
-    pos++;
-  }
-
-  // Header space
-  if (headerSpace) {
-    if (pos >= end) return null;
-    if (!matchSpace(timings[pos]!, headerSpace, tolerance, excess)) return null;
-    pos++;
+  // Header — consume if present, fail if required but missing.
+  if (headerMark || headerSpace) {
+    let tmp = pos;
+    let found = true;
+    if (headerMark) {
+      if (tmp < end && matchMark(timings[tmp]!, headerMark, tolerance, excess)) tmp++;
+      else found = false;
+    }
+    if (found && headerSpace) {
+      if (tmp < end && matchSpace(timings[tmp]!, headerSpace, tolerance, excess)) tmp++;
+      else found = false;
+    }
+    if (found) pos = tmp;
+    else if (!headerOptional) return null;
   }
 
   // Data bits
@@ -293,22 +296,25 @@ export function matchGenericBytes(
   tolerance: number = kTolerance,
   excess: number = kMarkExcess,
   msbFirst: boolean = true,
+  headerOptional: boolean = false,
 ): MatchGenericBytesResult | null {
   let pos = offset;
   const end = offset + remaining;
 
-  // Header mark
-  if (headerMark) {
-    if (pos >= end) return null;
-    if (!matchMark(timings[pos]!, headerMark, tolerance, excess)) return null;
-    pos++;
-  }
-
-  // Header space
-  if (headerSpace) {
-    if (pos >= end) return null;
-    if (!matchSpace(timings[pos]!, headerSpace, tolerance, excess)) return null;
-    pos++;
+  // Header — consume if present, fail if required but missing.
+  if (headerMark || headerSpace) {
+    let tmp = pos;
+    let found = true;
+    if (headerMark) {
+      if (tmp < end && matchMark(timings[tmp]!, headerMark, tolerance, excess)) tmp++;
+      else found = false;
+    }
+    if (found && headerSpace) {
+      if (tmp < end && matchSpace(timings[tmp]!, headerSpace, tolerance, excess)) tmp++;
+      else found = false;
+    }
+    if (found) pos = tmp;
+    else if (!headerOptional) return null;
   }
 
   // Data bytes — decode each byte as 8 bits.
@@ -346,4 +352,242 @@ export function matchGenericBytes(
   }
 
   return { data, used: pos - offset };
+}
+
+// ---------------------------------------------------------------------------
+// Unified decode dispatcher
+// ---------------------------------------------------------------------------
+
+// Import all protocol decoders lazily to avoid circular deps — they import
+// from this file, so we re-export them through the registry pattern below.
+
+import { decodeNEC } from "./protocols/nec.js";
+import type { NECDecodeResult } from "./protocols/nec.js";
+import { decodeDaikin64 } from "./protocols/daikin64.js";
+import type { Daikin64State } from "./protocols/daikin64.js";
+import { decodeDaikin128 } from "./protocols/daikin128.js";
+import type { Daikin128State } from "./protocols/daikin128.js";
+import { decodeDaikin152 } from "./protocols/daikin152.js";
+import type { Daikin152State } from "./protocols/daikin152.js";
+import { decodeDaikin160 } from "./protocols/daikin160.js";
+import type { Daikin160State } from "./protocols/daikin160.js";
+import { decodeDaikin176 } from "./protocols/daikin176.js";
+import type { Daikin176State } from "./protocols/daikin176.js";
+import { decodeDaikin216 } from "./protocols/daikin216.js";
+import type { Daikin216State } from "./protocols/daikin216.js";
+import { decodeDaikinESP } from "./protocols/daikin.js";
+import type { DaikinESPState } from "./protocols/daikin.js";
+import { decodeDaikin2 } from "./protocols/daikin2.js";
+import type { Daikin2State } from "./protocols/daikin2.js";
+import { decodeDaikin312 } from "./protocols/daikin312.js";
+import type { Daikin312State } from "./protocols/daikin312.js";
+import { decodeCoolix, decodeCoolixRaw } from "./protocols/coolix.js";
+import type { CoolixState } from "./protocols/coolix.js";
+
+/** All supported protocol names. */
+export type ProtocolName =
+  | "nec"
+  | "daikin64" | "daikin128" | "daikin152" | "daikin160"
+  | "daikin176" | "daikin216" | "daikin" | "daikin2" | "daikin312"
+  | "coolix";
+
+/** Brand groupings for hint-based filtering. */
+export type BrandName = "nec" | "daikin" | "coolix";
+
+/** Protocol type groupings. */
+export type ProtocolType = "ac" | "simple";
+
+/** Discriminated union of all possible decode results. */
+export type DecodeResult =
+  | { protocol: "nec"; brand: "nec"; type: "simple"; state: NECDecodeResult; confidence: "timing_match" }
+  | { protocol: "daikin64"; brand: "daikin"; type: "ac"; state: Daikin64State; confidence: "checksum_valid" }
+  | { protocol: "daikin128"; brand: "daikin"; type: "ac"; state: Daikin128State; confidence: "checksum_valid" }
+  | { protocol: "daikin152"; brand: "daikin"; type: "ac"; state: Daikin152State; confidence: "checksum_valid" }
+  | { protocol: "daikin160"; brand: "daikin"; type: "ac"; state: Daikin160State; confidence: "checksum_valid" }
+  | { protocol: "daikin176"; brand: "daikin"; type: "ac"; state: Daikin176State; confidence: "checksum_valid" }
+  | { protocol: "daikin216"; brand: "daikin"; type: "ac"; state: Daikin216State; confidence: "checksum_valid" }
+  | { protocol: "daikin"; brand: "daikin"; type: "ac"; state: DaikinESPState; confidence: "checksum_valid" }
+  | { protocol: "daikin2"; brand: "daikin"; type: "ac"; state: Daikin2State; confidence: "checksum_valid" }
+  | { protocol: "daikin312"; brand: "daikin"; type: "ac"; state: Daikin312State; confidence: "checksum_valid" }
+  | { protocol: "coolix"; brand: "coolix"; type: "ac"; state: CoolixState; confidence: "checksum_valid" }
+  | { protocol: "coolix"; brand: "coolix"; type: "ac"; state: null; raw: number; confidence: "checksum_valid" };
+
+interface ProtocolEntry {
+  protocol: ProtocolName;
+  brand: BrandName;
+  type: ProtocolType;
+  /** Try decoding at the given offset. Returns a DecodeResult or null. */
+  tryDecode: (timings: number[], offset: number, headerOptional: boolean) => DecodeResult | null;
+}
+
+/** Threshold for detecting inter-frame gaps (µs). Data spaces are <2000µs
+ *  for all supported protocols; gaps are >3000µs. */
+const GAP_THRESHOLD = 3000;
+
+const PROTOCOL_REGISTRY: ProtocolEntry[] = [
+  // AC protocols first (more common use case)
+  {
+    protocol: "coolix", brand: "coolix", type: "ac",
+    tryDecode(timings, offset, headerOptional) {
+      const state = decodeCoolix(timings, offset, headerOptional);
+      if (state) return { protocol: "coolix", brand: "coolix", type: "ac", state, confidence: "checksum_valid" };
+      // Also try raw decode for command codes
+      const raw = decodeCoolixRaw(timings, offset, headerOptional);
+      if (raw) return { protocol: "coolix", brand: "coolix", type: "ac", state: null, raw: raw.data, confidence: "checksum_valid" };
+      return null;
+    },
+  },
+  {
+    protocol: "daikin152", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikin152(timings, offset, ho);
+      return s ? { protocol: "daikin152", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "daikin216", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikin216(timings, offset, ho);
+      return s ? { protocol: "daikin216", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "daikin160", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikin160(timings, offset, ho);
+      return s ? { protocol: "daikin160", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "daikin176", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikin176(timings, offset, ho);
+      return s ? { protocol: "daikin176", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "daikin64", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikin64(timings, offset, ho);
+      return s ? { protocol: "daikin64", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "daikin128", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikin128(timings, offset, ho);
+      return s ? { protocol: "daikin128", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "daikin", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikinESP(timings, offset, ho);
+      return s ? { protocol: "daikin", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "daikin2", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikin2(timings, offset, ho);
+      return s ? { protocol: "daikin2", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "daikin312", brand: "daikin", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDaikin312(timings, offset, ho);
+      return s ? { protocol: "daikin312", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Simple protocols last
+  {
+    protocol: "nec", brand: "nec", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodeNEC(timings, offset, undefined, undefined, ho);
+      return s ? { protocol: "nec", brand: "nec", type: "simple", state: s, confidence: "timing_match" } : null;
+    },
+  },
+];
+
+export interface DecodeOptions {
+  /** Try only this specific protocol. */
+  protocol?: ProtocolName;
+  /** Try only protocols from this brand. */
+  brand?: BrandName;
+  /** Try only protocols of this type. */
+  type?: ProtocolType;
+}
+
+/**
+ * Unified IR decode dispatcher.
+ *
+ * Uses a 3-tier strategy to handle real-world hardware captures where
+ * headers may be missing:
+ *
+ * 1. **Header match at offset 0** — fastest path, handles intact captures.
+ * 2. **Find repeat frame** — scan for inter-frame gaps, try after each gap
+ *    with header required. Handles missing first-frame headers.
+ * 3. **Brute force, header optional** — try at offset 0 relying solely on
+ *    checksum/parity validation. Handles single-frame headerless captures.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param options Optional hints to narrow the search.
+ * @returns The first matching protocol's decode result, or null.
+ */
+export function decode(
+  timings: number[],
+  options?: DecodeOptions,
+): DecodeResult | null {
+  const candidates = filterCandidates(options);
+  if (candidates.length === 0) return null;
+
+  // Fast path: when a specific protocol is hinted, skip tiering —
+  // just try offset 0 with header optional. The protocol's own
+  // integrity checks (checksum/parity) are sufficient to confirm.
+  if (options?.protocol) {
+    for (const entry of candidates) {
+      const result = entry.tryDecode(timings, 0, true);
+      if (result) return result;
+    }
+    return null;
+  }
+
+  // Tier 1: header required at offset 0
+  for (const entry of candidates) {
+    const result = entry.tryDecode(timings, 0, false);
+    if (result) return result;
+  }
+
+  // Tier 2: find repeat frames (scan for gaps, try after each)
+  for (let i = 1; i < timings.length - 1; i += 2) {
+    // Gaps are spaces (odd indices in a mark-start array), but hardware
+    // captures with missing headers may shift parity. Check all entries.
+    if (timings[i]! >= GAP_THRESHOLD) {
+      const afterGap = i + 1;
+      if (afterGap >= timings.length) continue;
+      for (const entry of candidates) {
+        const result = entry.tryDecode(timings, afterGap, false);
+        if (result) return result;
+      }
+    }
+  }
+
+  // Tier 3: brute force at offset 0, header optional
+  for (const entry of candidates) {
+    const result = entry.tryDecode(timings, 0, true);
+    if (result) return result;
+  }
+
+  return null;
+}
+
+function filterCandidates(options?: DecodeOptions): ProtocolEntry[] {
+  if (!options) return PROTOCOL_REGISTRY;
+  return PROTOCOL_REGISTRY.filter((entry) => {
+    if (options.protocol && entry.protocol !== options.protocol) return false;
+    if (options.brand && entry.brand !== options.brand) return false;
+    if (options.type && entry.type !== options.type) return false;
+    return true;
+  });
 }

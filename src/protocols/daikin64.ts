@@ -30,6 +30,7 @@ const DAIKIN64_GAP = 20300;
 const DAIKIN64_DEFAULT_MESSAGE_GAP = 100000;
 const DAIKIN64_BITS = 64;
 const DAIKIN64_CHECKSUM_OFFSET = 60;
+const DAIKIN64_TOLERANCE = 30;
 
 // ---------------------------------------------------------------------------
 // Protocol values
@@ -268,6 +269,7 @@ function skipLeader(
       0, 0,                                    // zeroMark, zeroSpace (unused)
       0, 0,                                    // no footer
       true,
+      DAIKIN64_TOLERANCE,
     );
     if (!result) return offset; // Leader not found, return original offset
     pos += result.used;
@@ -287,6 +289,7 @@ function skipLeader(
 export function decodeDaikin64(
   timings: number[],
   offset: number = 0,
+  headerOptional: boolean = false,
 ): Daikin64State | null {
   // Skip leader if present.
   let pos = skipLeader(timings, offset);
@@ -298,7 +301,8 @@ export function decodeDaikin64(
     DAIKIN64_BIT_MARK, DAIKIN64_ONE_SPACE,
     DAIKIN64_BIT_MARK, DAIKIN64_ZERO_SPACE,
     DAIKIN64_BIT_MARK, DAIKIN64_GAP,
-    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+    true, DAIKIN64_TOLERANCE, undefined, false, // atLeast, tol, excess, msbFirst=false
+    headerOptional,
   );
   if (!frame) return null;
 

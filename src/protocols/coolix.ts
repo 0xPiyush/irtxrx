@@ -23,6 +23,8 @@ const COOLIX_BIT_MARK = 2 * COOLIX_TICK;   // 552
 const COOLIX_ONE_SPACE = 6 * COOLIX_TICK;  // 1656
 const COOLIX_ZERO_SPACE = 2 * COOLIX_TICK; // 552
 const COOLIX_MIN_GAP = 19 * COOLIX_TICK;   // 5244
+/** Extra tolerance for Coolix decode — matches kCoolixExtraTolerance in C++. */
+const COOLIX_TOLERANCE = 30; // 25% default + 5% extra
 
 const COOLIX_FAN_TEMP_CODE = 0b1110;
 const COOLIX_SENSOR_TEMP_IGNORE = 0x1F; // 31
@@ -279,18 +281,22 @@ export interface CoolixRawResult {
 export function decodeCoolixRaw(
   timings: number[],
   offset: number = 0,
+  headerOptional: boolean = false,
 ): CoolixRawResult | null {
   let pos = offset;
   const len = timings.length;
 
-  // Minimum: header(2) + 48 bits(96) + footer(2) = 100 entries
-  if (len - offset < 100) return null;
+  // Minimum: 48 data bits(96) + footer mark(1) = 97 entries (header may be optional)
+  if (len - offset < 97) return null;
 
-  // Header
-  if (!matchMark(timings[pos]!, COOLIX_HDR_MARK)) return null;
-  pos++;
-  if (!matchSpace(timings[pos]!, COOLIX_HDR_SPACE)) return null;
-  pos++;
+  // Header — consume if present, fail if required but missing.
+  if (pos + 1 < len &&
+      matchMark(timings[pos]!, COOLIX_HDR_MARK, COOLIX_TOLERANCE) &&
+      matchSpace(timings[pos + 1]!, COOLIX_HDR_SPACE, COOLIX_TOLERANCE)) {
+    pos += 2;
+  } else if (!headerOptional) {
+    return null;
+  }
 
   // Decode 3 byte pairs (normal + inverted)
   let data = 0;
@@ -300,6 +306,7 @@ export function decodeCoolixRaw(
       timings, pos, 8,
       COOLIX_BIT_MARK, COOLIX_ONE_SPACE,
       COOLIX_BIT_MARK, COOLIX_ZERO_SPACE,
+      COOLIX_TOLERANCE,
     );
     if (!normal.success) return null;
     pos += normal.used;
@@ -309,6 +316,7 @@ export function decodeCoolixRaw(
       timings, pos, 8,
       COOLIX_BIT_MARK, COOLIX_ONE_SPACE,
       COOLIX_BIT_MARK, COOLIX_ZERO_SPACE,
+      COOLIX_TOLERANCE,
     );
     if (!inverted.success) return null;
     pos += inverted.used;
@@ -323,12 +331,12 @@ export function decodeCoolixRaw(
 
   // Footer mark
   if (pos >= len) return null;
-  if (!matchMark(timings[pos]!, COOLIX_BIT_MARK)) return null;
+  if (!matchMark(timings[pos]!, COOLIX_BIT_MARK, COOLIX_TOLERANCE)) return null;
   pos++;
 
   // Footer gap (optional — may be last frame)
   if (pos < len) {
-    if (!matchAtLeast(timings[pos]!, COOLIX_MIN_GAP)) return null;
+    if (!matchAtLeast(timings[pos]!, COOLIX_MIN_GAP, COOLIX_TOLERANCE)) return null;
     pos++;
   }
 
@@ -391,8 +399,9 @@ export function parseCoolixState(data: number): CoolixState | null {
 export function decodeCoolix(
   timings: number[],
   offset: number = 0,
+  headerOptional: boolean = false,
 ): CoolixState | null {
-  const raw = decodeCoolixRaw(timings, offset);
+  const raw = decodeCoolixRaw(timings, offset, headerOptional);
   if (!raw) return null;
   return parseCoolixState(raw.data);
 }

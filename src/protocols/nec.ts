@@ -151,6 +151,7 @@ export function decodeNEC(
   offset: number = 0,
   nbits: number = NEC_BITS,
   strict: boolean = true,
+  headerOptional: boolean = false,
 ): NECDecodeResult | null {
   const remaining = timings.length - offset;
 
@@ -161,11 +162,13 @@ export function decodeNEC(
   let pos = offset;
 
   // 1. Match header mark.
-  if (!matchMark(timings[pos]!, NEC_HDR_MARK)) return null;
-  pos++;
+  const headerMarkFound = matchMark(timings[pos]!, NEC_HDR_MARK);
+  if (!headerMarkFound && !headerOptional) return null;
+  if (headerMarkFound) pos++;
 
   // 2. Check for repeat: rptSpace + footerMark (+ optional gap).
-  if (pos + 1 < timings.length &&
+  //    Only possible if header mark was found.
+  if (headerMarkFound && pos + 1 < timings.length &&
       matchSpace(timings[pos]!, NEC_RPT_SPACE) &&
       matchMark(timings[pos + 1]!, NEC_BIT_MARK)) {
     if (pos + 2 < timings.length &&
@@ -176,18 +179,19 @@ export function decodeNEC(
   }
 
   // 3. Decode header space + data bits + footer via matchGeneric.
-  //    Header mark already consumed, so pass headerMark = 0.
+  //    If header mark was found, it's already consumed (pass headerMark = 0).
+  //    If header was optional and missing, pass the full header to matchGeneric
+  //    with headerOptional so it can skip both mark and space.
   const result = matchGeneric(
     timings, pos, remaining - (pos - offset), nbits,
-    0,              // headerMark (already matched)
-    NEC_HDR_SPACE,  // headerSpace
-    NEC_BIT_MARK,   // oneMark
-    NEC_ONE_SPACE,  // oneSpace
-    NEC_BIT_MARK,   // zeroMark
-    NEC_ZERO_SPACE, // zeroSpace
-    NEC_BIT_MARK,   // footerMark
-    NEC_MIN_GAP,    // footerSpace (gap)
-    true,           // atLeast
+    headerMarkFound ? 0 : NEC_HDR_MARK, // skip if already consumed
+    NEC_HDR_SPACE,
+    NEC_BIT_MARK, NEC_ONE_SPACE,
+    NEC_BIT_MARK, NEC_ZERO_SPACE,
+    NEC_BIT_MARK, NEC_MIN_GAP,
+    true,                                         // atLeast
+    undefined, undefined, undefined,              // tolerance, excess, msbFirst defaults
+    !headerMarkFound && headerOptional,           // headerOptional for matchGeneric
   );
   if (!result) return null;
 

@@ -271,6 +271,7 @@ function skipLeader(
 export function decodeDaikin152(
   timings: number[],
   offset: number = 0,
+  headerOptional: boolean = false,
 ): Daikin152State | null {
   // Skip leader if present.
   let pos = skipLeader(timings, offset);
@@ -283,6 +284,7 @@ export function decodeDaikin152(
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
     true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+    headerOptional,
   );
   if (!frame) return null;
 
