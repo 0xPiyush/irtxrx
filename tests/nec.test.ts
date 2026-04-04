@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "bun:test";
 import { execSync } from "child_process";
 import { existsSync } from "fs";
-import { encodeNEC, sendNEC } from "../src/protocols/nec";
+import { encodeNEC, sendNEC, decodeNEC } from "../src/protocols/nec";
 
 const RUNNER = `${import.meta.dir}/cpp/runner`;
 
@@ -113,4 +113,110 @@ describe("encodeNEC cross-validation", () => {
       expect(tsTimings).toEqual(cppTimings);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// decodeNEC roundtrip: encodeNEC → sendNEC → decodeNEC
+// ---------------------------------------------------------------------------
+
+describe("decodeNEC roundtrip (TS encode → TS decode)", () => {
+  for (const tc of encodeNECCases) {
+    it(`roundtrips ${tc.label}`, () => {
+      const encoded = encodeNEC(tc.address, tc.command);
+      const timings = sendNEC(encoded);
+      const decoded = decodeNEC(timings);
+
+      expect(decoded).not.toBeNull();
+      expect(decoded!.repeat).toBe(false);
+      expect(decoded!.address).toBe(tc.address);
+      expect(decoded!.command).toBe(tc.command);
+      expect(decoded!.data).toBe(encoded);
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// decodeNEC from C++ generated timings
+// ---------------------------------------------------------------------------
+
+describe("decodeNEC cross-validation (C++ encode → TS decode)", () => {
+  for (const tc of encodeNECCases) {
+    it(`decodes C++ timings for ${tc.label}`, () => {
+      const cppData = Number(cpp(`encodeNEC ${tc.address} ${tc.command}`));
+      const cppTimings = parseCppTimings(
+        cpp(`sendNEC ${cppData.toString(16).toUpperCase()} 32 0`),
+      );
+
+      const decoded = decodeNEC(cppTimings);
+
+      expect(decoded).not.toBeNull();
+      expect(decoded!.repeat).toBe(false);
+      expect(decoded!.address).toBe(tc.address);
+      expect(decoded!.command).toBe(tc.command);
+      expect(decoded!.data).toBe(cppData);
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// decodeNEC repeat detection
+// ---------------------------------------------------------------------------
+
+describe("decodeNEC repeat frames", () => {
+  it("decodes repeat from sendNEC with repeat=1", () => {
+    const encoded = encodeNEC(1, 2);
+    const timings = sendNEC(encoded, 32, 1);
+
+    const first = decodeNEC(timings, 0);
+    expect(first).not.toBeNull();
+    expect(first!.repeat).toBe(false);
+    expect(first!.address).toBe(1);
+    expect(first!.command).toBe(2);
+
+    // Full NEC frame: 2 (header) + 64 (32 bits × 2) + 2 (footer) = 68 entries.
+    const repeatOffset = 68;
+    const repeat = decodeNEC(timings, repeatOffset);
+    expect(repeat).not.toBeNull();
+    expect(repeat!.repeat).toBe(true);
+    expect(repeat!.data).toBe(0xFFFFFFFF);
+  });
+
+  it("decodes repeat from C++ timings with repeat=1", () => {
+    const cppData = Number(cpp(`encodeNEC 1 2`));
+    const cppTimings = parseCppTimings(
+      cpp(`sendNEC ${cppData.toString(16).toUpperCase()} 32 1`),
+    );
+
+    const first = decodeNEC(cppTimings, 0);
+    expect(first).not.toBeNull();
+    expect(first!.repeat).toBe(false);
+
+    const repeatOffset = 68;
+    const repeat = decodeNEC(cppTimings, repeatOffset);
+    expect(repeat).not.toBeNull();
+    expect(repeat!.repeat).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// decodeNEC rejection
+// ---------------------------------------------------------------------------
+
+describe("decodeNEC rejection", () => {
+  it("rejects empty timings", () => {
+    expect(decodeNEC([])).toBeNull();
+  });
+
+  it("rejects timings that are too short", () => {
+    expect(decodeNEC([1, 2, 3])).toBeNull();
+  });
+
+  it("rejects wrong header mark", () => {
+    expect(decodeNEC([1000, 4480, 560, 560])).toBeNull();
+  });
+
+  it("rejects garbage data", () => {
+    const garbage = Array.from({ length: 68 }, () => Math.floor(Math.random() * 100));
+    expect(decodeNEC(garbage)).toBeNull();
+  });
 });

@@ -5,6 +5,7 @@ import {
   sendDaikin64,
   encodeDaikin64Raw,
   buildDaikin64Raw,
+  decodeDaikin64,
   Daikin64Mode,
   Daikin64Fan,
 } from "../src/protocols/daikin64";
@@ -205,4 +206,48 @@ describe("daikin64 state cross-validation", () => {
       expect(tsTimings).toEqual(cppTimings);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Decode roundtrip
+// ---------------------------------------------------------------------------
+
+describe("decodeDaikin64 roundtrip", () => {
+  for (const tc of stateCases) {
+    it(`roundtrips ${tc.label}`, () => {
+      const timings = sendDaikin64(tc.state);
+      const decoded = decodeDaikin64(timings);
+      expect(decoded).not.toBeNull();
+      expect(buildDaikin64Raw(decoded!)).toBe(buildDaikin64Raw(tc.state));
+    });
+  }
+
+  it("decodes without leader", () => {
+    const state = stateCases[0]!.state;
+    const timings = sendDaikin64(state);
+    const noLeader = timings.slice(4); // 2x mark+space = 4 entries
+    const decoded = decodeDaikin64(noLeader);
+    expect(decoded).not.toBeNull();
+    expect(buildDaikin64Raw(decoded!)).toBe(buildDaikin64Raw(state));
+  });
+});
+
+describe("decodeDaikin64 C++ cross-validation", () => {
+  for (const tc of stateCases) {
+    it(`decodes C++ timings for ${tc.label}`, () => {
+      const cppTimings = parseCppTimings(cpp(`daikin64 ${tc.cppArgs}`).split("\n")[1]!);
+      const decoded = decodeDaikin64(cppTimings);
+      expect(decoded).not.toBeNull();
+      expect(buildDaikin64Raw(decoded!)).toBe(buildDaikin64Raw(tc.state));
+    });
+  }
+});
+
+describe("decodeDaikin64 rejection", () => {
+  it("rejects empty/garbage", () => {
+    expect(decodeDaikin64([])).toBeNull();
+    expect(decodeDaikin64([1, 2, 3])).toBeNull();
+    const garbage = Array.from({ length: 200 }, () => Math.floor(Math.random() * 100));
+    expect(decodeDaikin64(garbage)).toBeNull();
+  });
 });

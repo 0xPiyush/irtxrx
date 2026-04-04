@@ -7,6 +7,7 @@
  */
 
 import { sumBytes, sendGeneric, sendGenericBytes } from "../encode.js";
+import { matchGeneric, matchGenericBytes } from "../decode.js";
 import {
   DaikinMode,
   DaikinFan,
@@ -245,4 +246,175 @@ export function encodeDaikin312Raw(data: Uint8Array, repeat = 0): number[] {
     for (let i = 0; i < s2.length; i++) result.push(s2[i]!);
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Decode API
+// ---------------------------------------------------------------------------
+
+/**
+ * Try to skip a leader section (e.g. 5 zero bits + footer + gap).
+ * Returns the new offset past the leader, or the original offset if no leader.
+ */
+function skipLeader(
+  timings: number[],
+  offset: number,
+): number {
+  const result = matchGeneric(
+    timings, offset, timings.length - offset, HEADER_BITS,
+    0, 0,                             // no header
+    BIT_MARK, ONE_SPACE,              // oneMark, oneSpace
+    BIT_MARK, ZERO_SPACE,             // zeroMark, zeroSpace
+    BIT_MARK, HDR_GAP,               // footerMark, gap
+    true,                             // atLeast for gap
+  );
+  return result ? offset + result.used : offset;
+}
+
+/**
+ * Read a little-endian bitfield spanning one or more bytes.
+ * Inverse of `setFieldLE`.
+ */
+function getFieldLE(
+  raw: Uint8Array, startByte: number, startBit: number, totalBits: number,
+): number {
+  let value = 0;
+  let byte = startByte;
+  let bit = startBit;
+  let remaining = totalBits;
+  let shift = 0;
+  while (remaining > 0) {
+    const bitsInThisByte = Math.min(remaining, 8 - bit);
+    const mask = ((1 << bitsInThisByte) - 1) << bit;
+    value |= ((raw[byte]! & mask) >>> bit) << shift;
+    shift += bitsInThisByte;
+    remaining -= bitsInThisByte;
+    byte++;
+    bit = 0;
+  }
+  return value;
+}
+
+/**
+ * Decode raw IR timings as a Daikin312 message.
+ *
+ * The 5-bit header preamble is optional — hardware captures often miss it.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param offset  Starting index in the timings array (default 0).
+ * @returns Decoded state (same shape as encode input), or null on mismatch.
+ */
+export function decodeDaikin312(
+  timings: number[],
+  offset: number = 0,
+): Daikin312State | null {
+  // Skip leader if present.
+  let pos = skipLeader(timings, offset);
+
+  // Section 1: 20 bytes (LSB-first)
+  const s1 = matchGenericBytes(
+    timings, pos, timings.length - pos, SECTION1_LEN,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, SECTION_GAP,
+    true, undefined, undefined, false,
+  );
+  if (!s1) return null;
+  pos += s1.used;
+
+  // Section 2: 19 bytes (LSB-first)
+  const s2Len = STATE_LENGTH - SECTION1_LEN;
+  const s2 = matchGenericBytes(
+    timings, pos, timings.length - pos, s2Len,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, SECTION_GAP,
+    true, undefined, undefined, false,
+  );
+  if (!s2) return null;
+
+  // Concatenate sections into one 39-byte array.
+  const raw = new Uint8Array(STATE_LENGTH);
+  raw.set(s1.data, 0);
+  raw.set(s2.data, SECTION1_LEN);
+
+  // Validate checksums.
+  if (raw[19] !== sumBytes(raw, 0, SECTION1_LEN - 1)) return null;
+  if (raw[38] !== sumBytes(raw, SECTION1_LEN, STATE_LENGTH - 1)) return null;
+
+  // --- Extract state ---
+
+  // CurrentTime (bytes 5–6, bits 0–11 LE)
+  const currentTime = getFieldLE(raw, 5, 0, 12);
+
+  // Power2 (byte 6, bit 7) — inverted
+  // Power (byte 25, bit 0) — primary
+  const power = !!(raw[25]! & 0x01);
+
+  // Beep (byte 7, bits 6–7)
+  const beep = (raw[7]! >> 6) & 0x3;
+
+  // FreshAir (byte 8, bit 0), Mold (byte 8, bit 3), FreshAirHigh (byte 8, bit 7)
+  const freshAir = !!(raw[8]! & (1 << 0));
+  const mold = !!(raw[8]! & (1 << 3));
+  const freshAirHigh = !!(raw[8]! & (1 << 7));
+
+  // Light (byte 12, bits 0–1)
+  const light = raw[12]! & 0x3;
+
+  // Clean (byte 14, bit 4)
+  const clean = !!(raw[14]! & (1 << 4));
+
+  // Mode (byte 25, bits 4–6)
+  const mode = ((raw[25]! >> 4) & 0b111) as DaikinModeValue;
+
+  // Temp (byte 26, bits 0–6, 7 bits) — stored as degrees * 2
+  const temp = (raw[26]! & 0x7f) / 2;
+
+  // Fan (byte 28, bits 4–7)
+  const fanInternal = (raw[28]! >> 4) & 0x0f;
+  const fan: DaikinFanValue =
+    fanInternal === DaikinFan.Auto || fanInternal === DaikinFan.Quiet
+      ? fanInternal
+      : (fanInternal - 2) as DaikinFanValue;
+
+  // SwingV (byte 28, bits 0–3)
+  const swingVertical = raw[28]! & 0x0f;
+
+  // SwingH (byte 29, bits 0–3)
+  const swingHorizontal = raw[29]! & 0x0f;
+
+  // Quiet (byte 33, bit 5), Powerful (byte 33, bit 0)
+  const quiet = !!(raw[33]! & (1 << 5));
+  const powerful = !!(raw[33]! & (1 << 0));
+
+  // Econo (byte 36, bit 2), Eye (byte 36, bit 1), EyeAuto (byte 36, bit 3), Purify (byte 36, bit 4)
+  const econo = !!(raw[36]! & (1 << 2));
+  const eye = !!(raw[36]! & (1 << 1));
+  const eyeAuto = !!(raw[36]! & (1 << 3));
+  const purify = !!(raw[36]! & (1 << 4));
+
+  return {
+    power,
+    temp,
+    mode,
+    fan,
+    swingVertical,
+    swingHorizontal,
+    quiet,
+    powerful,
+    econo,
+    light,
+    beep,
+    clean,
+    mold,
+    freshAir,
+    freshAirHigh,
+    eye,
+    eyeAuto,
+    purify,
+    currentTime,
+  };
 }

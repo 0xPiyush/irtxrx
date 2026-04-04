@@ -5,6 +5,7 @@
  */
 
 import { sumBytes, sendGeneric, sendGenericBytes } from "../encode.js";
+import { matchGeneric, matchGenericBytes } from "../decode.js";
 import {
   DaikinMode,
   DaikinFan,
@@ -233,4 +234,83 @@ export function encodeDaikin152Raw(data: Uint8Array, repeat = 0): number[] {
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Decode API
+// ---------------------------------------------------------------------------
+
+/**
+ * Try to skip a leader section (e.g. 5 zero bits + footer + gap).
+ * Returns the new offset past the leader, or the original offset if no leader.
+ */
+function skipLeader(
+  timings: number[],
+  offset: number,
+): number {
+  const result = matchGeneric(
+    timings, offset, timings.length - offset, LEADER_BITS,
+    0, 0,                             // no header
+    BIT_MARK, ONE_SPACE,              // oneMark, oneSpace
+    BIT_MARK, ZERO_SPACE,             // zeroMark, zeroSpace
+    BIT_MARK, GAP,                    // footerMark, gap
+    true,                             // atLeast for gap
+  );
+  return result ? offset + result.used : offset;
+}
+
+/**
+ * Decode raw IR timings as a Daikin152 message.
+ *
+ * The 5-bit leader preamble is optional — hardware captures often miss it.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param offset  Starting index in the timings array (default 0).
+ * @returns Decoded state (same shape as encode input), or null on mismatch.
+ */
+export function decodeDaikin152(
+  timings: number[],
+  offset: number = 0,
+): Daikin152State | null {
+  // Skip leader if present.
+  let pos = skipLeader(timings, offset);
+
+  // Match main frame: header + 19 bytes (LSB-first) + footer.
+  const frame = matchGenericBytes(
+    timings, pos, timings.length - pos, STATE_LENGTH,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, GAP,
+    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+  );
+  if (!frame) return null;
+
+  const raw = frame.data;
+
+  // Validate checksum.
+  if (raw[18] !== sumBytes(raw, 0, STATE_LENGTH - 1)) return null;
+
+  // Extract state from byte/bit positions.
+  const mode = ((raw[5]! >> 4) & 0b111) as DaikinModeValue;
+  const temp = (raw[6]! >> 1) & 0x7F;
+
+  const fanInternal = (raw[8]! >> 4) & 0x0F;
+  const fan: DaikinFanValue =
+    fanInternal === DaikinFan.Auto || fanInternal === DaikinFan.Quiet
+      ? fanInternal
+      : (fanInternal - 2) as DaikinFanValue;
+
+  return {
+    power: !!(raw[5]! & 0x01),
+    temp,
+    mode,
+    fan,
+    swingVertical: (raw[8]! & 0x0F) === DAIKIN_SWING_ON,
+    quiet: !!(raw[13]! & (1 << 5)),
+    powerful: !!(raw[13]! & (1 << 0)),
+    econo: !!(raw[16]! & (1 << 2)),
+    comfort: !!(raw[16]! & (1 << 1)),
+    sensor: !!(raw[16]! & (1 << 3)),
+  };
 }

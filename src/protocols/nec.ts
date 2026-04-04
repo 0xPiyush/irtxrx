@@ -7,6 +7,12 @@
  */
 
 import { reverseBits, sendGeneric } from "../encode.js";
+import {
+  matchMark,
+  matchSpace,
+  matchAtLeast,
+  matchGeneric,
+} from "../decode.js";
 
 // ---------------------------------------------------------------------------
 // Timing constants — must match ir_NEC.h exactly
@@ -30,7 +36,7 @@ const NEC_MIN_GAP =
     NEC_BIT_MARK); // 22400
 
 // ---------------------------------------------------------------------------
-// Public API
+// Encode API
 // ---------------------------------------------------------------------------
 
 /**
@@ -112,4 +118,104 @@ export function sendNEC(
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Decode API
+// ---------------------------------------------------------------------------
+
+export interface NECDecodeResult {
+  /** Raw 32-bit NEC data (MSB-first). */
+  data: number;
+  /** Decoded device address. */
+  address: number;
+  /** Decoded command. */
+  command: number;
+  /** Whether this is a repeat frame. */
+  repeat: boolean;
+}
+
+/**
+ * Decode raw IR timings as a NEC message.
+ *
+ * Matches IRremoteESP8266 `IRrecv::decodeNEC`.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param offset  Starting index in the timings array (default 0).
+ * @param nbits   Expected number of data bits (default 32).
+ * @param strict  If true, enforce NEC constraints (default true).
+ * @returns Decoded NEC result, or null if timings don't match.
+ */
+export function decodeNEC(
+  timings: number[],
+  offset: number = 0,
+  nbits: number = NEC_BITS,
+  strict: boolean = true,
+): NECDecodeResult | null {
+  const remaining = timings.length - offset;
+
+  // Need at least 4 entries for a repeat frame.
+  if (remaining < 4) return null;
+  if (strict && nbits !== NEC_BITS) return null;
+
+  let pos = offset;
+
+  // 1. Match header mark.
+  if (!matchMark(timings[pos]!, NEC_HDR_MARK)) return null;
+  pos++;
+
+  // 2. Check for repeat: rptSpace + footerMark (+ optional gap).
+  if (pos + 1 < timings.length &&
+      matchSpace(timings[pos]!, NEC_RPT_SPACE) &&
+      matchMark(timings[pos + 1]!, NEC_BIT_MARK)) {
+    if (pos + 2 < timings.length &&
+        !matchAtLeast(timings[pos + 2]!, NEC_MIN_GAP)) {
+      return null;
+    }
+    return { data: 0xFFFFFFFF, address: 0, command: 0, repeat: true };
+  }
+
+  // 3. Decode header space + data bits + footer via matchGeneric.
+  //    Header mark already consumed, so pass headerMark = 0.
+  const result = matchGeneric(
+    timings, pos, remaining - (pos - offset), nbits,
+    0,              // headerMark (already matched)
+    NEC_HDR_SPACE,  // headerSpace
+    NEC_BIT_MARK,   // oneMark
+    NEC_ONE_SPACE,  // oneSpace
+    NEC_BIT_MARK,   // zeroMark
+    NEC_ZERO_SPACE, // zeroSpace
+    NEC_BIT_MARK,   // footerMark
+    NEC_MIN_GAP,    // footerSpace (gap)
+    true,           // atLeast
+  );
+  if (!result) return null;
+
+  const data = Number(result.data & 0xFFFFFFFFn);
+
+  // 4. Validate command (inverted complement in bits 7:0).
+  let command = (data >> 8) & 0xFF;
+  const commandInv = data & 0xFF;
+  if ((command ^ 0xFF) !== commandInv) {
+    if (strict) return null;
+    command = 0;
+  }
+
+  // 5. Extract address — normal (8-bit) vs extended (16-bit).
+  const addrHi = (data >> 24) & 0xFF;
+  const addrLo = (data >> 16) & 0xFF;
+
+  let address: number;
+  if (addrHi === (addrLo ^ 0xFF)) {
+    address = reverseBits(addrHi, 8);
+  } else {
+    address = reverseBits((data >> 16) & 0xFFFF, 16);
+  }
+
+  return {
+    data,
+    address,
+    command: reverseBits(command, 8),
+    repeat: false,
+  };
 }

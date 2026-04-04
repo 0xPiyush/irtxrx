@@ -7,6 +7,7 @@
  */
 
 import { sumBytes, sendGenericBytes } from "../encode.js";
+import { matchGenericBytes } from "../decode.js";
 import { DAIKIN_MIN_TEMP, DAIKIN_MAX_TEMP } from "./daikin_common.js";
 
 // ---------------------------------------------------------------------------
@@ -177,4 +178,77 @@ export function encodeDaikin176Raw(data: Uint8Array, repeat = 0): number[] {
     for (let i = 0; i < s2.length; i++) result.push(s2[i]!);
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Decode API
+// ---------------------------------------------------------------------------
+
+/**
+ * Decode raw IR timings as a Daikin176 message.
+ *
+ * The protocol has 2 sections (7 + 15 bytes), each with its own header,
+ * data, footer, and checksum. No leader/preamble.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param offset  Starting index in the timings array (default 0).
+ * @returns Decoded state (same shape as encode input), or null on mismatch.
+ */
+export function decodeDaikin176(
+  timings: number[],
+  offset: number = 0,
+): Daikin176State | null {
+  let pos = offset;
+
+  // Section 1: 7 bytes (header + data + footer).
+  const section1 = matchGenericBytes(
+    timings, pos, timings.length - pos, SECTION1_LEN,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, GAP,
+    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+  );
+  if (!section1) return null;
+  pos += section1.used;
+
+  // Section 2: 15 bytes (header + data + footer).
+  const section2Len = STATE_LENGTH - SECTION1_LEN;
+  const section2 = matchGenericBytes(
+    timings, pos, timings.length - pos, section2Len,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, GAP,
+    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+  );
+  if (!section2) return null;
+
+  // Combine into full 22-byte array.
+  const raw = new Uint8Array(STATE_LENGTH);
+  raw.set(section1.data, 0);
+  raw.set(section2.data, SECTION1_LEN);
+
+  // Validate checksums.
+  if (raw[6] !== sumBytes(raw, 0, SECTION1_LEN - 1)) return null;
+  if (raw[21] !== sumBytes(raw, SECTION1_LEN, STATE_LENGTH - 1)) return null;
+
+  // Extract state from byte/bit positions.
+  const mode = ((raw[14]! >> 4) & 0b111) as Daikin176ModeValue;
+  const storedTemp = (raw[17]! >> 1) & 0x3F;
+  const temp = storedTemp + 9;
+  const fan = ((raw[18]! >> 4) & 0x0F) as 1 | 3;
+  const swingHRaw = raw[18]! & 0x0F;
+  const swingHorizontal: Daikin176SwingHValue =
+    swingHRaw === Daikin176SwingH.Auto ? Daikin176SwingH.Auto : Daikin176SwingH.Off;
+  const id: 0 | 1 = (raw[3]! & 0x01) ? 1 : 0;
+
+  return {
+    power: !!(raw[14]! & 0x01),
+    temp,
+    mode,
+    fan,
+    swingHorizontal,
+    id,
+  };
 }

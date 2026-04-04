@@ -9,9 +9,11 @@
 
 import {
   uint8ToBcd,
+  bcdToUint8,
   sumNibbles64,
   sendGeneric,
 } from "../encode.js";
+import { matchGeneric } from "../decode.js";
 
 // ---------------------------------------------------------------------------
 // Timing constants — must match ir_Daikin.h exactly
@@ -241,4 +243,115 @@ export function encodeDaikin64Raw(
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Decode API
+// ---------------------------------------------------------------------------
+
+/**
+ * Try to skip the leader section (2x mark+space pairs + footer mark + gap).
+ * Returns the new offset past the leader, or the original offset if no leader.
+ */
+function skipLeader(
+  timings: number[],
+  offset: number,
+): number {
+  // The leader consists of 2 pairs of (LDR_MARK, LDR_SPACE).
+  // We match these as 2 x matchGeneric with 0 data bits.
+  let pos = offset;
+  for (let i = 0; i < 2; i++) {
+    const result = matchGeneric(
+      timings, pos, timings.length - pos, 0,
+      DAIKIN64_LDR_MARK, DAIKIN64_LDR_SPACE, // header mark, header space
+      0, 0,                                    // oneMark, oneSpace (unused, 0 bits)
+      0, 0,                                    // zeroMark, zeroSpace (unused)
+      0, 0,                                    // no footer
+      true,
+    );
+    if (!result) return offset; // Leader not found, return original offset
+    pos += result.used;
+  }
+  return pos;
+}
+
+/**
+ * Decode raw IR timings as a Daikin64 message.
+ *
+ * The leader (2x mark+space pairs) is optional -- hardware captures may miss it.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param offset  Starting index in the timings array (default 0).
+ * @returns Decoded state (same shape as encode input), or null on mismatch.
+ */
+export function decodeDaikin64(
+  timings: number[],
+  offset: number = 0,
+): Daikin64State | null {
+  // Skip leader if present.
+  let pos = skipLeader(timings, offset);
+
+  // Match main frame: header + 64 bits (LSB-first) + footer + gap.
+  const frame = matchGeneric(
+    timings, pos, timings.length - pos, DAIKIN64_BITS,
+    DAIKIN64_HDR_MARK, DAIKIN64_HDR_SPACE,
+    DAIKIN64_BIT_MARK, DAIKIN64_ONE_SPACE,
+    DAIKIN64_BIT_MARK, DAIKIN64_ZERO_SPACE,
+    DAIKIN64_BIT_MARK, DAIKIN64_GAP,
+    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+  );
+  if (!frame) return null;
+
+  const raw = frame.data;
+
+  // Validate nibble checksum (bits 60-63).
+  const expectedChecksum = sumNibbles64(raw, DAIKIN64_CHECKSUM_OFFSET);
+  const actualChecksum = Number((raw >> 60n) & 0xFn);
+  if (actualChecksum !== expectedChecksum) return null;
+
+  // Extract fields from the 64-bit value (inverse of buildDaikin64Raw).
+  const getBits = (off: number, size: number): number =>
+    Number((raw >> BigInt(off)) & ((1n << BigInt(size)) - 1n));
+
+  const mode = getBits(8, 4) as Daikin64ModeValue;
+  const fan = getBits(12, 4) as Daikin64FanValue;
+
+  // Clock: BCD minutes (bits 16-23) + BCD hours (bits 24-31)
+  const clockMinBcd = getBits(16, 8);
+  const clockHourBcd = getBits(24, 8);
+  const clock = bcdToUint8(clockHourBcd) * 60 + bcdToUint8(clockMinBcd);
+
+  // On timer: BCD hours (bits 32-37, 6 bits) + half-hour flag (bit 38) + enabled (bit 39)
+  const onHoursBcd = getBits(32, 6);
+  const onHalfHour = getBits(38, 1);
+  const onTimerEnabled = !!getBits(39, 1);
+  const onTime = bcdToUint8(onHoursBcd) * 60 + (onHalfHour ? 30 : 0);
+
+  // Off timer: BCD hours (bits 40-45, 6 bits) + half-hour flag (bit 46) + enabled (bit 47)
+  const offHoursBcd = getBits(40, 6);
+  const offHalfHour = getBits(46, 1);
+  const offTimerEnabled = !!getBits(47, 1);
+  const offTime = bcdToUint8(offHoursBcd) * 60 + (offHalfHour ? 30 : 0);
+
+  // Temp: BCD (bits 48-55)
+  const tempBcd = getBits(48, 8);
+  const temp = bcdToUint8(tempBcd);
+
+  const swingVertical = !!getBits(56, 1);
+  const sleep = !!getBits(57, 1);
+  const power = !!getBits(59, 1);
+
+  return {
+    power,
+    temp,
+    mode,
+    fan,
+    swingVertical,
+    sleep,
+    clock,
+    onTimerEnabled,
+    onTime,
+    offTimerEnabled,
+    offTime,
+  };
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "bun:test";
 import { execSync } from "child_process";
 import { existsSync } from "fs";
-import { buildDaikin216Raw, encodeDaikin216Raw, DaikinMode, DaikinFan } from "../src/protocols/daikin216";
+import { buildDaikin216Raw, encodeDaikin216Raw, sendDaikin216, decodeDaikin216, DaikinMode, DaikinFan } from "../src/protocols/daikin216";
 import type { Daikin216State } from "../src/protocols/daikin216";
 
 const RUNNER = `${import.meta.dir}/cpp/runner`;
@@ -37,4 +37,39 @@ describe("daikin216 state cross-validation", () => {
       expect(encodeDaikin216Raw(tsRaw, 0)).toEqual(cppTimings);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Decode roundtrip
+// ---------------------------------------------------------------------------
+
+describe("decodeDaikin216 roundtrip", () => {
+  for (const tc of cases) {
+    it(`roundtrips ${tc.label}`, () => {
+      const timings = sendDaikin216(tc.state);
+      const decoded = decodeDaikin216(timings);
+      expect(decoded).not.toBeNull();
+      expect(Array.from(buildDaikin216Raw(decoded!))).toEqual(Array.from(buildDaikin216Raw(tc.state)));
+    });
+  }
+});
+
+describe("decodeDaikin216 C++ cross-validation", () => {
+  for (const tc of cases) {
+    it(`decodes C++ timings for ${tc.label}`, () => {
+      const cppTimings = parseCppTimings(cpp(`daikin216 ${tc.cppArgs}`).split("\n")[1]!);
+      const decoded = decodeDaikin216(cppTimings);
+      expect(decoded).not.toBeNull();
+      expect(Array.from(buildDaikin216Raw(decoded!))).toEqual(Array.from(buildDaikin216Raw(tc.state)));
+    });
+  }
+});
+
+describe("decodeDaikin216 rejection", () => {
+  it("rejects empty/garbage", () => {
+    expect(decodeDaikin216([])).toBeNull();
+    expect(decodeDaikin216([1, 2, 3])).toBeNull();
+    const garbage = Array.from({ length: 500 }, () => Math.floor(Math.random() * 100));
+    expect(decodeDaikin216(garbage)).toBeNull();
+  });
 });

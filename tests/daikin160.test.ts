@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "bun:test";
 import { execSync } from "child_process";
 import { existsSync } from "fs";
-import { buildDaikin160Raw, encodeDaikin160Raw, DaikinMode, DaikinFan, Daikin160SwingV } from "../src/protocols/daikin160";
+import { buildDaikin160Raw, encodeDaikin160Raw, sendDaikin160, decodeDaikin160, DaikinMode, DaikinFan, Daikin160SwingV } from "../src/protocols/daikin160";
 import type { Daikin160State } from "../src/protocols/daikin160";
 
 const RUNNER = `${import.meta.dir}/cpp/runner`;
@@ -36,4 +36,39 @@ describe("daikin160 state cross-validation", () => {
       expect(encodeDaikin160Raw(tsRaw, 0)).toEqual(cppTimings);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Decode roundtrip
+// ---------------------------------------------------------------------------
+
+describe("decodeDaikin160 roundtrip", () => {
+  for (const tc of cases) {
+    it(`roundtrips ${tc.label}`, () => {
+      const timings = sendDaikin160(tc.state);
+      const decoded = decodeDaikin160(timings);
+      expect(decoded).not.toBeNull();
+      expect(Array.from(buildDaikin160Raw(decoded!))).toEqual(Array.from(buildDaikin160Raw(tc.state)));
+    });
+  }
+});
+
+describe("decodeDaikin160 C++ cross-validation", () => {
+  for (const tc of cases) {
+    it(`decodes C++ timings for ${tc.label}`, () => {
+      const cppTimings = parseCppTimings(cpp(`daikin160 ${tc.cppArgs}`).split("\n")[1]!);
+      const decoded = decodeDaikin160(cppTimings);
+      expect(decoded).not.toBeNull();
+      expect(Array.from(buildDaikin160Raw(decoded!))).toEqual(Array.from(buildDaikin160Raw(tc.state)));
+    });
+  }
+});
+
+describe("decodeDaikin160 rejection", () => {
+  it("rejects empty/garbage", () => {
+    expect(decodeDaikin160([])).toBeNull();
+    expect(decodeDaikin160([1, 2, 3])).toBeNull();
+    const garbage = Array.from({ length: 500 }, () => Math.floor(Math.random() * 100));
+    expect(decodeDaikin160(garbage)).toBeNull();
+  });
 });

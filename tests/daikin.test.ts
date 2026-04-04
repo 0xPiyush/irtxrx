@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from "bun:test";
 import { execSync } from "child_process";
 import { existsSync } from "fs";
-import { buildDaikinESPRaw, encodeDaikinESPRaw, DaikinMode, DaikinFan } from "../src/protocols/daikin";
+import { buildDaikinESPRaw, encodeDaikinESPRaw, sendDaikinESP, decodeDaikinESP, DaikinMode, DaikinFan } from "../src/protocols/daikin";
 import type { DaikinESPState } from "../src/protocols/daikin";
 
 const RUNNER = `${import.meta.dir}/cpp/runner`;
@@ -42,4 +42,48 @@ describe("daikinESP state cross-validation", () => {
       expect(encodeDaikinESPRaw(tsRaw, 0)).toEqual(cppTimings);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Decode roundtrip
+// ---------------------------------------------------------------------------
+
+describe("decodeDaikinESP roundtrip", () => {
+  for (const tc of cases) {
+    it(`roundtrips ${tc.label}`, () => {
+      const timings = sendDaikinESP(tc.state);
+      const decoded = decodeDaikinESP(timings);
+      expect(decoded).not.toBeNull();
+      expect(Array.from(buildDaikinESPRaw(decoded!))).toEqual(Array.from(buildDaikinESPRaw(tc.state)));
+    });
+  }
+
+  it("decodes without leader", () => {
+    const state = cases[0]!.state;
+    const timings = sendDaikinESP(state);
+    const noLeader = timings.slice(12); // 5-bit leader = 12 entries
+    const decoded = decodeDaikinESP(noLeader);
+    expect(decoded).not.toBeNull();
+    expect(Array.from(buildDaikinESPRaw(decoded!))).toEqual(Array.from(buildDaikinESPRaw(state)));
+  });
+});
+
+describe("decodeDaikinESP C++ cross-validation", () => {
+  for (const tc of cases) {
+    it(`decodes C++ timings for ${tc.label}`, () => {
+      const cppTimings = parseCppTimings(cpp(`daikin ${tc.cppArgs}`).split("\n")[1]!);
+      const decoded = decodeDaikinESP(cppTimings);
+      expect(decoded).not.toBeNull();
+      expect(Array.from(buildDaikinESPRaw(decoded!))).toEqual(Array.from(buildDaikinESPRaw(tc.state)));
+    });
+  }
+});
+
+describe("decodeDaikinESP rejection", () => {
+  it("rejects empty/garbage", () => {
+    expect(decodeDaikinESP([])).toBeNull();
+    expect(decodeDaikinESP([1, 2, 3])).toBeNull();
+    const garbage = Array.from({ length: 500 }, () => Math.floor(Math.random() * 100));
+    expect(decodeDaikinESP(garbage)).toBeNull();
+  });
 });

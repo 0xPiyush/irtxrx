@@ -6,6 +6,7 @@
  */
 
 import { sumBytes, sendGenericBytes } from "../encode.js";
+import { matchGenericBytes } from "../decode.js";
 import {
   DaikinMode,
   DaikinFan,
@@ -15,6 +16,7 @@ import {
 import type { DaikinModeValue, DaikinFanValue } from "./daikin_common.js";
 
 export { DaikinMode, DaikinFan } from "./daikin_common.js";
+export type { DaikinModeValue, DaikinFanValue } from "./daikin_common.js";
 
 // ---------------------------------------------------------------------------
 // Timing constants
@@ -145,4 +147,75 @@ export function encodeDaikin160Raw(data: Uint8Array, repeat = 0): number[] {
     for (let i = 0; i < s2.length; i++) result.push(s2[i]!);
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Decode API
+// ---------------------------------------------------------------------------
+
+/**
+ * Decode raw IR timings as a Daikin160 message.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param offset  Starting index in the timings array (default 0).
+ * @returns Decoded state (same shape as encode input), or null on mismatch.
+ */
+export function decodeDaikin160(
+  timings: number[],
+  offset: number = 0,
+): Daikin160State | null {
+  let pos = offset;
+
+  // Section 1: bytes 0–6 (7 bytes)
+  const section1 = matchGenericBytes(
+    timings, pos, timings.length - pos, SECTION1_LEN,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, GAP,
+    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+  );
+  if (!section1) return null;
+  pos += section1.used;
+
+  // Section 2: bytes 7–19 (13 bytes)
+  const section2Len = STATE_LENGTH - SECTION1_LEN;
+  const section2 = matchGenericBytes(
+    timings, pos, timings.length - pos, section2Len,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, GAP,
+    true, undefined, undefined, false,
+  );
+  if (!section2) return null;
+
+  // Combine into full raw array.
+  const raw = new Uint8Array(STATE_LENGTH);
+  raw.set(section1.data, 0);
+  raw.set(section2.data, SECTION1_LEN);
+
+  // Validate checksums.
+  if (raw[6] !== sumBytes(raw, 0, SECTION1_LEN - 1)) return null;
+  if (raw[19] !== sumBytes(raw, SECTION1_LEN, STATE_LENGTH - 1)) return null;
+
+  // Extract state from byte/bit positions.
+  const mode = ((raw[12]! >> 4) & 0b111) as DaikinModeValue;
+  const temp = ((raw[16]! >> 1) & 0x3F) + 10;
+
+  const fanInternal = raw[17]! & 0x0F;
+  const fan: DaikinFanValue =
+    fanInternal === DaikinFan.Auto || fanInternal === DaikinFan.Quiet
+      ? fanInternal
+      : (fanInternal - 2) as DaikinFanValue;
+
+  const swingV = ((raw[13]! >> 4) & 0x0F) as Daikin160SwingVValue;
+
+  return {
+    power: !!(raw[12]! & 0x01),
+    temp,
+    mode,
+    fan,
+    swingVertical: swingV,
+  };
 }

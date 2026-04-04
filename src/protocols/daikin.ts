@@ -6,6 +6,7 @@
  */
 
 import { sumBytes, sendGeneric, sendGenericBytes } from "../encode.js";
+import { matchGeneric, matchGenericBytes } from "../decode.js";
 import {
   DaikinMode,
   DaikinFan,
@@ -249,5 +250,195 @@ export function encodeDaikinESPRaw(data: Uint8Array, repeat = 0): number[] {
     const s3 = sendGenericBytes({ ...sectionOpts, data: data.subarray(SECTION1_LEN + SECTION2_LEN) });
     for (let i = 0; i < s3.length; i++) result.push(s3[i]!);
   }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Decode API
+// ---------------------------------------------------------------------------
+
+const SECTION3_LEN = STATE_LENGTH - SECTION1_LEN - SECTION2_LEN; // 19
+
+/** Read a multi-byte little-endian bitfield (inverse of setFieldLE). */
+function getFieldLE(
+  raw: Uint8Array, startByte: number, startBit: number, totalBits: number,
+): number {
+  let value = 0;
+  let byte = startByte;
+  let bit = startBit;
+  let remaining = totalBits;
+  let shift = 0;
+  while (remaining > 0) {
+    const bitsInThisByte = Math.min(remaining, 8 - bit);
+    const mask = ((1 << bitsInThisByte) - 1) << bit;
+    value |= ((raw[byte]! & mask) >>> bit) << shift;
+    shift += bitsInThisByte;
+    remaining -= bitsInThisByte;
+    byte++;
+    bit = 0;
+  }
+  return value;
+}
+
+/**
+ * Try to skip the 5-bit zero leader (no header mark/space).
+ * Returns the new offset past the leader, or the original offset if no leader.
+ */
+function skipLeader(
+  timings: number[],
+  offset: number,
+): number {
+  const result = matchGeneric(
+    timings, offset, timings.length - offset, HEADER_BITS,
+    0, 0,                             // no header
+    BIT_MARK, ONE_SPACE,              // oneMark, oneSpace
+    BIT_MARK, ZERO_SPACE,             // zeroMark, zeroSpace
+    BIT_MARK, FOOTER_GAP,             // footerMark, gap
+    true,                             // atLeast for gap
+  );
+  return result ? offset + result.used : offset;
+}
+
+/**
+ * Decode raw IR timings as a DaikinESP message.
+ *
+ * The 5-bit leader preamble is optional — hardware captures often miss it.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param offset  Starting index in the timings array (default 0).
+ * @returns Decoded state (same shape as encode input), or null on mismatch.
+ */
+export function decodeDaikinESP(
+  timings: number[],
+  offset: number = 0,
+): DaikinESPState | null {
+  // Skip leader if present.
+  let pos = skipLeader(timings, offset);
+
+  // Section 1 (bytes 0–7): header + 8 bytes + footer.
+  const s1 = matchGenericBytes(
+    timings, pos, timings.length - pos, SECTION1_LEN,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, FOOTER_GAP,
+    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+  );
+  if (!s1) return null;
+  pos += s1.used;
+
+  // Section 2 (bytes 8–15): header + 8 bytes + footer.
+  const s2 = matchGenericBytes(
+    timings, pos, timings.length - pos, SECTION2_LEN,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, FOOTER_GAP,
+    true, undefined, undefined, false,
+  );
+  if (!s2) return null;
+  pos += s2.used;
+
+  // Section 3 (bytes 16–34): header + 19 bytes + footer.
+  const s3 = matchGenericBytes(
+    timings, pos, timings.length - pos, SECTION3_LEN,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, FOOTER_GAP,
+    true, undefined, undefined, false,
+  );
+  if (!s3) return null;
+
+  // Concatenate sections into one 35-byte array.
+  const raw = new Uint8Array(STATE_LENGTH);
+  raw.set(s1.data, 0);
+  raw.set(s2.data, SECTION1_LEN);
+  raw.set(s3.data, SECTION1_LEN + SECTION2_LEN);
+
+  // Validate checksums.
+  if (raw[7] !== sumBytes(raw, 0, SECTION1_LEN - 1)) return null;
+  if (raw[15] !== sumBytes(raw, SECTION1_LEN, SECTION1_LEN + SECTION2_LEN - 1)) return null;
+  if (raw[34] !== sumBytes(raw, SECTION1_LEN + SECTION2_LEN, STATE_LENGTH - 1)) return null;
+
+  // Extract state from byte/bit positions.
+
+  // --- Section 1 fields ---
+  const comfort = !!(raw[6]! & (1 << 4));
+
+  // --- Section 2 fields ---
+  // CurrentTime: 11-bit LE field at byte 13, bit 0
+  const currentTime = getFieldLE(raw, 13, 0, 11);
+  // CurrentDay: byte 14, bits 3–5
+  const currentDay = (raw[14]! >> 3) & 0x07;
+
+  // --- Section 3 fields ---
+  // Mode (byte 21, bits 4–6)
+  const mode = ((raw[21]! >> 4) & 0b111) as DaikinModeValue;
+
+  // Power (byte 21, bit 0)
+  const power = !!(raw[21]! & 0x01);
+
+  // On/Off timer enables (byte 21, bits 1–2)
+  const onTimerEnabled = !!(raw[21]! & (1 << 1));
+  const offTimerEnabled = !!(raw[21]! & (1 << 2));
+
+  // Temp (byte 22) — stored as degrees * 2
+  const temp = raw[22]! / 2;
+
+  // Fan (byte 24, bits 4–7)
+  const fanInternal = (raw[24]! >> 4) & 0x0f;
+  const fan: DaikinFanValue =
+    fanInternal === DaikinFan.Auto || fanInternal === DaikinFan.Quiet
+      ? fanInternal
+      : (fanInternal - 2) as DaikinFanValue;
+
+  // SwingV (byte 24, bits 0–3)
+  const swingVertical = (raw[24]! & 0x0f) === DAIKIN_SWING_ON;
+
+  // SwingH (byte 25, bits 0–3)
+  const swingHorizontal = (raw[25]! & 0x0f) === DAIKIN_SWING_ON;
+
+  // On timer: 12-bit LE field at byte 26, bit 0
+  const onTimeRaw = getFieldLE(raw, 26, 0, 12);
+
+  // Off timer: 12-bit LE field at byte 27, bit 4
+  const offTimeRaw = getFieldLE(raw, 27, 4, 12);
+
+  // Quiet (byte 29, bit 5)
+  const quiet = !!(raw[29]! & (1 << 5));
+  // Powerful (byte 29, bit 0)
+  const powerful = !!(raw[29]! & (1 << 0));
+
+  // Econo (byte 32, bit 2)
+  const econo = !!(raw[32]! & (1 << 2));
+  // Sensor (byte 32, bit 1)
+  const sensor = !!(raw[32]! & (1 << 1));
+  // WeeklyTimer (byte 32, bit 7) — inverted: bit=1 means disabled
+  const weeklyTimer = !(raw[32]! & (1 << 7));
+
+  // Mold (byte 33, bit 1)
+  const mold = !!(raw[33]! & (1 << 1));
+
+  const result: DaikinESPState = {
+    power,
+    temp,
+    mode,
+    fan,
+    swingVertical,
+    swingHorizontal,
+    quiet,
+    powerful,
+    econo,
+    mold,
+    comfort,
+    sensor,
+    weeklyTimer,
+    currentTime,
+    currentDay,
+  };
+  if (onTimerEnabled) result.onTime = onTimeRaw;
+  if (offTimerEnabled) result.offTime = offTimeRaw;
+
   return result;
 }

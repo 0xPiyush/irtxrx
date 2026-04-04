@@ -6,7 +6,8 @@
  * Ported from IRremoteESP8266 `ir_Daikin.cpp`.
  */
 
-import { uint8ToBcd, sumNibbles, sendGenericBytes } from "../encode.js";
+import { uint8ToBcd, bcdToUint8, sumNibbles, sendGenericBytes } from "../encode.js";
+import { matchMark, matchSpace, matchGenericBytes } from "../decode.js";
 
 // ---------------------------------------------------------------------------
 // Timing constants (shared with Daikin64)
@@ -216,4 +217,123 @@ export function encodeDaikin128Raw(data: Uint8Array, repeat = 0): number[] {
     for (let i = 0; i < s2.length; i++) result.push(s2[i]!);
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Decode API
+// ---------------------------------------------------------------------------
+
+/**
+ * Try to skip the leader section (2x mark/space pairs).
+ * Returns the new offset past the leader, or the original offset if no leader.
+ */
+function skipLeader(
+  timings: number[],
+  offset: number,
+): number {
+  let pos = offset;
+  // Leader is 2x (LDR_MARK + LDR_SPACE)
+  for (let i = 0; i < 2; i++) {
+    if (pos + 1 >= timings.length) return offset;
+    if (!matchMark(timings[pos]!, LDR_MARK)) return offset;
+    if (!matchSpace(timings[pos + 1]!, LDR_SPACE)) return offset;
+    pos += 2;
+  }
+  return pos;
+}
+
+/**
+ * Decode raw IR timings as a Daikin128 message.
+ *
+ * The leader preamble (2x mark/space) is optional — hardware captures often
+ * miss it.
+ *
+ * @param timings Raw mark/space timing array in microseconds.
+ * @param offset  Starting index in the timings array (default 0).
+ * @returns Decoded state (same shape as encode input), or null on mismatch.
+ */
+export function decodeDaikin128(
+  timings: number[],
+  offset: number = 0,
+): Daikin128State | null {
+  // Skip leader if present.
+  let pos = skipLeader(timings, offset);
+
+  // Section 1 (bytes 0–7): header + 8 bytes + footer (BIT_MARK + GAP).
+  const s1 = matchGenericBytes(
+    timings, pos, timings.length - pos, SECTION_LEN,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    BIT_MARK, GAP,
+    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+  );
+  if (!s1) return null;
+  pos += s1.used;
+
+  // Section 2 (bytes 8–15): no header + 8 bytes + footer (FOOTER_MARK + GAP).
+  const s2 = matchGenericBytes(
+    timings, pos, timings.length - pos, SECTION_LEN,
+    0, 0,
+    BIT_MARK, ONE_SPACE,
+    BIT_MARK, ZERO_SPACE,
+    FOOTER_MARK, GAP,
+    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+  );
+  if (!s2) return null;
+
+  // Concatenate sections into one 16-byte array.
+  const raw = new Uint8Array(STATE_LENGTH);
+  raw.set(s1.data, 0);
+  raw.set(s2.data, SECTION_LEN);
+
+  // Validate checksums.
+  // Section 1: sumNibbles(bytes 0–6, init=lower nibble of byte 7) & 0x0F === upper nibble of byte 7
+  const expectedSum1 = sumNibbles(raw, 0, SECTION_LEN - 1, raw[7]! & 0x0f) & 0x0f;
+  if (((raw[7]! >> 4) & 0x0f) !== expectedSum1) return null;
+
+  // Section 2: sumNibbles(bytes 8–14) === byte 15
+  const expectedSum2 = sumNibbles(raw, SECTION_LEN, SECTION_LEN - 1);
+  if (raw[15] !== expectedSum2) return null;
+
+  // Extract state from byte/bit positions.
+  const mode = (raw[1]! & 0x0f) as Daikin128ModeValue;
+  const fan = ((raw[1]! >> 4) & 0x0f) as Daikin128FanValue;
+
+  // Clock: byte 2 = minutes BCD, byte 3 = hours BCD
+  const clockMins = bcdToUint8(raw[2]!);
+  const clockHours = bcdToUint8(raw[3]!);
+  const clock = clockHours * 60 + clockMins;
+
+  // On timer (byte 4): bits 0–5 = hours BCD, bit 6 = half-hour, bit 7 = enabled
+  const onTimerHours = bcdToUint8(raw[4]! & 0x3f);
+  const onTimerHalf = !!(raw[4]! & (1 << 6));
+  const onTimerEnabled = !!(raw[4]! & (1 << 7));
+  const onTime = onTimerHours * 60 + (onTimerHalf ? 30 : 0);
+
+  // Off timer (byte 5): bits 0–5 = hours BCD, bit 6 = half-hour, bit 7 = enabled
+  const offTimerHours = bcdToUint8(raw[5]! & 0x3f);
+  const offTimerHalf = !!(raw[5]! & (1 << 6));
+  const offTimerEnabled = !!(raw[5]! & (1 << 7));
+  const offTime = offTimerHours * 60 + (offTimerHalf ? 30 : 0);
+
+  // Temp (byte 6, BCD)
+  const temp = bcdToUint8(raw[6]!);
+
+  return {
+    power: !!(raw[7]! & (1 << 3)),
+    temp,
+    mode,
+    fan,
+    swingVertical: !!(raw[7]! & (1 << 0)),
+    sleep: !!(raw[7]! & (1 << 1)),
+    econo: !!(raw[9]! & (1 << 2)),
+    ceiling: !!(raw[9]! & (1 << 0)),
+    wall: !!(raw[9]! & (1 << 3)),
+    clock,
+    onTimerEnabled,
+    onTime,
+    offTimerEnabled,
+    offTime,
+  };
 }

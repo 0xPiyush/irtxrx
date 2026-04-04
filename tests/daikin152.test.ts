@@ -5,6 +5,7 @@ import {
   sendDaikin152,
   encodeDaikin152Raw,
   buildDaikin152Raw,
+  decodeDaikin152,
   DaikinMode,
   DaikinFan,
 } from "../src/protocols/daikin152";
@@ -222,4 +223,49 @@ describe("daikin152 state cross-validation", () => {
       expect(tsTimings).toEqual(cppTimings);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// Decode roundtrip
+// ---------------------------------------------------------------------------
+
+describe("decodeDaikin152 roundtrip", () => {
+  for (const tc of cases) {
+    it(`roundtrips ${tc.label}`, () => {
+      const timings = sendDaikin152(tc.state);
+      const decoded = decodeDaikin152(timings);
+      expect(decoded).not.toBeNull();
+      expect(Array.from(buildDaikin152Raw(decoded!))).toEqual(Array.from(buildDaikin152Raw(tc.state)));
+    });
+  }
+
+  it("decodes without leader", () => {
+    const state = cases[0]!.state;
+    const timings = sendDaikin152(state);
+    const noLeader = timings.slice(12); // 5-bit leader = 12 entries
+    const decoded = decodeDaikin152(noLeader);
+    expect(decoded).not.toBeNull();
+    expect(Array.from(buildDaikin152Raw(decoded!))).toEqual(Array.from(buildDaikin152Raw(state)));
+  });
+});
+
+describe("decodeDaikin152 C++ cross-validation", () => {
+  for (const tc of cases) {
+    it(`decodes C++ timings for ${tc.label}`, () => {
+      const output = cpp(`daikin152 ${tc.cppArgs}`);
+      const cppTimings = parseCppTimings(output.split("\n")[1]!);
+      const decoded = decodeDaikin152(cppTimings);
+      expect(decoded).not.toBeNull();
+      expect(Array.from(buildDaikin152Raw(decoded!))).toEqual(Array.from(buildDaikin152Raw(tc.state)));
+    });
+  }
+});
+
+describe("decodeDaikin152 rejection", () => {
+  it("rejects empty/garbage", () => {
+    expect(decodeDaikin152([])).toBeNull();
+    expect(decodeDaikin152([1, 2, 3])).toBeNull();
+    const garbage = Array.from({ length: 500 }, () => Math.floor(Math.random() * 100));
+    expect(decodeDaikin152(garbage)).toBeNull();
+  });
 });
