@@ -25,6 +25,10 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_DAIKIN2=false \
             -DSEND_DAIKIN312=true \
             -DDECODE_DAIKIN312=false \
+            -DSEND_COOLIX=true \
+            -DDECODE_COOLIX=false \
+            -DSEND_COOLIX48=true \
+            -DDECODE_COOLIX48=false \
             -I$(VENDOR)/src \
             -I$(VENDOR)/test
 
@@ -34,7 +38,8 @@ SRCS := runner.cpp \
         $(VENDOR)/src/IRutils.cpp \
         $(VENDOR)/src/IRtext.cpp \
         $(VENDOR)/src/ir_NEC.cpp \
-        $(VENDOR)/src/ir_Daikin.cpp
+        $(VENDOR)/src/ir_Daikin.cpp \
+        $(VENDOR)/src/ir_Coolix.cpp
 
 runner: $(SRCS)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $(SRCS)

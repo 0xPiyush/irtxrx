@@ -107,3 +107,15 @@ export {
   decodeDaikin312,
 } from "./protocols/daikin312.js";
 export type { Daikin312State } from "./protocols/daikin312.js";
+export {
+  buildCoolixRaw,
+  encodeCoolixRaw,
+  sendCoolix,
+  decodeCoolixRaw,
+  decodeCoolix,
+  parseCoolixState,
+  CoolixMode,
+  CoolixFan,
+  CoolixCommand,
+} from "./protocols/coolix.js";
+export type { CoolixState, CoolixRawResult } from "./protocols/coolix.js";

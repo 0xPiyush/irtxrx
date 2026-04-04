@@ -21,6 +21,7 @@
 #include <cinttypes>
 #include "IRsend_test.h"
 #include "ir_Daikin.h"
+#include "ir_Coolix.h"
 
 /// Print the output[] array as comma-separated values.
 static void printTimings(IRsendTest& irsend) {
@@ -390,6 +391,54 @@ int main(int argc, char* argv[]) {
         ac.send();
         for (int i = 0; i < kDaikin312StateLength; i++) printf("%02X", raw[i]);
         printf("\n");
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Coolix raw send -----
+
+    if (strcmp(fn, "sendCoolix") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendCoolix <data_hex> [repeat]\n");
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 1;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendCOOLIX(data, kCoolixBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Coolix via class setters -----
+
+    if (strcmp(fn, "coolix") == 0) {
+        // Args: temp mode fan [sensorTemp]
+        if (argc < 5) {
+            fprintf(stderr, "Usage: runner coolix <temp> <mode> <fan> [sensorTemp]\n");
+            return 1;
+        }
+        uint8_t temp  = static_cast<uint8_t>(atoi(argv[2]));
+        uint8_t mode  = static_cast<uint8_t>(atoi(argv[3]));
+        uint8_t fan   = static_cast<uint8_t>(atoi(argv[4]));
+
+        IRCoolixAC ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(mode);
+        if (mode != kCoolixFan) ac.setTemp(temp);
+        ac.setFan(fan);
+        if (argc > 5) {
+            uint8_t sensorTemp = static_cast<uint8_t>(atoi(argv[5]));
+            ac.setSensorTemp(sensorTemp);
+        }
+
+        uint32_t raw = ac.getRaw();
+        ac.send();
+
+        printf("%06X\n", raw);
         printTimings(ac._irsend);
         return 0;
     }
