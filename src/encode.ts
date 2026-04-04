@@ -62,6 +62,16 @@ export function sumNibbles64(value: bigint, nbits: number): number {
   return result & 0xf;
 }
 
+/** Sum all nibbles (upper + lower) of each byte in a range. */
+export function sumNibbles(
+  data: Uint8Array, start: number, length: number, init = 0,
+): number {
+  let sum = init;
+  for (let i = start; i < start + length; i++)
+    sum += (data[i]! >> 4) + (data[i]! & 0xf);
+  return sum & 0xff;
+}
+
 // ---------------------------------------------------------------------------
 // Data encoding
 // ---------------------------------------------------------------------------

@@ -1,0 +1,248 @@
+/**
+ * Daikin312 312-bit (39-byte) IR protocol encoder.
+ *
+ * 5-bit header + 2 sections: bytes 0–19 (20) + bytes 20–38 (19).
+ * 36700 Hz carrier. Very similar to Daikin2 with field repositioning.
+ * Ported from IRremoteESP8266 `ir_Daikin.cpp`.
+ */
+
+import { sumBytes, sendGeneric, sendGenericBytes } from "../encode.js";
+import {
+  DaikinMode,
+  DaikinFan,
+  DAIKIN_MIN_TEMP,
+  DAIKIN_MAX_TEMP,
+  DAIKIN2_MIN_COOL_TEMP,
+} from "./daikin_common.js";
+import type { DaikinModeValue, DaikinFanValue } from "./daikin_common.js";
+
+export { DaikinMode, DaikinFan } from "./daikin_common.js";
+
+// ---------------------------------------------------------------------------
+// Timing constants
+// ---------------------------------------------------------------------------
+
+const HDR_MARK = 3518;
+const HDR_SPACE = 1688;
+const BIT_MARK = 453;
+const ONE_SPACE = 1275;
+const ZERO_SPACE = 414;
+const HDR_GAP = 25100;
+const SECTION_GAP = 35512;
+const STATE_LENGTH = 39;
+const SECTION1_LEN = 20;
+const HEADER_BITS = 5;
+const UNUSED_TIME = 0x600;
+
+// ---------------------------------------------------------------------------
+// State interface
+// ---------------------------------------------------------------------------
+
+export interface Daikin312State {
+  power?: boolean;
+  /** Temperature in °C. Supports 0.5°C via float. */
+  temp?: number;
+  mode?: DaikinModeValue;
+  fan?: DaikinFanValue;
+  swingVertical?: number;
+  swingHorizontal?: number;
+  quiet?: boolean;
+  powerful?: boolean;
+  econo?: boolean;
+  light?: number;
+  beep?: number;
+  clean?: boolean;
+  mold?: boolean;
+  freshAir?: boolean;
+  freshAirHigh?: boolean;
+  eye?: boolean;
+  eyeAuto?: boolean;
+  purify?: boolean;
+  currentTime?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Bit helpers
+// ---------------------------------------------------------------------------
+
+function setBit(raw: Uint8Array, byteIdx: number, bitIdx: number, on: boolean) {
+  if (on) raw[byteIdx] = raw[byteIdx]! | (1 << bitIdx);
+  else raw[byteIdx] = raw[byteIdx]! & ~(1 << bitIdx);
+}
+
+function setBitsRange(
+  raw: Uint8Array, byteIdx: number, bitOffset: number, size: number, value: number,
+) {
+  const mask = ((1 << size) - 1) << bitOffset;
+  raw[byteIdx] = (raw[byteIdx]! & ~mask) | ((value << bitOffset) & mask);
+}
+
+function setFieldLE(
+  raw: Uint8Array, startByte: number, startBit: number, totalBits: number, value: number,
+) {
+  let v = value;
+  let byte = startByte;
+  let bit = startBit;
+  let remaining = totalBits;
+  while (remaining > 0) {
+    const bitsInThisByte = Math.min(remaining, 8 - bit);
+    const mask = ((1 << bitsInThisByte) - 1) << bit;
+    raw[byte] = (raw[byte]! & ~mask) | (((v & ((1 << bitsInThisByte) - 1)) << bit) & mask);
+    v >>>= bitsInThisByte;
+    remaining -= bitsInThisByte;
+    byte++;
+    bit = 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Build
+// ---------------------------------------------------------------------------
+
+function defaultState(): Uint8Array {
+  const raw = new Uint8Array(STATE_LENGTH);
+  // Section 1
+  raw[0] = 0x11; raw[1] = 0xda; raw[2] = 0x27;
+  raw[4] = 0x02; raw[5] = 0x58; raw[6] = 0x64;
+  raw[7] = 0x58; raw[8] = 0x64; raw[9] = 0x06;
+  raw[12] = 0x01;
+  // Section 2
+  raw[20] = 0x11; raw[21] = 0xda; raw[22] = 0x27;
+  raw[25] = 0x08; raw[26] = 0x2c;
+  raw[31] = 0x06; raw[32] = 0x60;
+  raw[35] = 0xc5; raw[37] = 0x08;
+
+  // disableOnTimer/disableOffTimer/disableSleepTimer
+  setFieldLE(raw, 30, 0, 12, UNUSED_TIME);
+  setBit(raw, 25, 1, false);
+  setBit(raw, 36, 5, false);
+  setFieldLE(raw, 31, 4, 12, UNUSED_TIME);
+  setBit(raw, 25, 2, false);
+
+  return raw;
+}
+
+export function buildDaikin312Raw(state: Daikin312State): Uint8Array {
+  const raw = defaultState();
+
+  // --- Section 1 fields ---
+
+  // CurrentTime (bytes 5–6, bits 0–11)
+  if (state.currentTime !== undefined) {
+    let mins = state.currentTime;
+    if (mins > 24 * 60) mins = 0;
+    setFieldLE(raw, 5, 0, 12, mins);
+  }
+
+  // Power2 (byte 6, bit 7) — inverted
+  const power = state.power ?? false;
+  setBit(raw, 6, 7, !power);
+
+  // Beep (byte 7, bits 6–7)
+  if (state.beep !== undefined) setBitsRange(raw, 7, 6, 2, state.beep & 0x3);
+
+  // FreshAir (byte 8, bit 0), Mold (byte 8, bit 3), FreshAirHigh (byte 8, bit 7)
+  if (state.freshAir !== undefined) setBit(raw, 8, 0, state.freshAir);
+  if (state.mold !== undefined) setBit(raw, 8, 3, state.mold);
+  if (state.freshAirHigh !== undefined) setBit(raw, 8, 7, state.freshAirHigh);
+
+  // Light (byte 12, bits 0–1) — moved from Daikin2's byte 7
+  if (state.light !== undefined) setBitsRange(raw, 12, 0, 2, state.light & 0x3);
+
+  // Clean (byte 14, bit 4) — moved from Daikin2's byte 8
+  if (state.clean !== undefined) setBit(raw, 14, 4, state.clean);
+
+  // --- Section 2 fields ---
+
+  // Mode (byte 25, bits 4–6)
+  let mode: number = state.mode ?? DaikinMode.Auto;
+  if (!(mode === DaikinMode.Auto || mode === DaikinMode.Cool || mode === DaikinMode.Heat || mode === DaikinMode.Fan || mode === DaikinMode.Dry))
+    mode = DaikinMode.Auto;
+  setBitsRange(raw, 25, 4, 3, mode);
+
+  // Temp (byte 26, bits 0–6, 7 bits) — stored as degrees * 2 for 0.5°C resolution
+  let temp: number;
+  if (state.temp !== undefined) {
+    const minTemp = (mode === DaikinMode.Cool) ? DAIKIN2_MIN_COOL_TEMP : DAIKIN_MIN_TEMP;
+    temp = Math.min(Math.max(state.temp, minTemp), DAIKIN_MAX_TEMP);
+  } else {
+    temp = 22;
+  }
+  setBitsRange(raw, 26, 0, 7, Math.round(temp * 2));
+
+  // Fan (byte 28, bits 4–7)
+  const fanInput = state.fan ?? DaikinFan.Auto;
+  let fan: number;
+  if (fanInput === DaikinFan.Quiet || fanInput === DaikinFan.Auto) fan = fanInput;
+  else if (fanInput < 1 || fanInput > 5) fan = DaikinFan.Auto;
+  else fan = fanInput + 2;
+  setBitsRange(raw, 28, 4, 4, fan);
+
+  // SwingV (byte 28, bits 0–3) — moved from Daikin2's byte 18
+  setBitsRange(raw, 28, 0, 4, (state.swingVertical ?? 0) & 0xf);
+
+  // SwingH (byte 29, bits 0–3) — moved from Daikin2's byte 17 (now 4-bit)
+  setBitsRange(raw, 29, 0, 4, (state.swingHorizontal ?? 0) & 0xf);
+
+  // Power (byte 25, bit 0)
+  setBit(raw, 25, 0, power);
+
+  // Quiet (byte 33, bit 5), Powerful (byte 33, bit 0)
+  let quiet = state.quiet ?? false;
+  let powerful = state.powerful ?? false;
+  if (quiet) powerful = false;
+  if (powerful) quiet = false;
+  setBit(raw, 33, 5, quiet);
+  setBit(raw, 33, 0, powerful);
+
+  // Econo (byte 36, bit 2), Eye (byte 36, bit 1), EyeAuto (byte 36, bit 3), Purify (byte 36, bit 4)
+  if (state.econo !== undefined) setBit(raw, 36, 2, state.econo);
+  if (state.eye !== undefined) setBit(raw, 36, 1, state.eye);
+  if (state.eyeAuto !== undefined) setBit(raw, 36, 3, state.eyeAuto);
+  if (state.purify !== undefined) setBit(raw, 36, 4, state.purify);
+
+  // --- Checksums ---
+  raw[19] = sumBytes(raw, 0, SECTION1_LEN - 1);
+  raw[38] = sumBytes(raw, SECTION1_LEN, STATE_LENGTH - 1);
+
+  return raw;
+}
+
+// ---------------------------------------------------------------------------
+// Send
+// ---------------------------------------------------------------------------
+
+export function sendDaikin312(state: Daikin312State, repeat = 0): number[] {
+  return encodeDaikin312Raw(buildDaikin312Raw(state), repeat);
+}
+
+export function encodeDaikin312Raw(data: Uint8Array, repeat = 0): number[] {
+  const result: number[] = [];
+  const sectionOpts = {
+    headerMark: HDR_MARK, headerSpace: HDR_SPACE,
+    oneMark: BIT_MARK, oneSpace: ONE_SPACE,
+    zeroMark: BIT_MARK, zeroSpace: ZERO_SPACE,
+    footerMark: BIT_MARK, gap: SECTION_GAP, msbFirst: false,
+  };
+
+  for (let r = 0; r <= repeat; r++) {
+    // Header: 5 bits of zero
+    const hdr = sendGeneric({
+      headerMark: 0, headerSpace: 0,
+      oneMark: BIT_MARK, oneSpace: ONE_SPACE,
+      zeroMark: BIT_MARK, zeroSpace: ZERO_SPACE,
+      footerMark: BIT_MARK, gap: HDR_GAP,
+      data: 0n, nbits: HEADER_BITS, msbFirst: false,
+    });
+    for (let i = 0; i < hdr.length; i++) result.push(hdr[i]!);
+
+    // Section 1 (bytes 0–19)
+    const s1 = sendGenericBytes({ ...sectionOpts, data: data.subarray(0, SECTION1_LEN) });
+    for (let i = 0; i < s1.length; i++) result.push(s1[i]!);
+
+    // Section 2 (bytes 20–38)
+    const s2 = sendGenericBytes({ ...sectionOpts, data: data.subarray(SECTION1_LEN) });
+    for (let i = 0; i < s2.length; i++) result.push(s2[i]!);
+  }
+  return result;
+}

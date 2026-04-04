@@ -273,6 +273,127 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // ----- DaikinESP via class setters -----
+
+    if (strcmp(fn, "daikin") == 0) {
+        // Args: power temp mode fan swingV swingH quiet powerful econo mold comfort sensor
+        if (argc < 14) {
+            fprintf(stderr, "Usage: runner daikin <power> <temp> <mode> <fan> "
+                "<swingV> <swingH> <quiet> <powerful> <econo> <mold> <comfort> <sensor>\n");
+            return 1;
+        }
+        IRDaikinESP ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<float>(atof(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(atoi(argv[6]) != 0);
+        ac.setSwingHorizontal(atoi(argv[7]) != 0);
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setQuiet(atoi(argv[8]) != 0);
+        ac.setPowerful(atoi(argv[9]) != 0);
+        ac.setEcono(atoi(argv[10]) != 0);
+        ac.setMold(atoi(argv[11]) != 0);
+        ac.setComfort(atoi(argv[12]) != 0);
+        ac.setSensor(atoi(argv[13]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        ac.send();
+        for (int i = 0; i < kDaikinStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Daikin128 via class setters -----
+
+    if (strcmp(fn, "daikin128") == 0) {
+        // Args: power temp mode fan swingV sleep econo clock
+        if (argc < 10) {
+            fprintf(stderr, "Usage: runner daikin128 <power> <temp> <mode> <fan> "
+                "<swingV> <sleep> <econo> <clock>\n");
+            return 1;
+        }
+        IRDaikin128 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(atoi(argv[6]) != 0);
+        ac.setSleep(atoi(argv[7]) != 0);
+        ac.setEcono(atoi(argv[8]) != 0);
+        ac.setClock(static_cast<uint16_t>(atoi(argv[9])));
+        ac.setPowerToggle(atoi(argv[2]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        ac.send();
+        for (int i = 0; i < kDaikin128StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Daikin2 via class setters -----
+
+    if (strcmp(fn, "daikin2") == 0) {
+        // Args: power temp mode fan swingV swingH quiet powerful econo
+        if (argc < 11) {
+            fprintf(stderr, "Usage: runner daikin2 <power> <temp> <mode> <fan> "
+                "<swingV> <swingH> <quiet> <powerful> <econo>\n");
+            return 1;
+        }
+        IRDaikin2 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingHorizontal(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setQuiet(atoi(argv[8]) != 0);
+        ac.setPowerful(atoi(argv[9]) != 0);
+        ac.setEcono(atoi(argv[10]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        ac.send();
+        for (int i = 0; i < kDaikin2StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Daikin312 via class setters -----
+
+    if (strcmp(fn, "daikin312") == 0) {
+        if (argc < 11) {
+            fprintf(stderr, "Usage: runner daikin312 <power> <temp> <mode> <fan> "
+                "<swingV> <swingH> <quiet> <powerful> <econo>\n");
+            return 1;
+        }
+        IRDaikin312 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<float>(atof(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingHorizontal(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setQuiet(atoi(argv[8]) != 0);
+        ac.setPowerful(atoi(argv[9]) != 0);
+        ac.setEcono(atoi(argv[10]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        ac.send();
+        for (int i = 0; i < kDaikin312StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        printTimings(ac._irsend);
+        return 0;
+    }
+
     fprintf(stderr, "Unknown function: %s\n", fn);
     return 1;
 }

@@ -54,3 +54,29 @@ export {
   buildDaikin216Raw,
 } from "./protocols/daikin216.js";
 export type { Daikin216State } from "./protocols/daikin216.js";
+export {
+  sendDaikinESP,
+  encodeDaikinESPRaw,
+  buildDaikinESPRaw,
+} from "./protocols/daikin.js";
+export type { DaikinESPState } from "./protocols/daikin.js";
+export {
+  sendDaikin128,
+  encodeDaikin128Raw,
+  buildDaikin128Raw,
+  Daikin128Mode,
+  Daikin128Fan,
+} from "./protocols/daikin128.js";
+export type { Daikin128State } from "./protocols/daikin128.js";
+export {
+  sendDaikin2,
+  encodeDaikin2Raw,
+  buildDaikin2Raw,
+} from "./protocols/daikin2.js";
+export type { Daikin2State } from "./protocols/daikin2.js";
+export {
+  sendDaikin312,
+  encodeDaikin312Raw,
+  buildDaikin312Raw,
+} from "./protocols/daikin312.js";
+export type { Daikin312State } from "./protocols/daikin312.js";

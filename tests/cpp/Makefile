@@ -17,6 +17,14 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_DAIKIN176=false \
             -DSEND_DAIKIN216=true \
             -DDECODE_DAIKIN216=false \
+            -DSEND_DAIKIN=true \
+            -DDECODE_DAIKIN=false \
+            -DSEND_DAIKIN128=true \
+            -DDECODE_DAIKIN128=false \
+            -DSEND_DAIKIN2=true \
+            -DDECODE_DAIKIN2=false \
+            -DSEND_DAIKIN312=true \
+            -DDECODE_DAIKIN312=false \
             -I$(VENDOR)/src \
             -I$(VENDOR)/test
 
