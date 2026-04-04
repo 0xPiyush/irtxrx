@@ -21,6 +21,9 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Build C++ test runner
+        run: make -C tests/cpp
+
       - name: Test
         run: bun test
 

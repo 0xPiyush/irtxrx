@@ -24,6 +24,9 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+      - name: Build C++ test runner
+        run: make -C tests/cpp
+
       - name: Test
         run: bun test
 
