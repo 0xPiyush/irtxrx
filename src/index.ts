@@ -1,7 +1,8 @@
 /**
- * irtx — Raw IR remote control frame generator
+ * irtxrx — Raw IR remote control frame encoder and decoder
  *
- * Output format: flat arrays of alternating mark/space durations in microseconds.
+ * TX: state → flat arrays of alternating mark/space durations in microseconds.
+ * RX: raw timings → protocol identification + state extraction.
  */
 
 export {

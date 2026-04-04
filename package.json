@@ -1,7 +1,7 @@
 {
-  "name": "irtx",
+  "name": "irtxrx",
   "version": "0.0.1",
-  "description": "TypeScript library for generating raw IR remote control frames",
+  "description": "TypeScript library for encoding and decoding raw IR remote control frames",
   "type": "module",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
