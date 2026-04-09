@@ -188,6 +188,30 @@ describe("command codes", () => {
 });
 
 // ---------------------------------------------------------------------------
+// power: false → Off command
+// ---------------------------------------------------------------------------
+
+describe("power off", () => {
+  it("buildCoolixRaw returns Off command when power is false", () => {
+    expect(buildCoolixRaw({ power: false })).toBe(CoolixCommand.Off);
+    expect(buildCoolixRaw({ power: false, temp: 25, mode: CoolixMode.Cool, fan: CoolixFan.Auto })).toBe(CoolixCommand.Off);
+  });
+
+  it("sendCoolix with power: false produces decodable Off command", () => {
+    const timings = sendCoolix({ power: false, temp: 25, mode: CoolixMode.Cool });
+    const raw = decodeCoolixRaw(timings);
+    expect(raw).not.toBeNull();
+    expect(raw!.data).toBe(CoolixCommand.Off);
+  });
+
+  it("power: true encodes normal state (power field ignored)", () => {
+    const withPower = buildCoolixRaw({ power: true, temp: 24, mode: CoolixMode.Cool, fan: CoolixFan.Auto });
+    const without = buildCoolixRaw({ temp: 24, mode: CoolixMode.Cool, fan: CoolixFan.Auto });
+    expect(withPower).toBe(without);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Rejection
 // ---------------------------------------------------------------------------
 

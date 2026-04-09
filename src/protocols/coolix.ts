@@ -121,6 +121,8 @@ const COMMAND_SET = new Set<number>([
 // ---------------------------------------------------------------------------
 
 export interface CoolixState {
+  /** When false, encodes as CoolixCommand.Off instead of a state frame. */
+  power?: boolean;
   /** Temperature in °C (17–30). Omit for Fan mode. */
   temp?: number;
   mode?: CoolixModeValue;
@@ -140,8 +142,11 @@ const COOLIX_TEMP_MAX = 30;
 
 /**
  * Build a raw 24-bit Coolix code from a state object.
+ * When `power` is explicitly `false`, returns the Off command code.
  */
 export function buildCoolixRaw(state: CoolixState): number {
+  if (state.power === false) return CoolixCommand.Off;
+
   let raw = COOLIX_DEFAULT_STATE;
 
   // Fixed upper nibble 0xB (bits 20-23)
