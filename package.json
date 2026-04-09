@@ -33,5 +33,9 @@
     "@types/bun": "latest",
     "typescript": "^5.8"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0xPiyush/irtxrx.git"
+  },
   "license": "MIT"
 }
