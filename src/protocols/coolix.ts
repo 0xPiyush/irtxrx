@@ -379,6 +379,7 @@ export function parseCoolixState(data: number): CoolixState | null {
   }
 
   const state: CoolixState = {
+    power: true,
     mode,
     fan: fanRaw as CoolixFanValue,
     zoneFollow: !!(zf1 && zf2),
