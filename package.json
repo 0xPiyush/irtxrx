@@ -1,6 +1,6 @@
 {
   "name": "irtxrx",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "TypeScript library for encoding and decoding raw IR remote control frames",
   "type": "module",
   "main": "dist/cjs/index.js",
