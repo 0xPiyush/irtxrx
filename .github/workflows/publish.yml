@@ -20,6 +20,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted Publishing (OIDC) requires npm >= 11.5.1.
+      # Node 22 ships npm 10.x which does not support the OIDC handshake.
+      - name: Upgrade npm for Trusted Publishing support
+        run: npm install -g npm@latest
 
       - run: bun install --frozen-lockfile
 
@@ -32,5 +38,9 @@ jobs:
       - name: Build
         run: bun run build
 
+      # setup-node with registry-url sets NODE_AUTH_TOKEN to a placeholder,
+      # which prevents npm from using OIDC. Clear it so OIDC takes over.
       - name: Publish
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ""
