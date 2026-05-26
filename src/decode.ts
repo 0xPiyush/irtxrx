@@ -416,6 +416,35 @@ export type ProtocolName =
 /** Brand groupings for hint-based filtering. */
 export type BrandName = "nec" | "daikin" | "coolix" | "voltas" | "hitachi" | "tcl";
 
+/**
+ * A brand hint accepts a canonical {@link BrandName} or any alias string. The
+ * `(string & {})` keeps literal autocomplete for the canonical brands while
+ * still allowing aliases like `"croma"`.
+ */
+export type BrandHint = BrandName | (string & {});
+
+/**
+ * Consumer/OEM brand names that map onto an underlying protocol brand.
+ *
+ * These are **input hints only**: passing `{ brand: "croma" }` routes the
+ * decode search (and {@link getProtocolsForBrand}) to the underlying brand. A
+ * decode result still reports the canonical brand (e.g. `"coolix"`), because a
+ * decoded frame can't be attributed to a specific rebadge.
+ *
+ * - `croma` → `coolix` (Croma rebadges, reported to use the Coolix family)
+ * - `godrej` → `tcl` (inferred from rebadge research; not yet confirmed by a
+ *   hardware capture — a wrong guess simply yields no match, never bad data)
+ */
+export const BRAND_ALIASES: Readonly<Record<string, BrandName>> = {
+  croma: "coolix",
+  godrej: "tcl",
+};
+
+/** Resolve a brand hint through {@link BRAND_ALIASES} (identity if not an alias). */
+export function resolveBrand(brand: BrandHint): string {
+  return BRAND_ALIASES[brand] ?? brand;
+}
+
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
 
@@ -612,11 +641,19 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
   },
 ];
 
+/**
+ * Names of all protocols the unified {@link decode} dispatcher can identify, in
+ * priority order. (HitachiAc2 is intentionally excluded — it has no integrity
+ * check and is decoded only on request via `decodeHitachiAc2`.)
+ */
+export const REGISTERED_PROTOCOLS: readonly ProtocolName[] =
+  PROTOCOL_REGISTRY.map((entry) => entry.protocol);
+
 export interface DecodeOptions {
   /** Try only this specific protocol. */
   protocol?: ProtocolName;
-  /** Try only protocols from this brand. */
-  brand?: BrandName;
+  /** Try only protocols from this brand. Accepts aliases (see {@link BRAND_ALIASES}). */
+  brand?: BrandHint;
   /** Try only protocols of this type. */
   type?: ProtocolType;
 }
@@ -686,9 +723,10 @@ export function decode(
 
 function filterCandidates(options?: DecodeOptions): ProtocolEntry[] {
   if (!options) return PROTOCOL_REGISTRY;
+  const brand = options.brand !== undefined ? resolveBrand(options.brand) : undefined;
   return PROTOCOL_REGISTRY.filter((entry) => {
     if (options.protocol && entry.protocol !== options.protocol) return false;
-    if (options.brand && entry.brand !== options.brand) return false;
+    if (brand && entry.brand !== brand) return false;
     if (options.type && entry.type !== options.type) return false;
     return true;
   });

@@ -25,9 +25,21 @@ export {
   matchGeneric,
   matchGenericBytes,
   decode,
+  REGISTERED_PROTOCOLS,
+  BRAND_ALIASES,
+  resolveBrand,
   kTolerance,
   kMarkExcess,
 } from "./decode.js";
+export {
+  PROTOCOLS,
+  getProtocolInfo,
+  getProtocolsForBrand,
+  listBrands,
+} from "./capabilities.js";
+export type { ProtocolInfo, NamedValue, TempRange } from "./capabilities.js";
+export { encode, canEncode } from "./codec.js";
+export type { ProtocolStateMap } from "./codec.js";
 export type {
   MatchDataResult,
   MatchGenericResult,
@@ -36,6 +48,7 @@ export type {
   DecodeOptions,
   ProtocolName,
   BrandName,
+  BrandHint,
   ProtocolType,
 } from "./decode.js";
 export { encodeNEC, sendNEC, decodeNEC } from "./protocols/nec.js";
