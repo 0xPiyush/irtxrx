@@ -759,6 +759,13 @@ int main(int argc, char* argv[]) {
         }
         IRHitachiAc296 ac(4);
         ac.begin();
+        // IRHitachiAc296::stateReset() does not zero-fill its state (unlike the
+        // AC424 family), leaving the don't-care bits of bytes 13 (Temp) and 25
+        // (Mode/Fan) reading uninitialized memory. Zero the state first so those
+        // bits are deterministically 0 — matching the TS encoder's canonical
+        // form — instead of platform-dependent stack garbage.
+        const uint8_t zeros296[kHitachiAc296StateLength] = {0};
+        ac.setRaw(zeros296, kHitachiAc296StateLength);
         ac.stateReset();
         ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
         ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
