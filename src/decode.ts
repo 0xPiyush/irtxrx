@@ -383,16 +383,38 @@ import { decodeDaikin312 } from "./protocols/daikin312.js";
 import type { Daikin312State } from "./protocols/daikin312.js";
 import { decodeCoolix, decodeCoolixRaw } from "./protocols/coolix.js";
 import type { CoolixState } from "./protocols/coolix.js";
+import { decodeVoltas } from "./protocols/voltas.js";
+import type { VoltasState } from "./protocols/voltas.js";
+import { decodeHitachiAc } from "./protocols/hitachi.js";
+import type { HitachiAcState } from "./protocols/hitachi.js";
+import { decodeHitachiAc1 } from "./protocols/hitachi1.js";
+import type { HitachiAc1State } from "./protocols/hitachi1.js";
+import { decodeHitachiAc424 } from "./protocols/hitachi424.js";
+import type { HitachiAc424State } from "./protocols/hitachi424.js";
+import { decodeHitachiAc264 } from "./protocols/hitachi264.js";
+import type { HitachiAc264State } from "./protocols/hitachi264.js";
+import { decodeHitachiAc344 } from "./protocols/hitachi344.js";
+import type { HitachiAc344State } from "./protocols/hitachi344.js";
+import { decodeHitachiAc296 } from "./protocols/hitachi296.js";
+import type { HitachiAc296State } from "./protocols/hitachi296.js";
+import { decodeHitachiAc3 } from "./protocols/hitachi3.js";
+import { decodeTcl112 } from "./protocols/tcl112.js";
+import type { Tcl112State } from "./protocols/tcl112.js";
+import { decodeTcl96 } from "./protocols/tcl96.js";
 
 /** All supported protocol names. */
 export type ProtocolName =
   | "nec"
   | "daikin64" | "daikin128" | "daikin152" | "daikin160"
   | "daikin176" | "daikin216" | "daikin" | "daikin2" | "daikin312"
-  | "coolix";
+  | "coolix"
+  | "voltas"
+  | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
+  | "hitachi_ac296" | "hitachi_ac3"
+  | "tcl112" | "tcl96";
 
 /** Brand groupings for hint-based filtering. */
-export type BrandName = "nec" | "daikin" | "coolix";
+export type BrandName = "nec" | "daikin" | "coolix" | "voltas" | "hitachi" | "tcl";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -410,7 +432,17 @@ export type DecodeResult =
   | { protocol: "daikin2"; brand: "daikin"; type: "ac"; state: Daikin2State; confidence: "checksum_valid" }
   | { protocol: "daikin312"; brand: "daikin"; type: "ac"; state: Daikin312State; confidence: "checksum_valid" }
   | { protocol: "coolix"; brand: "coolix"; type: "ac"; state: CoolixState; confidence: "checksum_valid" }
-  | { protocol: "coolix"; brand: "coolix"; type: "ac"; state: null; raw: number; confidence: "checksum_valid" };
+  | { protocol: "coolix"; brand: "coolix"; type: "ac"; state: null; raw: number; confidence: "checksum_valid" }
+  | { protocol: "voltas"; brand: "voltas"; type: "ac"; state: VoltasState; confidence: "checksum_valid" }
+  | { protocol: "hitachi_ac"; brand: "hitachi"; type: "ac"; state: HitachiAcState; confidence: "checksum_valid" }
+  | { protocol: "hitachi_ac1"; brand: "hitachi"; type: "ac"; state: HitachiAc1State; confidence: "checksum_valid" }
+  | { protocol: "hitachi_ac424"; brand: "hitachi"; type: "ac"; state: HitachiAc424State; confidence: "checksum_valid" }
+  | { protocol: "hitachi_ac264"; brand: "hitachi"; type: "ac"; state: HitachiAc264State; confidence: "checksum_valid" }
+  | { protocol: "hitachi_ac344"; brand: "hitachi"; type: "ac"; state: HitachiAc344State; confidence: "checksum_valid" }
+  | { protocol: "hitachi_ac296"; brand: "hitachi"; type: "ac"; state: HitachiAc296State; confidence: "checksum_valid" }
+  | { protocol: "hitachi_ac3"; brand: "hitachi"; type: "ac"; state: Uint8Array; confidence: "checksum_valid" }
+  | { protocol: "tcl112"; brand: "tcl"; type: "ac"; state: Tcl112State; confidence: "checksum_valid" }
+  | { protocol: "tcl96"; brand: "tcl"; type: "ac"; state: Uint8Array; confidence: "timing_match" };
 
 interface ProtocolEntry {
   protocol: ProtocolName;
@@ -498,6 +530,76 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeDaikin312(timings, offset, ho);
       return s ? { protocol: "daikin312", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "voltas", brand: "voltas", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeVoltas(timings, offset, ho);
+      return s ? { protocol: "voltas", brand: "voltas", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "hitachi_ac", brand: "hitachi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHitachiAc(timings, offset, ho);
+      return s ? { protocol: "hitachi_ac", brand: "hitachi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "hitachi_ac1", brand: "hitachi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHitachiAc1(timings, offset, ho);
+      return s ? { protocol: "hitachi_ac1", brand: "hitachi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "hitachi_ac424", brand: "hitachi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHitachiAc424(timings, offset, ho);
+      return s ? { protocol: "hitachi_ac424", brand: "hitachi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "hitachi_ac264", brand: "hitachi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHitachiAc264(timings, offset, ho);
+      return s ? { protocol: "hitachi_ac264", brand: "hitachi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "hitachi_ac344", brand: "hitachi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHitachiAc344(timings, offset, ho);
+      return s ? { protocol: "hitachi_ac344", brand: "hitachi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "hitachi_ac296", brand: "hitachi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHitachiAc296(timings, offset, ho);
+      return s ? { protocol: "hitachi_ac296", brand: "hitachi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "hitachi_ac3", brand: "hitachi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHitachiAc3(timings, offset, ho);
+      return s ? { protocol: "hitachi_ac3", brand: "hitachi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "tcl112", brand: "tcl", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTcl112(timings, offset, ho);
+      return s ? { protocol: "tcl112", brand: "tcl", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "tcl96", brand: "tcl", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTcl96(timings, offset, ho);
+      return s ? { protocol: "tcl96", brand: "tcl", type: "ac", state: s, confidence: "timing_match" } : null;
     },
   },
   // Simple protocols last

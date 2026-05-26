@@ -105,6 +105,17 @@ if (result?.state === null) {
 | DaikinESP | 280 | Daikin | AC | Most features: 0.5°C, timers, mold, comfort |
 | Daikin2 | 312 | Daikin | AC | Eye, purify, fresh air, light, beep |
 | Daikin312 | 312 | Daikin | AC | 0.5°C, eye auto, purify |
+| Voltas | 80 | Voltas | AC | Mode, temp, fan, swing V/H, turbo, sleep, econo, light, wifi, on/off timers |
+| HitachiAc | 224 | Hitachi | AC | Temp, mode, fan, swing V/H, byte-sum checksum |
+| HitachiAc1 | 104 | Hitachi | AC | Model A/B, sleep, on/off timers, toggle bits, nibble checksum |
+| HitachiAc2 | 424 | Hitachi | AC | Raw 53-byte frame (no integrity check; not auto-detected) |
+| HitachiAc3 | 120–216 | Hitachi | AC | Variable-length raw frame, byte-pair inversion |
+| HitachiAc264 | 264 | Hitachi | AC | Temp, mode, fan, byte-pair inversion |
+| HitachiAc296 | 296 | Hitachi | AC | Temp, mode, fan (incl. dehumidify), byte-pair inversion |
+| HitachiAc344 | 344 | Hitachi | AC | Temp, mode, fan, swing V + 6-position swing H |
+| HitachiAc424 | 424 | Hitachi | AC | Leader pulse, temp, mode, fan, swing V toggle, byte-pair inversion |
+| TCL112AC | 112 | TCL | AC | 0.5°C temp, mode, fan, swing V/H, econo, health, light, turbo, timers, model |
+| TCL96AC | 96 | TCL | AC | 2-bits-per-symbol raw frame (no integrity check; timing-match only) |
 
 ## Development
 

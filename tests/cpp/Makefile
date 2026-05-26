@@ -29,6 +29,29 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_COOLIX=false \
             -DSEND_COOLIX48=true \
             -DDECODE_COOLIX48=false \
+            -DSEND_VOLTAS=true \
+            -DDECODE_VOLTAS=false \
+            -DSEND_HITACHI_AC=true \
+            -DDECODE_HITACHI_AC=false \
+            -DSEND_HITACHI_AC1=true \
+            -DDECODE_HITACHI_AC1=false \
+            -DSEND_HITACHI_AC2=true \
+            -DDECODE_HITACHI_AC2=false \
+            -DSEND_HITACHI_AC3=true \
+            -DDECODE_HITACHI_AC3=false \
+            -DSEND_HITACHI_AC264=true \
+            -DDECODE_HITACHI_AC264=false \
+            -DSEND_HITACHI_AC296=true \
+            -DDECODE_HITACHI_AC296=false \
+            -DSEND_HITACHI_AC344=true \
+            -DDECODE_HITACHI_AC344=false \
+            -DSEND_HITACHI_AC424=true \
+            -DDECODE_HITACHI_AC424=false \
+            -DSEND_TCL112AC=true \
+            -DDECODE_TCL112AC=true \
+            -DSEND_TCL96AC=true \
+            -DDECODE_TCL96AC=true \
+            -DDECODE_MITSUBISHI112=true \
             -I$(VENDOR)/src \
             -I$(VENDOR)/test
 
@@ -39,7 +62,12 @@ SRCS := runner.cpp \
         $(VENDOR)/src/IRtext.cpp \
         $(VENDOR)/src/ir_NEC.cpp \
         $(VENDOR)/src/ir_Daikin.cpp \
-        $(VENDOR)/src/ir_Coolix.cpp
+        $(VENDOR)/src/ir_Coolix.cpp \
+        $(VENDOR)/src/ir_Voltas.cpp \
+        $(VENDOR)/src/ir_Hitachi.cpp \
+        $(VENDOR)/src/ir_Tcl.cpp \
+        $(VENDOR)/src/ir_Mitsubishi.cpp \
+        $(VENDOR)/src/IRrecv.cpp
 
 runner: $(SRCS)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $(SRCS)

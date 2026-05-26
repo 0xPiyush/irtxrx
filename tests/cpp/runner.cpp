@@ -22,6 +22,11 @@
 #include "IRsend_test.h"
 #include "ir_Daikin.h"
 #include "ir_Coolix.h"
+#include "ir_Voltas.h"
+#include "ir_Hitachi.h"
+#include "ir_Tcl.h"
+#include "IRrecv.h"
+#include "IRutils.h"
 
 /// Print the output[] array as comma-separated values.
 static void printTimings(IRsendTest& irsend) {
@@ -440,6 +445,478 @@ int main(int argc, char* argv[]) {
 
         printf("%06X\n", raw);
         printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Voltas raw send -----
+
+    if (strcmp(fn, "sendVoltas") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendVoltas <data_hex_20> [repeat]\n");
+            return 1;
+        }
+        // Hex string of 20 chars (10 bytes)
+        const char* hex = argv[2];
+        if (strlen(hex) != 20) {
+            fprintf(stderr, "sendVoltas: data must be exactly 20 hex chars\n");
+            return 1;
+        }
+        uint8_t data[kVoltasStateLength];
+        for (int i = 0; i < kVoltasStateLength; i++) {
+            char buf[3] = { hex[i*2], hex[i*2+1], 0 };
+            data[i] = static_cast<uint8_t>(strtoul(buf, nullptr, 16));
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendVoltas(data, kVoltasStateLength, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Voltas via class setters -----
+
+    if (strcmp(fn, "voltas") == 0) {
+        // Args: power temp mode fan swingV swingH turbo econo sleep light wifi onTime offTime model
+        if (argc < 16) {
+            fprintf(stderr, "Usage: runner voltas <power> <temp> <mode> <fan> <swingV> "
+                "<swingH> <turbo> <econo> <sleep> <light> <wifi> <onTime> <offTime> <model>\n");
+            return 1;
+        }
+        IRVoltas ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setModel(static_cast<voltas_ac_remote_model_t>(atoi(argv[15])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setSwingV(atoi(argv[6]) != 0);
+        ac.setSwingH(atoi(argv[7]) != 0);
+        ac.setTurbo(atoi(argv[8]) != 0);
+        ac.setEcono(atoi(argv[9]) != 0);
+        ac.setSleep(atoi(argv[10]) != 0);
+        ac.setLight(atoi(argv[11]) != 0);
+        ac.setWifi(atoi(argv[12]) != 0);
+        ac.setOnTime(static_cast<uint16_t>(atoi(argv[13])));
+        ac.setOffTime(static_cast<uint16_t>(atoi(argv[14])));
+
+        uint8_t* raw = ac.getRaw();
+        ac.send();
+        for (int i = 0; i < kVoltasStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC (224-bit base) raw send -----
+
+    if (strcmp(fn, "sendHitachiAc") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendHitachiAc <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendHitachiAC(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC (224-bit base) via class setters -----
+
+    if (strcmp(fn, "hitachiAc") == 0) {
+        // Args: power temp mode fan swingV swingH
+        if (argc < 8) {
+            fprintf(stderr, "Usage: runner hitachiAc <power> <temp> <mode> <fan> "
+                "<swingV> <swingH>\n");
+            return 1;
+        }
+        IRHitachiAc ac(4);
+        ac.begin();
+        ac.stateReset();
+        uint8_t mode = static_cast<uint8_t>(atoi(argv[4]));
+        ac.setMode(mode);
+        if (mode != kHitachiAcFan) ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(atoi(argv[6]) != 0);
+        ac.setSwingHorizontal(atoi(argv[7]) != 0);
+        ac.setPower(atoi(argv[2]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        ac.send();
+        for (int i = 0; i < kHitachiAcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC1 (104-bit) raw send -----
+
+    if (strcmp(fn, "sendHitachiAc1") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendHitachiAc1 <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendHitachiAC1(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC1 (104-bit) via class setters -----
+
+    if (strcmp(fn, "hitachiAc1") == 0) {
+        // Args: power temp mode fan swingV swingH swingToggle sleep onTimer
+        //       offTimer powerToggle model
+        if (argc < 14) {
+            fprintf(stderr, "Usage: runner hitachiAc1 <power> <temp> <mode> <fan> "
+                "<swingV> <swingH> <swingToggle> <sleep> <onTimer> <offTimer> "
+                "<powerToggle> <model>\n");
+            return 1;
+        }
+        IRHitachiAc1 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setModel(static_cast<hitachi_ac1_remote_model_t>(atoi(argv[13])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingV(atoi(argv[6]) != 0);
+        ac.setSwingH(atoi(argv[7]) != 0);
+        ac.setSwingToggle(atoi(argv[8]) != 0);
+        ac.setSleep(static_cast<uint8_t>(atoi(argv[9])));
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[11])));
+        ac.setOnTimer(static_cast<uint16_t>(atoi(argv[10])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setPowerToggle(atoi(argv[12]) != 0);
+
+        // Print raw BEFORE send(): send() clears the toggle bits afterwards.
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kHitachiAc1StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC2 (424-bit) raw send -----
+
+    if (strcmp(fn, "sendHitachiAc2") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendHitachiAc2 <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendHitachiAC2(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC424 (424-bit, leader) raw send -----
+
+    if (strcmp(fn, "sendHitachiAc424") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendHitachiAc424 <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendHitachiAc424(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC424 via class setters -----
+
+    if (strcmp(fn, "hitachiAc424") == 0) {
+        // Args: power temp mode fan swingVToggle
+        if (argc < 7) {
+            fprintf(stderr, "Usage: runner hitachiAc424 <power> <temp> <mode> <fan> "
+                "<swingVToggle>\n");
+            return 1;
+        }
+        IRHitachiAc424 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setSwingVToggle(atoi(argv[6]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kHitachiAc424StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC264 via class setters -----
+
+    if (strcmp(fn, "hitachiAc264") == 0) {
+        // Args: power temp mode fan swingVToggle
+        if (argc < 7) {
+            fprintf(stderr, "Usage: runner hitachiAc264 <power> <temp> <mode> <fan> "
+                "<swingVToggle>\n");
+            return 1;
+        }
+        IRHitachiAc264 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setSwingVToggle(atoi(argv[6]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kHitachiAc264StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC344 via class setters -----
+
+    if (strcmp(fn, "hitachiAc344") == 0) {
+        // Args: power temp mode fan swingV swingH
+        if (argc < 8) {
+            fprintf(stderr, "Usage: runner hitachiAc344 <power> <temp> <mode> <fan> "
+                "<swingV> <swingH>\n");
+            return 1;
+        }
+        IRHitachiAc344 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingV(atoi(argv[6]) != 0);
+        ac.setSwingH(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setPower(atoi(argv[2]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kHitachiAc344StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC296 via class setters -----
+
+    if (strcmp(fn, "hitachiAc296") == 0) {
+        // Args: power temp mode fan
+        if (argc < 6) {
+            fprintf(stderr, "Usage: runner hitachiAc296 <power> <temp> <mode> <fan>\n");
+            return 1;
+        }
+        IRHitachiAc296 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setPower(atoi(argv[2]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kHitachiAc296StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Hitachi AC3 (variable length) raw send -----
+
+    if (strcmp(fn, "sendHitachiAc3") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendHitachiAc3 <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendHitachiAc3(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- TCL112AC raw send -----
+
+    if (strcmp(fn, "sendTcl112Ac") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendTcl112Ac <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendTcl112Ac(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- TCL112AC via class setters -----
+
+    if (strcmp(fn, "tcl112") == 0) {
+        // Args: power temp mode fan swingV swingH econo health light turbo
+        //       onTimer offTimer model
+        if (argc < 15) {
+            fprintf(stderr, "Usage: runner tcl112 <power> <temp> <mode> <fan> "
+                "<swingV> <swingH> <econo> <health> <light> <turbo> "
+                "<onTimer> <offTimer> <model>\n");
+            return 1;
+        }
+        IRTcl112Ac ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setModel(static_cast<tcl_ac_remote_model_t>(atoi(argv[14])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<float>(atof(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingHorizontal(atoi(argv[7]) != 0);
+        ac.setEcono(atoi(argv[8]) != 0);
+        ac.setHealth(atoi(argv[9]) != 0);
+        ac.setLight(atoi(argv[10]) != 0);
+        ac.setTurbo(atoi(argv[11]) != 0);
+        ac.setOnTimer(static_cast<uint16_t>(atoi(argv[12])));
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[13])));
+        ac.setPower(atoi(argv[2]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kTcl112AcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- TCL96AC raw send -----
+
+    if (strcmp(fn, "sendTcl96Ac") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendTcl96Ac <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendTcl96Ac(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Generic decode: feed raw timings into IRrecv::decode -----
+    // Prints "<PROTOCOL_NAME>\n<state_hex>" or "FAIL".
+
+    if (strcmp(fn, "decode") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner decode <csv_timings_usec>\n");
+            return 1;
+        }
+        static uint16_t rawbuf[1024];
+        uint16_t n = 0;
+        const char* p = argv[2];
+        while (*p && n < 1022) {
+            char* end;
+            long v = strtol(p, &end, 10);
+            if (end == p) break;
+            long ticks = v / kRawTick;
+            rawbuf[++n] = static_cast<uint16_t>(ticks > UINT16_MAX ? UINT16_MAX : ticks);
+            p = end;
+            while (*p == ',' || *p == ' ') p++;
+        }
+
+        decode_results results;
+        results.rawbuf = rawbuf;
+        results.rawlen = n + 1;
+        results.overflow = false;
+        results.decode_type = UNKNOWN;
+
+        IRrecv irrecv(4);
+        if (irrecv.decode(&results)) {
+            printf("%s\n", typeToString(results.decode_type, false).c_str());
+            for (uint16_t i = 0; i < results.bits / 8; i++)
+                printf("%02X", results.state[i]);
+            printf("\n");
+        } else {
+            printf("FAIL\n");
+        }
         return 0;
     }
 
