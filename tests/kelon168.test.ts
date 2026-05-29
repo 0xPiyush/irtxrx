@@ -46,29 +46,29 @@ interface TC {
 const cases: TC[] = [
   {
     label: "cool 24 max, swing, light, cmd=temp",
-    state: { on: true, power: true, temp: 24, mode: Kelon168Mode.Cool, fan: Kelon168Fan.Max,
-      swing: true, light: true, command: Kelon168Command.Temp },
+    state: { power: true, powerFlag: true, temp: 24, mode: Kelon168Mode.Cool, fan: Kelon168Fan.Max,
+      swingV: true, light: true, command: Kelon168Command.Temp },
     cppArgs: "1 24 2 5 1 1 0 0 0 0 0 2",
   },
   {
     label: "heat 30 auto, off, clock+timers, cmd=mode",
-    state: { on: false, power: true, temp: 30, mode: Kelon168Mode.Heat, fan: Kelon168Fan.Auto,
-      swing: false, light: false, clockMinutes: 510,
+    state: { power: false, powerFlag: true, temp: 30, mode: Kelon168Mode.Heat, fan: Kelon168Fan.Auto,
+      swingV: false, light: false, clockMinutes: 510,
       offTimerEnabled: true, offTimerMinutes: 1320,
       onTimerEnabled: true, onTimerMinutes: 360, command: Kelon168Command.Mode },
     cppArgs: "0 30 0 0 0 0 510 1 1320 1 360 6",
   },
   {
     label: "dry 16 medium, clock max, on-timer, cmd=ontimer",
-    state: { on: true, power: true, temp: 16, mode: Kelon168Mode.Dry, fan: Kelon168Fan.Medium,
-      swing: true, light: true, clockMinutes: 1439,
+    state: { power: true, powerFlag: true, temp: 16, mode: Kelon168Mode.Dry, fan: Kelon168Fan.Medium,
+      swingV: true, light: true, clockMinutes: 1439,
       onTimerEnabled: true, onTimerMinutes: 90, command: Kelon168Command.OnTimer },
     cppArgs: "1 16 3 3 1 1 1439 0 0 1 90 5",
   },
   {
     label: "fan-mode 28 high, cmd=fanspeed",
-    state: { on: true, power: true, temp: 28, mode: Kelon168Mode.Fan, fan: Kelon168Fan.High,
-      swing: false, light: true, clockMinutes: 720, command: Kelon168Command.FanSpeed },
+    state: { power: true, powerFlag: true, temp: 28, mode: Kelon168Mode.Fan, fan: Kelon168Fan.High,
+      swingV: false, light: true, clockMinutes: 720, command: Kelon168Command.FanSpeed },
     cppArgs: "1 28 4 4 0 1 720 0 0 0 0 17",
   },
 ];

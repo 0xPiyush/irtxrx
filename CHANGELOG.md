@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.4.1]
+
+Aligns several new-protocol state fields with the library's naming convention
+(state field names match the capability registry's `swingV` / `swingH` / `power`),
+so registry-driven consumers can control them generically.
+
+### Changed
+
+- **BREAKING (0.4.0 protocols only):** renamed state fields for consistency —
+  - `mitsubishi_ac`: `vane` → `swingV`, `wideVane` → `swingH`.
+  - `teco`: `swing` → `swingV`.
+  - `kelon168`: `swing` → `swingV`; `on` → `power` (the actual on/off state); the
+    former `power` "command-present" flag is now `powerFlag`.
+
+  Value sets are unchanged (e.g. `MitsubishiAcVane` / `MitsubishiAcWideVane`
+  remain the option enums for `swingV` / `swingH`).
+
 ## [0.4.0]
 
 Adds the Gree, Kelon, Teco, and Mitsubishi protocol families plus the second

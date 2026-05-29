@@ -88,13 +88,13 @@ export const Kelon168Command = {
 // ---------------------------------------------------------------------------
 
 export interface Kelon168State {
-  /** "Power command present" flag (byte 2). */
-  power?: boolean;
   /** Actual on/off state (byte 18). */
-  on?: boolean;
+  power?: boolean;
+  /** "Power command present" flag (byte 2). */
+  powerFlag?: boolean;
   fan?: number;
   sleep?: boolean;
-  swing?: boolean;
+  swingV?: boolean;
   super?: boolean;
   mode?: number;
   /** Temperature in °C (16–31). */
@@ -181,7 +181,7 @@ export function buildKelon168Raw(state: Kelon168State): Uint8Array {
   const offT = clamp(state.offTimerMinutes ?? 0, 0, 24 * 60 - 1);
   const onT = clamp(state.onTimerMinutes ?? 0, 0, 24 * 60 - 1);
 
-  const swing = state.swing ? 1 : 0;
+  const swing = state.swingV ? 1 : 0;
   const sup = state.super ? 1 : 0;
 
   // Bytes 0-1: fixed preamble
@@ -190,7 +190,7 @@ export function buildKelon168Raw(state: Kelon168State): Uint8Array {
   // Byte 2: Fan(0-1), Power(2), Sleep(3), Swing1(7)
   d[2] =
     (fan & 0x3) |
-    ((state.power ? 1 : 0) << 2) |
+    ((state.powerFlag ? 1 : 0) << 2) |
     ((state.sleep ? 1 : 0) << 3) |
     (swing << 7);
   // Byte 3: Mode(0-2), Temp(4-7)
@@ -226,7 +226,7 @@ export function buildKelon168Raw(state: Kelon168State): Uint8Array {
   // Byte 17: pad
   d[17] = 0;
   // Byte 18: Model1=0b1000, On(4), Model2=0b001
-  d[18] = 0b1000 | ((state.on ? 1 : 0) << 4) | (0b001 << 5);
+  d[18] = 0b1000 | ((state.power ? 1 : 0) << 4) | (0b001 << 5);
   // Byte 19: unused
   d[19] = 0;
   // Byte 20: Sum2 (computed below)
@@ -359,11 +359,11 @@ export function parseKelon168State(d: Uint8Array): Kelon168State {
     b16 = d[16]!, b18 = d[18]!;
 
   return {
-    power: !!((b2 >> 2) & 1),
-    on: !!((b18 >> 4) & 1),
+    power: !!((b18 >> 4) & 1),
+    powerFlag: !!((b2 >> 2) & 1),
     fan: wireToFan(b2 & 0x3, (b16 >> 1) & 1),
     sleep: !!((b2 >> 3) & 1),
-    swing: !!((b2 >> 7) & 1) && !!((b8 >> 6) & 1),
+    swingV: !!((b2 >> 7) & 1) && !!((b8 >> 6) & 1),
     super: !!((b5 >> 4) & 1) && !!((b5 >> 7) & 1),
     mode: b3 & 0x7,
     temp: ((b3 >> 4) & 0xf) + KELON168_TEMP_MIN,

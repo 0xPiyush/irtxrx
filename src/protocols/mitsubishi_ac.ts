@@ -104,9 +104,9 @@ export interface MitsubishiAcState {
   /** Fan speed (see {@link MitsubishiAcFan}). */
   fan?: number;
   /** Vertical vane / swing-V (see {@link MitsubishiAcVane}). */
-  vane?: number;
+  swingV?: number;
   /** Horizontal wide-vane / swing-H (see {@link MitsubishiAcWideVane}). */
-  wideVane?: number;
+  swingH?: number;
   iSee?: boolean;
   /** Left vertical vane (0–7). */
   vaneLeft?: number;
@@ -160,7 +160,7 @@ export function buildMitsubishiAcRaw(state: MitsubishiAcState): Uint8Array {
   const halfDegree = nrHalf & 1;
   const tempField = (nrHalf >> 1) - TEMP_MIN;
   const { fan, fanAuto } = fanToFields(state.fan ?? MitsubishiAcFan.Silent);
-  const wideVane = state.wideVane ?? MitsubishiAcWideVane.Middle;
+  const wideVane = state.swingH ?? MitsubishiAcWideVane.Middle;
 
   // Byte 5 bit 5: Power
   d[5] = (d[5]! & ~0x20) | ((state.power ?? true ? 1 : 0) << 5);
@@ -173,7 +173,7 @@ export function buildMitsubishiAcRaw(state: MitsubishiAcState): Uint8Array {
   // Byte 9: Fan(0-2), Vane(3-5), VaneBit(6)=1, FanAuto(7)
   d[9] =
     (fan & 0x07) |
-    (((state.vane ?? MitsubishiAcVane.Auto) & 0x07) << 3) |
+    (((state.swingV ?? MitsubishiAcVane.Auto) & 0x07) << 3) |
     (1 << 6) |
     (fanAuto << 7);
   // Bytes 10-16 are "advanced" fields. They are only overwritten when
@@ -236,9 +236,9 @@ export function parseMitsubishiAcState(raw: Uint8Array): MitsubishiAcState {
     mode: (raw[6]! >> 3) & 0x07,
     iSee: !!((raw[6]! >> 6) & 1),
     temp: tempField + TEMP_MIN + (halfDegree ? 0.5 : 0),
-    wideVane: (raw[8]! >> 4) & 0x0f,
+    swingH: (raw[8]! >> 4) & 0x0f,
     fan: fieldsToFan(raw[9]! & 0x07, (raw[9]! >> 7) & 1),
-    vane: (raw[9]! >> 3) & 0x07,
+    swingV: (raw[9]! >> 3) & 0x07,
     clock: raw[10]!,
     stopClock: raw[11]!,
     startClock: raw[12]!,

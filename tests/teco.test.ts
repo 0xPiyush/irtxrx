@@ -42,7 +42,7 @@ interface TC {
 const cases: TC[] = [
   {
     label: "cool 24 high, swing",
-    state: { power: true, temp: 24, mode: TecoMode.Cool, fan: TecoFan.High, swing: true },
+    state: { power: true, temp: 24, mode: TecoMode.Cool, fan: TecoFan.High, swingV: true },
     cppArgs: "1 24 1 3 1 0 0 0 0 0",
   },
   {

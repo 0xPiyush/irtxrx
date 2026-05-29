@@ -67,7 +67,7 @@ export interface TecoState {
   /** Temperature in °C (16–30). */
   temp?: number;
   fan?: number;
-  swing?: boolean;
+  swingV?: boolean;
   sleep?: boolean;
   light?: boolean;
   humid?: boolean;
@@ -104,7 +104,7 @@ export function buildTecoRaw(state: TecoState): bigint {
   v |= BigInt(mode & 0x7); // bits 0-2
   v |= BigInt(state.power ? 1 : 0) << 3n;
   v |= BigInt(fan & 0x3) << 4n;
-  v |= BigInt(state.swing ? 1 : 0) << 6n;
+  v |= BigInt(state.swingV ? 1 : 0) << 6n;
   v |= BigInt(state.sleep ? 1 : 0) << 7n;
   v |= BigInt((tempC - TECO_TEMP_MIN) & 0xf) << 8n;
   v |= BigInt(halfHour) << 12n;
@@ -168,7 +168,7 @@ export function parseTecoState(value: bigint): TecoState | null {
     mode: Number(v & 0x7n),
     power: !!Number((v >> 3n) & 1n),
     fan: Number((v >> 4n) & 0x3n),
-    swing: !!Number((v >> 6n) & 1n),
+    swingV: !!Number((v >> 6n) & 1n),
     sleep: !!Number((v >> 7n) & 1n),
     temp: Number((v >> 8n) & 0xfn) + TECO_TEMP_MIN,
     timerMinutes,

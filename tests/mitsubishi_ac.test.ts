@@ -44,31 +44,31 @@ const cases: TC[] = [
   {
     label: "cool 22.5 fan2, vane mid, wide right, isee",
     state: { power: true, temp: 22.5, mode: MitsubishiAcMode.Cool, fan: 2,
-      vane: MitsubishiAcVane.Middle, wideVane: MitsubishiAcWideVane.Right, iSee: true },
+      swingV: MitsubishiAcVane.Middle, swingH: MitsubishiAcWideVane.Right, iSee: true },
     cppArgs: "1 45 3 2 3 4 1",
   },
   {
     label: "heat 20 auto fan, vane auto, wide auto",
     state: { power: true, temp: 20, mode: MitsubishiAcMode.Heat, fan: MitsubishiAcFan.Auto,
-      vane: MitsubishiAcVane.Auto, wideVane: MitsubishiAcWideVane.Auto },
+      swingV: MitsubishiAcVane.Auto, swingH: MitsubishiAcWideVane.Auto },
     cppArgs: "1 40 1 0 0 8 0",
   },
   {
     label: "auto 25 max, vane swing, wide left",
     state: { power: true, temp: 25, mode: MitsubishiAcMode.Auto, fan: MitsubishiAcFan.Max,
-      vane: MitsubishiAcVane.Swing, wideVane: MitsubishiAcWideVane.Left },
+      swingV: MitsubishiAcVane.Swing, swingH: MitsubishiAcWideVane.Left },
     cppArgs: "1 50 4 5 7 2 0",
   },
   {
     label: "off, dry 16 silent, vane highest, wide middle",
     state: { power: false, temp: 16, mode: MitsubishiAcMode.Dry, fan: MitsubishiAcFan.Silent,
-      vane: MitsubishiAcVane.Highest, wideVane: MitsubishiAcWideVane.Middle },
+      swingV: MitsubishiAcVane.Highest, swingH: MitsubishiAcWideVane.Middle },
     cppArgs: "0 32 2 6 1 3 0",
   },
   {
     label: "fan-mode 31 speed4, vane low, wide rightmax",
     state: { power: true, temp: 31, mode: MitsubishiAcMode.Fan, fan: 4,
-      vane: MitsubishiAcVane.Low, wideVane: MitsubishiAcWideVane.RightMax },
+      swingV: MitsubishiAcVane.Low, swingH: MitsubishiAcWideVane.RightMax },
     cppArgs: "1 62 7 4 4 5 0",
   },
 ];
