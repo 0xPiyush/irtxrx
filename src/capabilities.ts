@@ -23,6 +23,7 @@ import { TecoMode, TecoFan } from "./protocols/teco.js";
 import { MitsubishiAcMode, MitsubishiAcFan, MitsubishiAcVane, MitsubishiAcWideVane } from "./protocols/mitsubishi_ac.js";
 import { Mitsubishi136Mode, Mitsubishi136Fan, Mitsubishi136SwingV } from "./protocols/mitsubishi136.js";
 import { Mitsubishi112Mode, Mitsubishi112Fan, Mitsubishi112SwingV, Mitsubishi112SwingH } from "./protocols/mitsubishi112.js";
+import { GodrejMode, GodrejFan } from "./protocols/godrej.js";
 import { DaikinMode, DaikinFan } from "./protocols/daikin_common.js";
 import { Daikin64Mode, Daikin64Fan } from "./protocols/daikin64.js";
 import { Daikin128Mode, Daikin128Fan } from "./protocols/daikin128.js";
@@ -141,6 +142,10 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     modes: named(Mitsubishi112Mode), fans: named(Mitsubishi112Fan),
     temp: { min: 16, max: 31, step: 1 }, swingV: true, swingH: true,
     swingVOptions: named(Mitsubishi112SwingV), swingHOptions: named(Mitsubishi112SwingH),
+  }),
+  info("godrej", "godrej", "ac", {
+    modes: named(GodrejMode), fans: named(GodrejFan),
+    temp: { min: 16, max: 31, step: 1 }, swingV: true, swingH: false,
   }),
   info("daikin152", "daikin", "ac", {
     modes: named(DaikinMode), fans: named(DaikinFan), fanSpeedRange: DAIKIN_FAN_RANGE,

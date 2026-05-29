@@ -33,6 +33,8 @@ import { sendMitsubishi136 } from "./protocols/mitsubishi136.js";
 import type { Mitsubishi136State } from "./protocols/mitsubishi136.js";
 import { sendMitsubishi112 } from "./protocols/mitsubishi112.js";
 import type { Mitsubishi112State } from "./protocols/mitsubishi112.js";
+import { sendGodrej } from "./protocols/godrej.js";
+import type { GodrejState } from "./protocols/godrej.js";
 import { sendDaikin64 } from "./protocols/daikin64.js";
 import type { Daikin64State } from "./protocols/daikin64.js";
 import { sendDaikin128 } from "./protocols/daikin128.js";
@@ -85,6 +87,7 @@ export interface ProtocolStateMap {
   mitsubishi_ac: MitsubishiAcState;
   mitsubishi136: Mitsubishi136State;
   mitsubishi112: Mitsubishi112State;
+  godrej: GodrejState;
   daikin64: Daikin64State;
   daikin128: Daikin128State;
   daikin152: Daikin152State;
@@ -126,6 +129,7 @@ const ENCODERS: EncoderMap = {
   mitsubishi_ac: (s, r) => sendMitsubishiAc(s, r),
   mitsubishi136: (s, r) => sendMitsubishi136(s, r),
   mitsubishi112: (s, r) => sendMitsubishi112(s, r),
+  godrej: (s, r) => sendGodrej(s, r),
   daikin64: (s, r) => sendDaikin64(s, r),
   daikin128: (s, r) => sendDaikin128(s, r),
   daikin152: (s, r) => sendDaikin152(s, r),

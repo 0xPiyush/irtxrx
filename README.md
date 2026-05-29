@@ -163,6 +163,7 @@ The protocols below span 10 brands. See [CHANGELOG.md](CHANGELOG.md) for release
 | MitsubishiAC | 144 | Mitsubishi | AC | Mode, temp (0.5°), fan, vane V/H, iSee, clock, timers, ecocool; 5-byte signature + byte-sum |
 | Mitsubishi136 | 136 | Mitsubishi | AC | Mode, temp, fan, swing V; complement-pair checksum |
 | Mitsubishi112 | 112 | Mitsubishi | AC | Mode, temp (inverted), fan, swing V/H; shares timings with TCL112 (longer header) |
+| Godrej | 96 | Godrej | AC | Mode, temp, fan, swing, turbo, sleep, display, convert (5-in-1), i-Sense, timer; reverse-engineered, nibble-sum checksum |
 | Voltas | 80 | Voltas | AC | Mode, temp, fan, swing V/H, turbo, sleep, econo, light, wifi, on/off timers |
 | HitachiAc | 224 | Hitachi | AC | Temp, mode, fan, swing V/H, byte-sum checksum |
 | HitachiAc1 | 104 | Hitachi | AC | Model A/B, sleep, on/off timers, toggle bits, nibble checksum |
@@ -201,7 +202,7 @@ A **brand** is the protocol's originating manufacturer — the true creator of t
 ```ts
 import { decode, getProtocolsForBrand, listBrands } from "irtxrx";
 
-listBrands();                          // → ["coolix", "daikin", "gree", "hitachi", "kelon", "mitsubishi", "nec", "tcl", "teco", "voltas"]
+listBrands();                          // → ["coolix", "daikin", "godrej", "gree", "hitachi", "kelon", "mitsubishi", "nec", "tcl", "teco", "voltas"]
 getProtocolsForBrand("coolix");        // → Coolix protocol variants (coolix, coolix48)
 decode(timings, { brand: "daikin" });  // → narrow the search to Daikin protocols
 ```

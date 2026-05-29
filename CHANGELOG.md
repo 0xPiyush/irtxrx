@@ -4,6 +4,24 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.5.0]
+
+### Added
+
+- **Godrej** (`godrej`, new brand) — a 96-bit (12-byte) A/C protocol
+  **reverse-engineered from hardware captures** (not present in
+  IRremoteESP8266). Supports power, temp (16–31 °C), mode (Auto/Cool/Dry/Fan/
+  Heat), fan (Auto/Low/Med/High), V-swing, turbo, sleep, display, "5-in-1
+  Convert" capacity level, i-Sense (with reported room temperature), and a
+  timer (30-minute steps to 24 h). MSB-first framing with a `0x14 0x27`
+  preamble and a nibble-sum checksum over bytes 2–10.
+
+### Notes
+
+- Godrej timing constants are averages derived from real captures, so they may
+  benefit from a bench test against the unit. The codec is validated against the
+  original captures as test fixtures (decode → fields → re-encode → exact bytes).
+
 ## [0.4.1]
 
 Aligns several new-protocol state fields with the library's naming convention

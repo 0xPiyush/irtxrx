@@ -250,6 +250,19 @@ export {
 } from "./protocols/mitsubishi112.js";
 export type { Mitsubishi112State } from "./protocols/mitsubishi112.js";
 export {
+  buildGodrejRaw,
+  encodeGodrejRaw,
+  sendGodrej,
+  decodeGodrej,
+  decodeGodrejRaw,
+  parseGodrejState,
+  validGodrejChecksum,
+  GodrejMode,
+  GodrejFan,
+  GODREJ_BITS,
+} from "./protocols/godrej.js";
+export type { GodrejState, GodrejRawResult } from "./protocols/godrej.js";
+export {
   buildVoltasRaw,
   encodeVoltasRaw,
   sendVoltas,

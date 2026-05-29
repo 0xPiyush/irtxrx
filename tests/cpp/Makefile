@@ -89,7 +89,20 @@ SRCS := runner.cpp \
 runner: $(SRCS)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $(SRCS)
 
+# Standalone capture-identification tool: compiles EVERY IRremoteESP8266
+# protocol decoder (via _IR_ENABLE_DEFAULT_=true) and runs IRrecv::decode on a
+# capture. Use it to triage unknown edge arrays, including protocols not yet
+# ported to irtxrx.   Usage:  make identify && ./identify "<csv_edges_usec>"
+identify: identify.cpp
+	$(CXX) -std=gnu++11 -w -O1 -DUNIT_TEST -D_IR_LOCALE_=en-AU \
+	    -D_IR_ENABLE_DEFAULT_=true \
+	    -I$(VENDOR)/src -I$(VENDOR)/test -o $@ identify.cpp \
+	    $(VENDOR)/src/ir_*.cpp \
+	    $(VENDOR)/src/IRrecv.cpp $(VENDOR)/src/IRsend.cpp \
+	    $(VENDOR)/src/IRutils.cpp $(VENDOR)/src/IRtext.cpp \
+	    $(VENDOR)/src/IRtimer.cpp
+
 clean:
-	rm -f runner
+	rm -f runner identify
 
 .PHONY: clean

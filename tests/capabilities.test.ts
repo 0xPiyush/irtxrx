@@ -78,8 +78,9 @@ describe("capabilities registry", () => {
     expect(getProtocolsForBrand("mitsubishi").map((p) => p.protocol)).toEqual(
       ["mitsubishi_ac", "mitsubishi136", "mitsubishi112", "mitsubishi", "mitsubishi2"],
     );
+    expect(getProtocolsForBrand("godrej").map((p) => p.protocol)).toEqual(["godrej"]);
     expect(getProtocolsForBrand("samsung")).toEqual([]); // unknown brand → empty
-    expect(listBrands().sort()).toEqual(["coolix", "daikin", "gree", "hitachi", "kelon", "mitsubishi", "nec", "tcl", "teco", "voltas"]);
+    expect(listBrands().sort()).toEqual(["coolix", "daikin", "godrej", "gree", "hitachi", "kelon", "mitsubishi", "nec", "tcl", "teco", "voltas"]);
   });
 
   it("getProtocolInfo returns undefined for unknown protocols", () => {

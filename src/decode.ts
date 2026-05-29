@@ -402,6 +402,8 @@ import { decodeMitsubishi136 } from "./protocols/mitsubishi136.js";
 import type { Mitsubishi136State } from "./protocols/mitsubishi136.js";
 import { decodeMitsubishi112 } from "./protocols/mitsubishi112.js";
 import type { Mitsubishi112State } from "./protocols/mitsubishi112.js";
+import { decodeGodrej } from "./protocols/godrej.js";
+import type { GodrejState } from "./protocols/godrej.js";
 import { decodeVoltas } from "./protocols/voltas.js";
 import type { VoltasState } from "./protocols/voltas.js";
 import { decodeHitachiAc } from "./protocols/hitachi.js";
@@ -431,6 +433,7 @@ export type ProtocolName =
   | "kelon" | "kelon168"
   | "teco"
   | "mitsubishi" | "mitsubishi2" | "mitsubishi_ac" | "mitsubishi136" | "mitsubishi112"
+  | "godrej"
   | "voltas"
   | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
   | "hitachi_ac296" | "hitachi_ac3"
@@ -445,7 +448,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "voltas" | "hitachi" | "tcl";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -474,6 +477,7 @@ export type DecodeResult =
   | { protocol: "mitsubishi112"; brand: "mitsubishi"; type: "ac"; state: Mitsubishi112State; confidence: "checksum_valid" }
   | { protocol: "mitsubishi"; brand: "mitsubishi"; type: "simple"; state: MitsubishiState; confidence: "timing_match" }
   | { protocol: "mitsubishi2"; brand: "mitsubishi"; type: "simple"; state: Mitsubishi2State; confidence: "timing_match" }
+  | { protocol: "godrej"; brand: "godrej"; type: "ac"; state: GodrejState; confidence: "checksum_valid" }
   | { protocol: "voltas"; brand: "voltas"; type: "ac"; state: VoltasState; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac"; brand: "hitachi"; type: "ac"; state: HitachiAcState; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac1"; brand: "hitachi"; type: "ac"; state: HitachiAc1State; confidence: "checksum_valid" }
@@ -706,6 +710,13 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeMitsubishi112(timings, offset, ho);
       return s ? { protocol: "mitsubishi112", brand: "mitsubishi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "godrej", brand: "godrej", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeGodrej(timings, offset, ho);
+      return s ? { protocol: "godrej", brand: "godrej", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
   // Simple protocols last

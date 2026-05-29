@@ -5,8 +5,9 @@ dist/
 # Bun
 bun.lock
 
-# C++ runner binary
+# C++ runner / identify binaries
 tests/cpp/runner
+tests/cpp/identify
 
 # OS
 .DS_Store
