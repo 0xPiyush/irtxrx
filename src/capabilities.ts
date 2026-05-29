@@ -13,10 +13,16 @@
  * (see tests/capabilities.test.ts) that compares against {@link REGISTERED_PROTOCOLS}.
  */
 
-import type { ProtocolName, BrandName, ProtocolType, BrandHint } from "./decode.js";
-import { resolveBrand } from "./decode.js";
+import type { ProtocolName, BrandName, ProtocolType } from "./decode.js";
 
 import { CoolixMode, CoolixFan } from "./protocols/coolix.js";
+import { GreeMode, GreeFan, GreeSwingV, GreeSwingH } from "./protocols/gree.js";
+import { KelonMode, KelonFan } from "./protocols/kelon.js";
+import { Kelon168Mode, Kelon168Fan } from "./protocols/kelon168.js";
+import { TecoMode, TecoFan } from "./protocols/teco.js";
+import { MitsubishiAcMode, MitsubishiAcFan, MitsubishiAcVane, MitsubishiAcWideVane } from "./protocols/mitsubishi_ac.js";
+import { Mitsubishi136Mode, Mitsubishi136Fan, Mitsubishi136SwingV } from "./protocols/mitsubishi136.js";
+import { Mitsubishi112Mode, Mitsubishi112Fan, Mitsubishi112SwingV, Mitsubishi112SwingH } from "./protocols/mitsubishi112.js";
 import { DaikinMode, DaikinFan } from "./protocols/daikin_common.js";
 import { Daikin64Mode, Daikin64Fan } from "./protocols/daikin64.js";
 import { Daikin128Mode, Daikin128Fan } from "./protocols/daikin128.js";
@@ -101,6 +107,41 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     modes: named(CoolixMode), fans: named(CoolixFan),
     temp: { min: 17, max: 30, step: 1 }, swingV: false, swingH: false,
   }),
+  // Raw 48-bit code carrier — no structured appliance fields.
+  info("coolix48", "coolix", "ac"),
+  info("gree", "gree", "ac", {
+    modes: named(GreeMode), fans: named(GreeFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: true,
+    swingVOptions: named(GreeSwingV), swingHOptions: named(GreeSwingH),
+  }),
+  info("kelon168", "kelon", "ac", {
+    modes: named(Kelon168Mode), fans: named(Kelon168Fan),
+    temp: { min: 16, max: 31, step: 1 }, swingV: true, swingH: false,
+  }),
+  info("kelon", "kelon", "ac", {
+    modes: named(KelonMode), fans: named(KelonFan),
+    temp: { min: 18, max: 32, step: 1 }, swingV: false, swingH: false,
+  }),
+  info("teco", "teco", "ac", {
+    modes: named(TecoMode), fans: named(TecoFan),
+    temp: { min: 16, max: 30, step: 1 }, swingV: true, swingH: false,
+  }),
+  info("mitsubishi_ac", "mitsubishi", "ac", {
+    modes: named(MitsubishiAcMode), fans: named(MitsubishiAcFan),
+    temp: { min: 16, max: 31, step: 0.5 }, swingV: true, swingH: true,
+    swingVOptions: named(MitsubishiAcVane), swingHOptions: named(MitsubishiAcWideVane),
+  }),
+  info("mitsubishi136", "mitsubishi", "ac", {
+    modes: named(Mitsubishi136Mode), fans: named(Mitsubishi136Fan),
+    temp: { min: 17, max: 30, step: 1 }, swingV: true, swingH: false,
+    swingVOptions: named(Mitsubishi136SwingV),
+  }),
+  info("mitsubishi112", "mitsubishi", "ac", {
+    modes: named(Mitsubishi112Mode), fans: named(Mitsubishi112Fan),
+    temp: { min: 16, max: 31, step: 1 }, swingV: true, swingH: true,
+    swingVOptions: named(Mitsubishi112SwingV), swingHOptions: named(Mitsubishi112SwingH),
+  }),
   info("daikin152", "daikin", "ac", {
     modes: named(DaikinMode), fans: named(DaikinFan), fanSpeedRange: DAIKIN_FAN_RANGE,
     temp: DAIKIN_TEMP, swingV: true, swingH: false,
@@ -174,8 +215,10 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
   }),
   // Raw byte-array protocol — no structured fields.
   info("tcl96", "tcl", "ac"),
-  // Simple (non-AC) protocol.
+  // Simple (non-AC) protocols.
   info("nec", "nec", "simple"),
+  info("mitsubishi", "mitsubishi", "simple"),
+  info("mitsubishi2", "mitsubishi", "simple"),
 ];
 
 // ---------------------------------------------------------------------------
@@ -190,12 +233,11 @@ export function getProtocolInfo(protocol: ProtocolName): ProtocolInfo | undefine
 }
 
 /**
- * All protocols for a given brand (e.g. every Daikin or Hitachi variant).
- * Accepts brand aliases — e.g. `"croma"` resolves to the Coolix protocols.
+ * All protocols for a given brand (e.g. every Coolix, Daikin, or Hitachi
+ * variant). Returns an empty array for an unknown brand.
  */
-export function getProtocolsForBrand(brand: BrandHint): ProtocolInfo[] {
-  const resolved = resolveBrand(brand);
-  return PROTOCOLS.filter((p) => p.brand === resolved);
+export function getProtocolsForBrand(brand: string): ProtocolInfo[] {
+  return PROTOCOLS.filter((p) => p.brand === brand);
 }
 
 /** Distinct brands present in the registry. */

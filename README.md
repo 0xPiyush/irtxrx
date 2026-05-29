@@ -138,10 +138,13 @@ if (canEncode(protocol)) {
 
 ## Supported protocols
 
+The protocols below span 10 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 | Protocol | Bits | Brand | Type | Features |
 |----------|------|-------|------|----------|
 | NEC | 32 | NEC | Simple | Address + command, repeat detection |
 | Coolix | 24 | Coolix | AC | Temp, mode, fan, zone follow, toggle commands |
+| Coolix48 | 48 | Coolix | AC | Raw 48-bit code (no checksum, timing match only) |
 | Daikin64 | 64 | Daikin | AC | Temp, mode, fan, swing, sleep, timers |
 | Daikin128 | 128 | Daikin | AC | BCD temps, nibble checksums, timers |
 | Daikin152 | 152 | Daikin | AC | Quiet, powerful, econo, comfort, sensor |
@@ -151,6 +154,15 @@ if (canEncode(protocol)) {
 | DaikinESP | 280 | Daikin | AC | Most features: 0.5°C, timers, mold, comfort |
 | Daikin2 | 312 | Daikin | AC | Eye, purify, fresh air, light, beep |
 | Daikin312 | 312 | Daikin | AC | 0.5°C, eye auto, purify |
+| Gree | 64 | Gree | AC | Temp, mode, fan, swing V/H, turbo, sleep, xfan, econo, iFeel, wifi, light, timer; two-block frame + Kelvinator checksum |
+| Kelon | 48 | Kelon | AC | Mode, temp, fan (inverted), dry grade, sleep, power/swing toggles, timer; fixed preamble, no checksum (timing match) |
+| Kelon168 | 168 | Kelon | AC | Mode, temp, fan, swing, light, clock, on/off timers, command byte; 3-section frame + dual XOR checksums |
+| Teco | 35 | Teco | AC | Mode, temp, fan, swing, sleep, light, humid, save, timer; value-based, fixed constant bits (no checksum, timing match) |
+| Mitsubishi | 16 | Mitsubishi | Simple | TV command value (headerless, timing match) |
+| Mitsubishi2 | 16 | Mitsubishi | Simple | HC3000 projector command value (two 8-bit halves) |
+| MitsubishiAC | 144 | Mitsubishi | AC | Mode, temp (0.5°), fan, vane V/H, iSee, clock, timers, ecocool; 5-byte signature + byte-sum |
+| Mitsubishi136 | 136 | Mitsubishi | AC | Mode, temp, fan, swing V; complement-pair checksum |
+| Mitsubishi112 | 112 | Mitsubishi | AC | Mode, temp (inverted), fan, swing V/H; shares timings with TCL112 (longer header) |
 | Voltas | 80 | Voltas | AC | Mode, temp, fan, swing V/H, turbo, sleep, econo, light, wifi, on/off timers |
 | HitachiAc | 224 | Hitachi | AC | Temp, mode, fan, swing V/H, byte-sum checksum |
 | HitachiAc1 | 104 | Hitachi | AC | Model A/B, sleep, on/off timers, toggle bits, nibble checksum |
@@ -182,20 +194,17 @@ tcl.swingV;  // true
 
 `REGISTERED_PROTOCOLS` is a lightweight name-only list (the protocols `decode()` auto-detects). Note `HitachiAc2` is encodable but absent from both — it has no integrity check, so it's decoded only on request via `decodeHitachiAc2`.
 
-### Brand aliases
+### Brands
 
-Some rebadged ACs use another manufacturer's protocol under the hood. `BRAND_ALIASES` maps such consumer/OEM names onto the underlying brand, so a hint like `{ brand: "croma" }` routes the search to the right decoder:
+A **brand** is the protocol's originating manufacturer — the true creator of the protocol family. Each protocol belongs to exactly one brand (every Coolix protocol → `coolix`, all nine Daikin protocols → `daikin`), and a decoded frame reports that creator brand. Rebadges/OEM resellers aren't modelled: a captured frame can't be attributed to a specific reseller.
 
 ```ts
-import { decode, BRAND_ALIASES, getProtocolsForBrand } from "irtxrx";
+import { decode, getProtocolsForBrand, listBrands } from "irtxrx";
 
-decode(timings, { brand: "croma" });   // → searches Coolix protocols
-getProtocolsForBrand("godrej");        // → TCL protocols
-
-BRAND_ALIASES; // { croma: "coolix", godrej: "tcl" }
+listBrands();                          // → ["coolix", "daikin", "gree", "hitachi", "kelon", "mitsubishi", "nec", "tcl", "teco", "voltas"]
+getProtocolsForBrand("coolix");        // → Coolix protocol variants (coolix, coolix48)
+decode(timings, { brand: "daikin" });  // → narrow the search to Daikin protocols
 ```
-
-Aliases are **input hints only.** A decode result always reports the canonical brand (e.g. `"coolix"`), because a decoded frame can't be attributed to a specific rebadge. A hint that points at the wrong protocol simply yields no match — it never produces incorrect data. (`godrej → tcl` is inferred from rebadge research and not yet confirmed against a real capture.)
 
 ## Development
 

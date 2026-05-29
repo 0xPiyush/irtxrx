@@ -26,8 +26,6 @@ export {
   matchGenericBytes,
   decode,
   REGISTERED_PROTOCOLS,
-  BRAND_ALIASES,
-  resolveBrand,
   kTolerance,
   kMarkExcess,
 } from "./decode.js";
@@ -48,7 +46,6 @@ export type {
   DecodeOptions,
   ProtocolName,
   BrandName,
-  BrandHint,
   ProtocolType,
 } from "./decode.js";
 export { encodeNEC, sendNEC, decodeNEC } from "./protocols/nec.js";
@@ -138,6 +135,120 @@ export {
   CoolixCommand,
 } from "./protocols/coolix.js";
 export type { CoolixState, CoolixRawResult } from "./protocols/coolix.js";
+export {
+  encodeCoolix48,
+  decodeCoolix48,
+  COOLIX48_BITS,
+} from "./protocols/coolix48.js";
+export {
+  buildGreeRaw,
+  encodeGreeRaw,
+  sendGree,
+  decodeGreeRaw,
+  decodeGree,
+  parseGreeState,
+  validGreeChecksum,
+  GreeMode,
+  GreeFan,
+  GreeSwingV,
+  GreeSwingH,
+  GreeDisplayTemp,
+  GREE_STATE_LENGTH,
+  GREE_BITS,
+} from "./protocols/gree.js";
+export type { GreeState, GreeRawResult } from "./protocols/gree.js";
+export {
+  buildKelonRaw,
+  buildKelonBytes,
+  encodeKelonRaw,
+  sendKelon,
+  decodeKelon,
+  parseKelonState,
+  KelonMode,
+  KelonFan,
+  KELON_BITS,
+} from "./protocols/kelon.js";
+export type { KelonState } from "./protocols/kelon.js";
+export {
+  buildKelon168Raw,
+  encodeKelon168Raw,
+  sendKelon168,
+  decodeKelon168,
+  decodeKelon168Raw,
+  parseKelon168State,
+  validKelon168Checksum,
+  Kelon168Mode,
+  Kelon168Fan,
+  Kelon168Command,
+  KELON168_STATE_LENGTH,
+  KELON168_BITS,
+} from "./protocols/kelon168.js";
+export type { Kelon168State, Kelon168RawResult } from "./protocols/kelon168.js";
+export {
+  buildTecoRaw,
+  encodeTecoRaw,
+  sendTeco,
+  decodeTeco,
+  parseTecoState,
+  TecoMode,
+  TecoFan,
+  TECO_BITS,
+} from "./protocols/teco.js";
+export type { TecoState } from "./protocols/teco.js";
+export {
+  encodeMitsubishiRaw,
+  sendMitsubishi,
+  decodeMitsubishi,
+  MITSUBISHI_BITS,
+} from "./protocols/mitsubishi.js";
+export type { MitsubishiState } from "./protocols/mitsubishi.js";
+export {
+  encodeMitsubishi2Raw,
+  sendMitsubishi2,
+  decodeMitsubishi2,
+  MITSUBISHI2_BITS,
+} from "./protocols/mitsubishi2.js";
+export type { Mitsubishi2State } from "./protocols/mitsubishi2.js";
+export {
+  buildMitsubishiAcRaw,
+  encodeMitsubishiAcRaw,
+  sendMitsubishiAc,
+  decodeMitsubishiAc,
+  parseMitsubishiAcState,
+  validMitsubishiAcChecksum,
+  MitsubishiAcMode,
+  MitsubishiAcFan,
+  MitsubishiAcVane,
+  MitsubishiAcWideVane,
+  MITSUBISHI_AC_BITS,
+} from "./protocols/mitsubishi_ac.js";
+export type { MitsubishiAcState } from "./protocols/mitsubishi_ac.js";
+export {
+  buildMitsubishi136Raw,
+  encodeMitsubishi136Raw,
+  sendMitsubishi136,
+  decodeMitsubishi136,
+  parseMitsubishi136State,
+  validMitsubishi136Checksum,
+  Mitsubishi136Mode,
+  Mitsubishi136Fan,
+  Mitsubishi136SwingV,
+  MITSUBISHI136_BITS,
+} from "./protocols/mitsubishi136.js";
+export type { Mitsubishi136State } from "./protocols/mitsubishi136.js";
+export {
+  buildMitsubishi112Raw,
+  encodeMitsubishi112Raw,
+  sendMitsubishi112,
+  decodeMitsubishi112,
+  parseMitsubishi112State,
+  Mitsubishi112Mode,
+  Mitsubishi112Fan,
+  Mitsubishi112SwingV,
+  Mitsubishi112SwingH,
+  MITSUBISHI112_BITS,
+} from "./protocols/mitsubishi112.js";
+export type { Mitsubishi112State } from "./protocols/mitsubishi112.js";
 export {
   buildVoltasRaw,
   encodeVoltasRaw,

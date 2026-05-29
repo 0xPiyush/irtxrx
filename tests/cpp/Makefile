@@ -29,6 +29,14 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_COOLIX=false \
             -DSEND_COOLIX48=true \
             -DDECODE_COOLIX48=false \
+            -DSEND_GREE=true \
+            -DDECODE_GREE=false \
+            -DSEND_KELON=true \
+            -DDECODE_KELON=false \
+            -DSEND_KELON168=true \
+            -DDECODE_KELON168=false \
+            -DSEND_TECO=true \
+            -DDECODE_TECO=false \
             -DSEND_VOLTAS=true \
             -DDECODE_VOLTAS=false \
             -DSEND_HITACHI_AC=true \
@@ -52,6 +60,11 @@ CPPFLAGS := -DUNIT_TEST \
             -DSEND_TCL96AC=true \
             -DDECODE_TCL96AC=true \
             -DDECODE_MITSUBISHI112=true \
+            -DSEND_MITSUBISHI=true \
+            -DSEND_MITSUBISHI2=true \
+            -DSEND_MITSUBISHI_AC=true \
+            -DSEND_MITSUBISHI136=true \
+            -DSEND_MITSUBISHI112=true \
             -I$(VENDOR)/src \
             -I$(VENDOR)/test
 
@@ -63,6 +76,10 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_NEC.cpp \
         $(VENDOR)/src/ir_Daikin.cpp \
         $(VENDOR)/src/ir_Coolix.cpp \
+        $(VENDOR)/src/ir_Gree.cpp \
+        $(VENDOR)/src/ir_Kelvinator.cpp \
+        $(VENDOR)/src/ir_Kelon.cpp \
+        $(VENDOR)/src/ir_Teco.cpp \
         $(VENDOR)/src/ir_Voltas.cpp \
         $(VENDOR)/src/ir_Hitachi.cpp \
         $(VENDOR)/src/ir_Tcl.cpp \

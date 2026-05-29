@@ -383,6 +383,25 @@ import { decodeDaikin312 } from "./protocols/daikin312.js";
 import type { Daikin312State } from "./protocols/daikin312.js";
 import { decodeCoolix, decodeCoolixRaw } from "./protocols/coolix.js";
 import type { CoolixState } from "./protocols/coolix.js";
+import { decodeCoolix48 } from "./protocols/coolix48.js";
+import { decodeGree } from "./protocols/gree.js";
+import type { GreeState } from "./protocols/gree.js";
+import { decodeKelon } from "./protocols/kelon.js";
+import type { KelonState } from "./protocols/kelon.js";
+import { decodeKelon168 } from "./protocols/kelon168.js";
+import type { Kelon168State } from "./protocols/kelon168.js";
+import { decodeTeco } from "./protocols/teco.js";
+import type { TecoState } from "./protocols/teco.js";
+import { decodeMitsubishi } from "./protocols/mitsubishi.js";
+import type { MitsubishiState } from "./protocols/mitsubishi.js";
+import { decodeMitsubishi2 } from "./protocols/mitsubishi2.js";
+import type { Mitsubishi2State } from "./protocols/mitsubishi2.js";
+import { decodeMitsubishiAc } from "./protocols/mitsubishi_ac.js";
+import type { MitsubishiAcState } from "./protocols/mitsubishi_ac.js";
+import { decodeMitsubishi136 } from "./protocols/mitsubishi136.js";
+import type { Mitsubishi136State } from "./protocols/mitsubishi136.js";
+import { decodeMitsubishi112 } from "./protocols/mitsubishi112.js";
+import type { Mitsubishi112State } from "./protocols/mitsubishi112.js";
 import { decodeVoltas } from "./protocols/voltas.js";
 import type { VoltasState } from "./protocols/voltas.js";
 import { decodeHitachiAc } from "./protocols/hitachi.js";
@@ -407,43 +426,26 @@ export type ProtocolName =
   | "nec"
   | "daikin64" | "daikin128" | "daikin152" | "daikin160"
   | "daikin176" | "daikin216" | "daikin" | "daikin2" | "daikin312"
-  | "coolix"
+  | "coolix" | "coolix48"
+  | "gree"
+  | "kelon" | "kelon168"
+  | "teco"
+  | "mitsubishi" | "mitsubishi2" | "mitsubishi_ac" | "mitsubishi136" | "mitsubishi112"
   | "voltas"
   | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
   | "hitachi_ac296" | "hitachi_ac3"
   | "tcl112" | "tcl96";
 
-/** Brand groupings for hint-based filtering. */
-export type BrandName = "nec" | "daikin" | "coolix" | "voltas" | "hitachi" | "tcl";
-
 /**
- * A brand hint accepts a canonical {@link BrandName} or any alias string. The
- * `(string & {})` keeps literal autocomplete for the canonical brands while
- * still allowing aliases like `"croma"`.
- */
-export type BrandHint = BrandName | (string & {});
-
-/**
- * Consumer/OEM brand names that map onto an underlying protocol brand.
+ * Brand groupings for hint-based filtering.
  *
- * These are **input hints only**: passing `{ brand: "croma" }` routes the
- * decode search (and {@link getProtocolsForBrand}) to the underlying brand. A
- * decode result still reports the canonical brand (e.g. `"coolix"`), because a
- * decoded frame can't be attributed to a specific rebadge.
- *
- * - `croma` → `coolix` (Croma rebadges, reported to use the Coolix family)
- * - `godrej` → `tcl` (inferred from rebadge research; not yet confirmed by a
- *   hardware capture — a wrong guess simply yields no match, never bad data)
+ * A brand is the protocol's originating manufacturer — the true creator of the
+ * protocol family (e.g. every Coolix protocol belongs to `coolix`, all nine
+ * Daikin protocols to `daikin`). Rebadges/OEM resellers are intentionally not
+ * modelled: a captured frame can't be attributed to a specific reseller, so
+ * the brand always names the protocol's creator.
  */
-export const BRAND_ALIASES: Readonly<Record<string, BrandName>> = {
-  croma: "coolix",
-  godrej: "tcl",
-};
-
-/** Resolve a brand hint through {@link BRAND_ALIASES} (identity if not an alias). */
-export function resolveBrand(brand: BrandHint): string {
-  return BRAND_ALIASES[brand] ?? brand;
-}
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "voltas" | "hitachi" | "tcl";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -462,6 +464,16 @@ export type DecodeResult =
   | { protocol: "daikin312"; brand: "daikin"; type: "ac"; state: Daikin312State; confidence: "checksum_valid" }
   | { protocol: "coolix"; brand: "coolix"; type: "ac"; state: CoolixState; confidence: "checksum_valid" }
   | { protocol: "coolix"; brand: "coolix"; type: "ac"; state: null; raw: number; confidence: "checksum_valid" }
+  | { protocol: "coolix48"; brand: "coolix"; type: "ac"; state: null; raw: bigint; confidence: "timing_match" }
+  | { protocol: "gree"; brand: "gree"; type: "ac"; state: GreeState; confidence: "checksum_valid" }
+  | { protocol: "kelon"; brand: "kelon"; type: "ac"; state: KelonState; confidence: "timing_match" }
+  | { protocol: "kelon168"; brand: "kelon"; type: "ac"; state: Kelon168State; confidence: "checksum_valid" }
+  | { protocol: "teco"; brand: "teco"; type: "ac"; state: TecoState; confidence: "timing_match" }
+  | { protocol: "mitsubishi_ac"; brand: "mitsubishi"; type: "ac"; state: MitsubishiAcState; confidence: "checksum_valid" }
+  | { protocol: "mitsubishi136"; brand: "mitsubishi"; type: "ac"; state: Mitsubishi136State; confidence: "checksum_valid" }
+  | { protocol: "mitsubishi112"; brand: "mitsubishi"; type: "ac"; state: Mitsubishi112State; confidence: "checksum_valid" }
+  | { protocol: "mitsubishi"; brand: "mitsubishi"; type: "simple"; state: MitsubishiState; confidence: "timing_match" }
+  | { protocol: "mitsubishi2"; brand: "mitsubishi"; type: "simple"; state: Mitsubishi2State; confidence: "timing_match" }
   | { protocol: "voltas"; brand: "voltas"; type: "ac"; state: VoltasState; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac"; brand: "hitachi"; type: "ac"; state: HitachiAcState; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac1"; brand: "hitachi"; type: "ac"; state: HitachiAc1State; confidence: "checksum_valid" }
@@ -631,12 +643,93 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
       return s ? { protocol: "tcl96", brand: "tcl", type: "ac", state: s, confidence: "timing_match" } : null;
     },
   },
+  // Coolix48 has no checksum (timing match only) and shares Coolix's wire
+  // length, so it must come after the inversion-validated `coolix` entry: a
+  // genuine 24-bit Coolix frame is caught there first, leaving Coolix48 to
+  // match only 48-bit Coolix-timed frames that lack the byte-inversion
+  // structure. Mirrors IRremoteESP8266's decode order (COOLIX before COOLIX48).
+  {
+    protocol: "coolix48", brand: "coolix", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const raw = decodeCoolix48(timings, offset, ho);
+      return raw !== null ? { protocol: "coolix48", brand: "coolix", type: "ac", state: null, raw, confidence: "timing_match" } : null;
+    },
+  },
+  {
+    protocol: "gree", brand: "gree", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeGree(timings, offset, ho);
+      return s ? { protocol: "gree", brand: "gree", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Kelon168 (checksum-validated) before Kelon (timing + fixed preamble, no
+  // checksum): the two share a header and Kelon168's first section starts with
+  // the same 48-bit preamble, but their footer gaps differ, so neither matches
+  // the other. Mirrors IRremoteESP8266's KELON168-before-KELON decode order.
+  {
+    protocol: "kelon168", brand: "kelon", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeKelon168(timings, offset, ho);
+      return s ? { protocol: "kelon168", brand: "kelon", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "kelon", brand: "kelon", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeKelon(timings, offset, ho);
+      return s ? { protocol: "kelon", brand: "kelon", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  {
+    protocol: "teco", brand: "teco", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTeco(timings, offset, ho);
+      return s ? { protocol: "teco", brand: "teco", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  {
+    protocol: "mitsubishi_ac", brand: "mitsubishi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeMitsubishiAc(timings, offset, ho);
+      return s ? { protocol: "mitsubishi_ac", brand: "mitsubishi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "mitsubishi136", brand: "mitsubishi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeMitsubishi136(timings, offset, ho);
+      return s ? { protocol: "mitsubishi136", brand: "mitsubishi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "mitsubishi112", brand: "mitsubishi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeMitsubishi112(timings, offset, ho);
+      return s ? { protocol: "mitsubishi112", brand: "mitsubishi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
   // Simple protocols last
   {
     protocol: "nec", brand: "nec", type: "simple",
     tryDecode(timings, offset, ho) {
       const s = decodeNEC(timings, offset, undefined, undefined, ho);
       return s ? { protocol: "nec", brand: "nec", type: "simple", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Mitsubishi2 before Mitsubishi: the headerless Mitsubishi matcher is the
+  // least specific, so it is tried last.
+  {
+    protocol: "mitsubishi2", brand: "mitsubishi", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodeMitsubishi2(timings, offset, ho);
+      return s ? { protocol: "mitsubishi2", brand: "mitsubishi", type: "simple", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  {
+    protocol: "mitsubishi", brand: "mitsubishi", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodeMitsubishi(timings, offset, ho);
+      return s ? { protocol: "mitsubishi", brand: "mitsubishi", type: "simple", state: s, confidence: "timing_match" } : null;
     },
   },
 ];
@@ -652,8 +745,8 @@ export const REGISTERED_PROTOCOLS: readonly ProtocolName[] =
 export interface DecodeOptions {
   /** Try only this specific protocol. */
   protocol?: ProtocolName;
-  /** Try only protocols from this brand. Accepts aliases (see {@link BRAND_ALIASES}). */
-  brand?: BrandHint;
+  /** Try only protocols from this brand (the protocol's creator, see {@link BrandName}). */
+  brand?: BrandName;
   /** Try only protocols of this type. */
   type?: ProtocolType;
 }
@@ -721,10 +814,9 @@ export function decode(
 
 function filterCandidates(options?: DecodeOptions): ProtocolEntry[] {
   if (!options) return PROTOCOL_REGISTRY;
-  const brand = options.brand !== undefined ? resolveBrand(options.brand) : undefined;
   return PROTOCOL_REGISTRY.filter((entry) => {
     if (options.protocol && entry.protocol !== options.protocol) return false;
-    if (brand && entry.brand !== brand) return false;
+    if (options.brand && entry.brand !== options.brand) return false;
     if (options.type && entry.type !== options.type) return false;
     return true;
   });

@@ -71,7 +71,15 @@ describe("capabilities registry", () => {
     expect(daikin.length).toBe(9);
     expect(daikin.every((p) => p.brand === "daikin")).toBe(true);
     expect(getProtocolsForBrand("hitachi").length).toBe(7); // AC2 is not auto-registered
-    expect(listBrands().sort()).toEqual(["coolix", "daikin", "hitachi", "nec", "tcl", "voltas"]);
+    expect(getProtocolsForBrand("coolix").map((p) => p.protocol)).toEqual(["coolix", "coolix48"]);
+    expect(getProtocolsForBrand("gree").map((p) => p.protocol)).toEqual(["gree"]);
+    expect(getProtocolsForBrand("kelon").map((p) => p.protocol)).toEqual(["kelon168", "kelon"]);
+    expect(getProtocolsForBrand("teco").map((p) => p.protocol)).toEqual(["teco"]);
+    expect(getProtocolsForBrand("mitsubishi").map((p) => p.protocol)).toEqual(
+      ["mitsubishi_ac", "mitsubishi136", "mitsubishi112", "mitsubishi", "mitsubishi2"],
+    );
+    expect(getProtocolsForBrand("samsung")).toEqual([]); // unknown brand → empty
+    expect(listBrands().sort()).toEqual(["coolix", "daikin", "gree", "hitachi", "kelon", "mitsubishi", "nec", "tcl", "teco", "voltas"]);
   });
 
   it("getProtocolInfo returns undefined for unknown protocols", () => {

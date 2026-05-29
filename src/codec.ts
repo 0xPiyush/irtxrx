@@ -14,6 +14,25 @@ import type { ProtocolName } from "./decode.js";
 
 import { sendCoolix } from "./protocols/coolix.js";
 import type { CoolixState } from "./protocols/coolix.js";
+import { encodeCoolix48 } from "./protocols/coolix48.js";
+import { sendGree } from "./protocols/gree.js";
+import type { GreeState } from "./protocols/gree.js";
+import { sendKelon } from "./protocols/kelon.js";
+import type { KelonState } from "./protocols/kelon.js";
+import { sendKelon168 } from "./protocols/kelon168.js";
+import type { Kelon168State } from "./protocols/kelon168.js";
+import { sendTeco } from "./protocols/teco.js";
+import type { TecoState } from "./protocols/teco.js";
+import { sendMitsubishi } from "./protocols/mitsubishi.js";
+import type { MitsubishiState } from "./protocols/mitsubishi.js";
+import { sendMitsubishi2 } from "./protocols/mitsubishi2.js";
+import type { Mitsubishi2State } from "./protocols/mitsubishi2.js";
+import { sendMitsubishiAc } from "./protocols/mitsubishi_ac.js";
+import type { MitsubishiAcState } from "./protocols/mitsubishi_ac.js";
+import { sendMitsubishi136 } from "./protocols/mitsubishi136.js";
+import type { Mitsubishi136State } from "./protocols/mitsubishi136.js";
+import { sendMitsubishi112 } from "./protocols/mitsubishi112.js";
+import type { Mitsubishi112State } from "./protocols/mitsubishi112.js";
 import { sendDaikin64 } from "./protocols/daikin64.js";
 import type { Daikin64State } from "./protocols/daikin64.js";
 import { sendDaikin128 } from "./protocols/daikin128.js";
@@ -55,6 +74,17 @@ import { sendNEC, encodeNEC } from "./protocols/nec.js";
 /** The state shape each protocol's encoder accepts, keyed by protocol name. */
 export interface ProtocolStateMap {
   coolix: CoolixState;
+  /** Raw 48-bit Coolix48 code. */
+  coolix48: bigint;
+  gree: GreeState;
+  kelon: KelonState;
+  kelon168: Kelon168State;
+  teco: TecoState;
+  mitsubishi: MitsubishiState;
+  mitsubishi2: Mitsubishi2State;
+  mitsubishi_ac: MitsubishiAcState;
+  mitsubishi136: Mitsubishi136State;
+  mitsubishi112: Mitsubishi112State;
   daikin64: Daikin64State;
   daikin128: Daikin128State;
   daikin152: Daikin152State;
@@ -86,6 +116,16 @@ type EncoderMap = {
 
 const ENCODERS: EncoderMap = {
   coolix: (s, r) => sendCoolix(s, r),
+  coolix48: (s, r) => encodeCoolix48(s, r),
+  gree: (s, r) => sendGree(s, r),
+  kelon: (s, r) => sendKelon(s, r),
+  kelon168: (s, r) => sendKelon168(s, r),
+  teco: (s, r) => sendTeco(s, r),
+  mitsubishi: (s, r) => sendMitsubishi(s, r),
+  mitsubishi2: (s, r) => sendMitsubishi2(s, r),
+  mitsubishi_ac: (s, r) => sendMitsubishiAc(s, r),
+  mitsubishi136: (s, r) => sendMitsubishi136(s, r),
+  mitsubishi112: (s, r) => sendMitsubishi112(s, r),
   daikin64: (s, r) => sendDaikin64(s, r),
   daikin128: (s, r) => sendDaikin128(s, r),
   daikin152: (s, r) => sendDaikin152(s, r),
