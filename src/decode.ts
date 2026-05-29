@@ -681,16 +681,14 @@ export function decode(
   const candidates = filterCandidates(options);
   if (candidates.length === 0) return null;
 
-  // Fast path: when a specific protocol is hinted, skip tiering —
-  // just try offset 0 with header optional. The protocol's own
-  // integrity checks (checksum/parity) are sufficient to confirm.
-  if (options?.protocol) {
-    for (const entry of candidates) {
-      const result = entry.tryDecode(timings, 0, true);
-      if (result) return result;
-    }
-    return null;
-  }
+  // The same 3-tier strategy serves both blind and hinted decodes — a hint
+  // (protocol/brand/type) only narrows `candidates`. Tiering is essential even
+  // with a protocol hint: real remotes repeat the frame, and when the first
+  // frame is followed by a short inter-frame gap, an offset-0-only decode fails
+  // its trailing-gap (footer `atLeast`) check and the whole capture is lost.
+  // The Tier 2 gap scan recovers by decoding a later frame. Offset 0 is still
+  // attempted first (Tier 1, then Tier 3), so any capture that decoded under
+  // the old offset-0-only fast path continues to decode identically.
 
   // Tier 1: header required at offset 0
   for (const entry of candidates) {

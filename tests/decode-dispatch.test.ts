@@ -8,6 +8,8 @@ import { sendDaikin216, buildDaikin216Raw } from "../src/protocols/daikin216";
 import { sendDaikinESP, buildDaikinESPRaw } from "../src/protocols/daikin";
 import { sendCoolix, encodeCoolixRaw, buildCoolixRaw, CoolixMode, CoolixFan, CoolixCommand } from "../src/protocols/coolix";
 import { sendNEC, encodeNEC } from "../src/protocols/nec";
+import { sendVoltas, buildVoltasRaw, VoltasMode, VoltasFan } from "../src/protocols/voltas";
+import { sendHitachiAc, HitachiAcMode, HitachiAcFan } from "../src/protocols/hitachi";
 
 // ---------------------------------------------------------------------------
 // Tier 1: header present at offset 0
@@ -149,6 +151,55 @@ describe("decode with hints", () => {
   it("type=ac excludes NEC", () => {
     const timings = sendNEC(encodeNEC(1, 2));
     expect(decode(timings, { type: "ac" })).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Hinted path — repeat frame with a short inter-frame gap (regression)
+//
+// Real remotes repeat the frame; hardware captures the whole burst with a
+// realistic (short) inter-frame gap, NOT the 100ms message pad the encoder
+// appends. The offset-0-only hinted fast path used to fail its footer `atLeast`
+// check on the first frame and lose the capture, even though a blind decode
+// recovered via the gap scan. Both paths must now agree. (Observed in the wild
+// on aura-cloud: a Voltas remote detected via blind decode, but every later
+// protocol-hinted capture decoded to null and was discarded.)
+// ---------------------------------------------------------------------------
+
+describe("decode hinted path — repeat frame after short gap", () => {
+  // Two identical Voltas frames, separated by a realistic ~20ms gap (well below
+  // the encoder's 100ms pad), with a trailing message gap. frameBody drops the
+  // 100ms pad sendGenericBytes appends so we control the inter-frame spacing.
+  const state = { power: true, mode: VoltasMode.Cool, temp: 24, fan: VoltasFan.Auto, swingV: true };
+  const frameBody = sendVoltas(state, 0).slice(0, -1);
+  const capture = [...frameBody, 20000, ...frameBody, 100000];
+
+  it("blind decode identifies Voltas (baseline — gap scan)", () => {
+    const result = decode(capture);
+    expect(result).not.toBeNull();
+    expect(result!.protocol).toBe("voltas");
+  });
+
+  it("protocol-hinted decode identifies Voltas (was null before the fix)", () => {
+    const result = decode(capture, { protocol: "voltas" });
+    expect(result).not.toBeNull();
+    expect(result!.protocol).toBe("voltas");
+    // The recovered frame is the real one, not a spurious match.
+    expect(buildVoltasRaw(result!.state)).toEqual(buildVoltasRaw(state));
+  });
+
+  it("brand-hinted decode identifies Voltas", () => {
+    const result = decode(capture, { brand: "voltas" });
+    expect(result).not.toBeNull();
+    expect(result!.protocol).toBe("voltas");
+  });
+
+  it("a single-frame hinted capture still decodes at offset 0 (non-regression)", () => {
+    // The common case — one frame, header present — must keep working unchanged.
+    const single = sendHitachiAc({ power: true, temp: 24, mode: HitachiAcMode.Cool, fan: HitachiAcFan.Auto }, 0);
+    const result = decode(single, { protocol: "hitachi_ac" });
+    expect(result).not.toBeNull();
+    expect(result!.protocol).toBe("hitachi_ac");
   });
 });
 
