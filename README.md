@@ -73,7 +73,7 @@ const result = decode(timings, { brand: "daikin" });
 const result = decode(timings, { type: "ac" });
 ```
 
-`state.mode` and `state.fan` are **protocol-specific integers** (e.g. `mode: 3` is Cool for Daikin). Use the `PROTOCOLS` registry — see [Discovering protocols at runtime](#discovering-protocols-at-runtime) — to map those values to names/labels and to validate them.
+`state.mode` and `state.fan` are **protocol-specific integers** (e.g. `mode: 3` is Cool for Daikin). Use the `PROTOCOLS` registry — see [Discovering protocols at runtime](#discovering-protocols-at-runtime) — to map those values to names/labels and to validate them, or normalize the whole state to a brand-agnostic vocabulary with the [canonical capability model](#canonical-capability-model).
 
 The decoded `state` is the same type the encoder accepts, so roundtrips are lossless:
 
@@ -195,6 +195,8 @@ tcl.swingV;  // true
 
 `REGISTERED_PROTOCOLS` is a lightweight name-only list (the protocols `decode()` auto-detects). Note `HitachiAc2` is encodable but absent from both — it has no integrity check, so it's decoded only on request via `decodeHitachiAc2`.
 
+`PROTOCOLS` exposes each protocol's *own* mode/fan names and raw values, and only the basics (modes, fans, temp, swing). For a brand-agnostic surface that covers **every** capability — turbo, sleep, econo, timers, clock, sensors, and so on — and that translates values across protocols, use the [canonical capability model](#canonical-capability-model) below.
+
 ### Brands
 
 A **brand** is the protocol's originating manufacturer — the true creator of the protocol family. Each protocol belongs to exactly one brand (every Coolix protocol → `coolix`, all nine Daikin protocols → `daikin`), and a decoded frame reports that creator brand. Rebadges/OEM resellers aren't modelled: a captured frame can't be attributed to a specific reseller.
@@ -206,6 +208,57 @@ listBrands();                          // → ["coolix", "daikin", "godrej", "gr
 getProtocolsForBrand("coolix");        // → Coolix protocol variants (coolix, coolix48)
 decode(timings, { brand: "daikin" });  // → narrow the search to Daikin protocols
 ```
+
+## Canonical capability model
+
+`PROTOCOLS` reports each protocol's *raw* values verbatim — `mode: 1` means Cool on Gree but Cool is `0` on Coolix, and the dozens of extra fields each protocol's state carries (turbo, sleep, econo, light, timers, clock, sensors, model, …) aren't surfaced at all.
+
+The **canonical model** adds a brand-agnostic layer on top, in three parts:
+
+1. **Vocabulary** — fixed tokens shared across every protocol: `CanonicalMode` (`"cool"`, `"heat"`, …), `CanonicalFan` (`"auto"`, `"low"`, `"max"`, …), `CanonicalSwingPosition`, and `CanonicalFeature` (`"turbo"`, `"sleep"`, `"econo"`, `"timer_on"`, …).
+2. **Mapping** — `CAPABILITIES`, a per-protocol bidirectional translation between those tokens and the protocol's raw state fields/values.
+3. **Labels** — `LABELS` / `labelFor(token)`, a shared token → display-string table (`"econo"` → `"Economy"`).
+
+`toCanonical` / `fromCanonical` move a state between its protocol-specific form and the canonical form, so you can decode, edit in protocol-agnostic terms, and re-encode:
+
+```ts
+import { decode, encode, toCanonical, fromCanonical } from "irtxrx";
+
+const result = decode(capturedTimings)!;            // e.g. { protocol: "gree", state: {...} }
+const canon = toCanonical(result.protocol, result.state);
+// → {
+//     power: { kind: "stateful", on: true },
+//     mode: "cool", temp: 22, fan: "medium",
+//     swingV: { kind: "position", position: "last" },
+//     features: { turbo: true, light: true, econo: false, timer: { minutes: 0 }, ... },
+//   }
+
+canon.temp = 25;
+canon.features = { ...canon.features, turbo: false, econo: true };
+
+const timings = encode("gree", fromCanonical("gree", canon));  // back to Gree wire bytes
+```
+
+Field shapes:
+
+- **Power** is a discriminated union: `{ kind: "stateful", on }` for absolute on/off, or `{ kind: "toggle", toggle }` for remotes (Kelon, …) that only carry a "power button pressed" bit.
+- **Swing** is `{ kind: "bool" | "toggle" | "position" | "numeric", … }` depending on how the protocol models it.
+- **Features** are `boolean` (flags), `{ level }` (e.g. light/beep level, dry grade), `{ minutes }` (timers/clock, always normalized to minutes), or `{ token }` (enums like `display_temp`, `model`).
+- **Temperature** is always °C; resolution is on the spec's `temp.step`.
+
+Discover what a protocol supports — and render it — without touching its raw fields:
+
+```ts
+import { getCanonicalCapabilities, labelFor } from "irtxrx";
+
+const caps = getCanonicalCapabilities("gree")!;
+caps.features.map((f) => `${f.canonical} → ${labelFor(f.canonical)}`);
+// → ["turbo → Turbo", "sleep → Sleep", "econo → Economy", "timer → Timer", ...]
+```
+
+Synonyms are consolidated where the function is identical (`powerful`/`super` → `turbo`, `mold` → `xfan`, `sensor`/`iSense` → `ifeel`, `save`/`ecocool` → `econo`) but kept distinct where they aren't (presence-detection `isee` stays separate from follow-me `ifeel`). Raw/opaque protocols (Coolix48, HitachiAc3, TCL96, NEC, Mitsubishi, Mitsubishi2) carry no structured state and are absent from `CAPABILITIES`; `toCanonical` / `fromCanonical` / `getCanonicalCapabilities` return `undefined` or throw for them.
+
+Feature keys are typed `keyof ProtocolStateMap[P]`, so the mapping can't drift from the protocol state types — a renamed field fails the type-check.
 
 ## Development
 

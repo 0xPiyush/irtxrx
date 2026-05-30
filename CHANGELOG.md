@@ -4,6 +4,40 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.6.0]
+
+### Added
+
+- **Canonical capability model** (`src/canonical.ts`) — a brand-agnostic layer
+  over the protocol registry that exposes **every** capability the encoders
+  accept, not just modes/fans/temp/swing. Three parts:
+  - **Vocabulary** — shared tokens across all protocols: `CanonicalMode`,
+    `CanonicalFan`, `CanonicalSwingPosition`, and `CanonicalFeature` (turbo,
+    quiet, econo, sleep, light, xfan, clean, comfort, ifeel, isee, timers,
+    clock, sensors, model, and more).
+  - **Mapping** — `CAPABILITIES`, a per-protocol bidirectional translation
+    between canonical tokens and each protocol's raw state fields/values.
+    Feature keys are typed `keyof ProtocolStateMap[P]`, so the mapping can't
+    drift from the state types.
+  - **Labels** — `LABELS` / `labelFor()`, a shared token → display-string table.
+- `toCanonical(protocol, state)` / `fromCanonical(protocol, canonical)` —
+  normalize a decoded state into canonical form, edit it in protocol-agnostic
+  terms, and feed it straight back through `encode()`. Power is modelled as
+  stateful vs toggle; swing as bool/toggle/position/numeric; features as
+  flag/level/minutes/enum-token. Raw/opaque protocols (Coolix48, HitachiAc3,
+  TCL96, NEC, Mitsubishi, Mitsubishi2) carry no structured state and throw.
+- `getCanonicalCapabilities(protocol)` — read a protocol's full canonical
+  capability spec at runtime.
+
+### Notes
+
+- Purely additive — the existing `PROTOCOLS` / `getProtocolInfo` registry and
+  its behaviour are unchanged. Synonyms are consolidated where the function is
+  identical (`powerful`/`super` → `turbo`, `mold` → `xfan`, `sensor`/`iSense` →
+  `ifeel`, `save`/`ecocool` → `econo`) and kept distinct where they aren't
+  (presence-detection `isee` vs follow-me `ifeel`). A test verifies a lossless
+  decode → canonical → encode wire round-trip for every protocol.
+
 ## [0.5.0]
 
 ### Added

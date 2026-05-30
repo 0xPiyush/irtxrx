@@ -140,6 +140,13 @@ const timings2 = sendDaikin152(state); // accepts Daikin152State
 
 All state fields are populated on decode (no undefined values for stateful protocols), so the decoded state can be stored in a database and later re-encoded without any information loss.
 
+### Capability Registries
+
+Protocol state uses **protocol-specific integers** (`mode: 3` is Cool for Daikin, `0` for Coolix). Two runtime registries let consumers (UIs, gateways) discover and translate capabilities instead of hard-coding tables:
+
+- **`PROTOCOLS` / `getProtocolInfo()`** (`src/capabilities.ts`) — each protocol's *own* mode/fan names + raw values, temperature range, and swing support.
+- **Canonical capability model** (`src/canonical.ts`) — a brand-agnostic layer that realises the "protocol-agnostic on the server" goal end-to-end. It defines a fixed canonical vocabulary (modes, fans, swing positions, and a `CanonicalFeature` set covering **every** capability the encoders accept — turbo, sleep, econo, light, timers, clock, sensors, model, …), a per-protocol bidirectional `CAPABILITIES` mapping to/from each protocol's raw fields, and a shared human-readable `LABELS` table. `toCanonical(protocol, state)` / `fromCanonical(protocol, canonical)` let a server normalize any decoded appliance state into one vocabulary, present/edit it uniformly across brands, and re-encode it. Feature keys are typed `keyof ProtocolStateMap[P]`, so the mapping cannot drift from the state types. Raw/opaque protocols carry no structured state and are excluded.
+
 ### Protocol Categories
 
 Protocols fall into two categories that affect how decode works:

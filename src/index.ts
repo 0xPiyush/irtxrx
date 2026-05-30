@@ -38,6 +38,25 @@ export {
 export type { ProtocolInfo, NamedValue, TempRange } from "./capabilities.js";
 export { encode, canEncode } from "./codec.js";
 export type { ProtocolStateMap } from "./codec.js";
+export {
+  CAPABILITIES,
+  LABELS,
+  labelFor,
+  toCanonical,
+  fromCanonical,
+  getCanonicalCapabilities,
+} from "./canonical.js";
+export type {
+  CanonicalState,
+  CanonicalMode,
+  CanonicalFan,
+  CanonicalFanValue,
+  CanonicalFeature,
+  CanonicalSwingPosition,
+  CapabilitySpec,
+  SwingValue,
+  FeatureValue,
+} from "./canonical.js";
 export type {
   MatchDataResult,
   MatchGenericResult,

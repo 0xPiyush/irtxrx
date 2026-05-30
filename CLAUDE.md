@@ -35,6 +35,14 @@ The state type is **the same for encode and decode** — `decodeFoo()` returns `
 
 **Cross-validation** — `tests/cpp/runner.cpp` compiles against the vendored IRremoteESP8266 C++ library (git submodule at `vendor/IRremoteESP8266`). Each protocol's test file calls the C++ runner via `execSync`, then compares its output byte-for-byte against the TypeScript implementation.
 
+**Runtime registries** — three layers describe the supported protocols for consumers:
+
+- `src/codec.ts` — `encode(protocol, state)`, the runtime-dispatched inverse of `decode()`, plus `ProtocolStateMap` (protocol name → its state type).
+- `src/capabilities.ts` — `PROTOCOLS` / `getProtocolInfo()`: each protocol's *own* mode/fan names + raw values, temp range, and swing support.
+- `src/canonical.ts` — the brand-agnostic capability model: a canonical vocabulary (`CanonicalMode`/`Fan`/`Feature`/`SwingPosition`), the per-protocol `CAPABILITIES` mapping, shared `LABELS`, and `toCanonical()` / `fromCanonical()` translators. Feature keys are typed `keyof ProtocolStateMap[P]` so the mapping can't drift from the state types. Exposes **all** capabilities (toggles, timers, clock, sensors, enums), not just modes/fans/temp/swing.
+
+`tests/capabilities.test.ts` and `tests/canonical.test.ts` assert both registries stay in lock-step with `REGISTERED_PROTOCOLS` (no drift).
+
 ## Adding a new protocol
 
 1. Read `ir_Foo.h` and `ir_Foo.cpp` from the vendor submodule
@@ -45,6 +53,9 @@ The state type is **the same for encode and decode** — `decodeFoo()` returns `
 6. Create `tests/foo.test.ts` with encode cross-validation, decode roundtrip, C++ decode cross-validation, and rejection tests
 7. Export from `src/index.ts`
 8. Register in `PROTOCOL_REGISTRY` in `src/decode.ts`
+9. Add the encoder to `ENCODERS` + `ProtocolStateMap` in `src/codec.ts`
+10. Add a `PROTOCOLS` entry in `src/capabilities.ts` (drift test enforces this)
+11. For structured (non-raw) protocols, add a `CAPABILITIES` entry in `src/canonical.ts` mapping its modes/fans/swing/features to canonical tokens (the canonical drift test enforces this)
 
 ## Key conventions
 
