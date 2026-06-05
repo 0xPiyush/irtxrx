@@ -59,6 +59,8 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_TCL112AC=true \
             -DSEND_TCL96AC=true \
             -DDECODE_TCL96AC=true \
+            -DSEND_TEKNOPOINT=true \
+            -DDECODE_TEKNOPOINT=true \
             -DDECODE_MITSUBISHI112=true \
             -DSEND_MITSUBISHI=true \
             -DSEND_MITSUBISHI2=true \
@@ -83,6 +85,7 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_Voltas.cpp \
         $(VENDOR)/src/ir_Hitachi.cpp \
         $(VENDOR)/src/ir_Tcl.cpp \
+        $(VENDOR)/src/ir_Teknopoint.cpp \
         $(VENDOR)/src/ir_Mitsubishi.cpp \
         $(VENDOR)/src/IRrecv.cpp
 

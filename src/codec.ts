@@ -70,6 +70,8 @@ import type { HitachiAc296State } from "./protocols/hitachi296.js";
 import { sendHitachiAc3 } from "./protocols/hitachi3.js";
 import { sendTcl112 } from "./protocols/tcl112.js";
 import type { Tcl112State } from "./protocols/tcl112.js";
+import { sendTeknopoint } from "./protocols/teknopoint.js";
+import type { TeknopointState } from "./protocols/teknopoint.js";
 import { sendTcl96 } from "./protocols/tcl96.js";
 import { sendNEC, encodeNEC } from "./protocols/nec.js";
 
@@ -107,6 +109,7 @@ export interface ProtocolStateMap {
   /** Raw 15/17/21/23/27-byte payload. */
   hitachi_ac3: Uint8Array;
   tcl112: Tcl112State;
+  teknopoint: TeknopointState;
   /** Raw 12-byte payload. */
   tcl96: Uint8Array;
   /** NEC re-encodes from the decoded address + command. */
@@ -148,6 +151,7 @@ const ENCODERS: EncoderMap = {
   hitachi_ac296: (s, r) => sendHitachiAc296(s, r),
   hitachi_ac3: (s, r) => sendHitachiAc3(s, r),
   tcl112: (s, r) => sendTcl112(s, r),
+  teknopoint: (s, r) => sendTeknopoint(s, r),
   tcl96: (s, r) => sendTcl96(s, r),
   nec: (s, r) => sendNEC(encodeNEC(s.address, s.command), undefined, r),
 };

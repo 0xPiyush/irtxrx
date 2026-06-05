@@ -373,6 +373,17 @@ export {
 } from "./protocols/tcl112.js";
 export type { Tcl112State, Tcl112ModeValue, Tcl112FanValue, Tcl112SwingVValue, Tcl112ModelValue } from "./protocols/tcl112.js";
 export {
+  buildTeknopointRaw,
+  encodeTeknopointRaw,
+  sendTeknopoint,
+  decodeTeknopoint,
+  TeknopointMode,
+  TeknopointFan,
+  TeknopointSwingV,
+  TeknopointModel,
+} from "./protocols/teknopoint.js";
+export type { TeknopointState, TeknopointModeValue, TeknopointFanValue, TeknopointSwingVValue, TeknopointModelValue } from "./protocols/teknopoint.js";
+export {
   encodeTcl96Raw,
   sendTcl96,
   decodeTcl96,

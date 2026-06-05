@@ -37,6 +37,7 @@ import { HitachiAc264Fan } from "./protocols/hitachi264.js";
 import { HitachiAc344SwingH } from "./protocols/hitachi344.js";
 import { HitachiAc296Mode, HitachiAc296Fan } from "./protocols/hitachi296.js";
 import { Tcl112Mode, Tcl112Fan, Tcl112SwingV } from "./protocols/tcl112.js";
+import { TeknopointMode, TeknopointFan, TeknopointSwingV } from "./protocols/teknopoint.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -217,6 +218,13 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     modes: named(Tcl112Mode), fans: named(Tcl112Fan),
     temp: { min: 16, max: 31, step: 0.5 },
     swingV: true, swingH: true, swingVOptions: named(Tcl112SwingV),
+  }),
+  // Teknopoint shares TCL112AC's byte format (driven by IRTcl112Ac), so it
+  // exposes the identical capability set under its own protocol name.
+  info("teknopoint", "teknopoint", "ac", {
+    modes: named(TeknopointMode), fans: named(TeknopointFan),
+    temp: { min: 16, max: 31, step: 0.5 },
+    swingV: true, swingH: true, swingVOptions: named(TeknopointSwingV),
   }),
   // Raw byte-array protocol — no structured fields.
   info("tcl96", "tcl", "ac"),

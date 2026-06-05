@@ -421,6 +421,8 @@ import type { HitachiAc296State } from "./protocols/hitachi296.js";
 import { decodeHitachiAc3 } from "./protocols/hitachi3.js";
 import { decodeTcl112 } from "./protocols/tcl112.js";
 import type { Tcl112State } from "./protocols/tcl112.js";
+import { decodeTeknopoint } from "./protocols/teknopoint.js";
+import type { TeknopointState } from "./protocols/teknopoint.js";
 import { decodeTcl96 } from "./protocols/tcl96.js";
 
 /** All supported protocol names. */
@@ -437,7 +439,7 @@ export type ProtocolName =
   | "voltas"
   | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
   | "hitachi_ac296" | "hitachi_ac3"
-  | "tcl112" | "tcl96";
+  | "tcl112" | "teknopoint" | "tcl96";
 
 /**
  * Brand groupings for hint-based filtering.
@@ -448,7 +450,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -487,6 +489,7 @@ export type DecodeResult =
   | { protocol: "hitachi_ac296"; brand: "hitachi"; type: "ac"; state: HitachiAc296State; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac3"; brand: "hitachi"; type: "ac"; state: Uint8Array; confidence: "checksum_valid" }
   | { protocol: "tcl112"; brand: "tcl"; type: "ac"; state: Tcl112State; confidence: "checksum_valid" }
+  | { protocol: "teknopoint"; brand: "teknopoint"; type: "ac"; state: TeknopointState; confidence: "checksum_valid" }
   | { protocol: "tcl96"; brand: "tcl"; type: "ac"; state: Uint8Array; confidence: "timing_match" };
 
 interface ProtocolEntry {
@@ -710,6 +713,19 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeMitsubishi112(timings, offset, ho);
       return s ? { protocol: "mitsubishi112", brand: "mitsubishi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Teknopoint shares the 0x23CB26 prefix/checksum with TCL112AC and
+  // MITSUBISHI112 and is told apart only by its longer zero-space (530µs vs
+  // 325/385µs). Its wide 35% decode tolerance would otherwise swallow a
+  // MITSUBISHI112 frame (385µs zero-space falls inside its window), so it must
+  // come after both — the reverse never collides (Teknopoint's 530µs zero-space
+  // is outside their tolerances). Mirrors IRremoteESP8266's decode order.
+  {
+    protocol: "teknopoint", brand: "teknopoint", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTeknopoint(timings, offset, ho);
+      return s ? { protocol: "teknopoint", brand: "teknopoint", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
   {

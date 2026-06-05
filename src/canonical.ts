@@ -42,6 +42,7 @@ import { Mitsubishi136Mode, Mitsubishi136Fan, Mitsubishi136SwingV } from "./prot
 import { TecoMode, TecoFan } from "./protocols/teco.js";
 import { VoltasMode, VoltasFan, VoltasModel } from "./protocols/voltas.js";
 import { Tcl112Mode, Tcl112Fan, Tcl112SwingV, Tcl112Model } from "./protocols/tcl112.js";
+import { TeknopointMode, TeknopointFan, TeknopointSwingV, TeknopointModel } from "./protocols/teknopoint.js";
 import { HitachiAcMode, HitachiAcFan } from "./protocols/hitachi.js";
 import { HitachiAc1Mode, HitachiAc1Fan, HitachiAc1Model } from "./protocols/hitachi1.js";
 import { HitachiAc264Fan } from "./protocols/hitachi264.js";
@@ -626,6 +627,27 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 720, step: 20, unit: "minutes" },
       { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 720, step: 20, unit: "minutes" },
       { kind: "enum", canonical: "model", key: "model", constants: Tcl112Model, map: { TAC09CHSD: "tac09chsd", GZ055BE1: "gz055be1" } },
+    ],
+  },
+
+  // Identical mapping to tcl112 — Teknopoint reuses the TCL112AC byte format.
+  teknopoint: {
+    power: { kind: "stateful" },
+    modes: { constants: TeknopointMode, map: { Heat: "heat", Dry: "dry", Cool: "cool", Fan: "fan", Auto: "auto" } },
+    fan: { constants: TeknopointFan, map: { Auto: "auto", Min: "min", Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 16, max: 31, step: 0.5 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: TeknopointSwingV, map: {
+      Off: "off", Highest: "highest", High: "high", Middle: "middle", Low: "low", Lowest: "lowest", On: "on",
+    } } },
+    swingH: { key: "swingH", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "econo", key: "econo" },
+      { kind: "boolean", canonical: "health", key: "health" },
+      { kind: "boolean", canonical: "light", key: "light" },
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 720, step: 20, unit: "minutes" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 720, step: 20, unit: "minutes" },
+      { kind: "enum", canonical: "model", key: "model", constants: TeknopointModel, map: { TAC09CHSD: "tac09chsd", GZ055BE1: "gz055be1" } },
     ],
   },
 

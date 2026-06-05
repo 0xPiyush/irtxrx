@@ -269,6 +269,43 @@ export function sendTcl112(state: Tcl112State, repeat: number = 0): number[] {
 // ---------------------------------------------------------------------------
 
 /**
+ * Interpret a decoded 14-byte TCL112AC/Teknopoint frame as a state object.
+ *
+ * Validates the fixed 0x23CB26 prefix and the byte-sum checksum, and rejects
+ * the out-of-scope special/quiet (type 2) message. Shared by `decodeTcl112`
+ * and the Teknopoint decoder — the two protocols are byte-for-byte identical
+ * and differ only in wire timings.
+ *
+ * @returns Decoded state, or null if the frame fails validation.
+ */
+export function interpretTcl112Bytes(raw: Uint8Array): Tcl112State | null {
+  // Fixed prefix + checksum gate false matches.
+  if (raw[0] !== 0x23 || raw[1] !== 0xCB || raw[2] !== 0x26) return null;
+  if (raw[13] !== calcChecksum(raw)) return null;
+  // Out of scope: the special/quiet (type 2) message.
+  if ((raw[3]! & 0x03) === MSGTYPE_SPECIAL) return null;
+
+  const halfDegree = (raw[12]! >> 5) & 1;
+  const temp = (TEMP_MAX - (raw[7]! & 0x0F)) + (halfDegree ? 0.5 : 0);
+
+  return {
+    power: !!(raw[5]! & 0x04),
+    temp,
+    mode: (raw[6]! & 0x0F) as Tcl112ModeValue,
+    fan: (raw[8]! & 0x07) as Tcl112FanValue,
+    swingV: ((raw[8]! >> 3) & 0x07) as Tcl112SwingVValue,
+    swingH: !!(raw[12]! & 0x08),
+    econo: !!(raw[5]! & 0x80),
+    health: !!(raw[6]! & 0x10),
+    light: !((raw[5]! >> 6) & 1),
+    turbo: !!(raw[6]! & 0x20),
+    onTimer: ((raw[10]! >> 1) & 0x3F) * TIMER_RESOLUTION,
+    offTimer: ((raw[9]! >> 1) & 0x3F) * TIMER_RESOLUTION,
+    model: ((raw[12]! >> 7) & 1) ? Tcl112Model.TAC09CHSD : Tcl112Model.GZ055BE1,
+  };
+}
+
+/**
  * Decode raw IR timings as a TCL112AC message.
  *
  * The header mark is matched with a tight tolerance so a (timing-compatible)
@@ -305,29 +342,5 @@ export function decodeTcl112(
   );
   if (!frame) return null;
 
-  const raw = frame.data;
-  // Fixed prefix + checksum gate false matches.
-  if (raw[0] !== 0x23 || raw[1] !== 0xCB || raw[2] !== 0x26) return null;
-  if (raw[13] !== calcChecksum(raw)) return null;
-  // Out of scope: the special/quiet (type 2) message.
-  if ((raw[3]! & 0x03) === MSGTYPE_SPECIAL) return null;
-
-  const halfDegree = (raw[12]! >> 5) & 1;
-  const temp = (TEMP_MAX - (raw[7]! & 0x0F)) + (halfDegree ? 0.5 : 0);
-
-  return {
-    power: !!(raw[5]! & 0x04),
-    temp,
-    mode: (raw[6]! & 0x0F) as Tcl112ModeValue,
-    fan: (raw[8]! & 0x07) as Tcl112FanValue,
-    swingV: ((raw[8]! >> 3) & 0x07) as Tcl112SwingVValue,
-    swingH: !!(raw[12]! & 0x08),
-    econo: !!(raw[5]! & 0x80),
-    health: !!(raw[6]! & 0x10),
-    light: !((raw[5]! >> 6) & 1),
-    turbo: !!(raw[6]! & 0x20),
-    onTimer: ((raw[10]! >> 1) & 0x3F) * TIMER_RESOLUTION,
-    offTimer: ((raw[9]! >> 1) & 0x3F) * TIMER_RESOLUTION,
-    model: ((raw[12]! >> 7) & 1) ? Tcl112Model.TAC09CHSD : Tcl112Model.GZ055BE1,
-  };
+  return interpretTcl112Bytes(frame.data);
 }

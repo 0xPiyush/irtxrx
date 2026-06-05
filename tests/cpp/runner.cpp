@@ -1251,6 +1251,69 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // ----- Teknopoint raw send -----
+
+    if (strcmp(fn, "sendTeknopoint") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendTeknopoint <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendTeknopoint(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Teknopoint via IRTcl112Ac setters (shared byte format) -----
+
+    if (strcmp(fn, "teknopoint") == 0) {
+        // Args: power temp mode fan swingV swingH econo health light turbo
+        //       onTimer offTimer model
+        if (argc < 15) {
+            fprintf(stderr, "Usage: runner teknopoint <power> <temp> <mode> "
+                "<fan> <swingV> <swingH> <econo> <health> <light> <turbo> "
+                "<onTimer> <offTimer> <model>\n");
+            return 1;
+        }
+        IRTcl112Ac ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setModel(static_cast<tcl_ac_remote_model_t>(atoi(argv[14])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<float>(atof(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingHorizontal(atoi(argv[7]) != 0);
+        ac.setEcono(atoi(argv[8]) != 0);
+        ac.setHealth(atoi(argv[9]) != 0);
+        ac.setLight(atoi(argv[10]) != 0);
+        ac.setTurbo(atoi(argv[11]) != 0);
+        ac.setOnTimer(static_cast<uint16_t>(atoi(argv[12])));
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[13])));
+        ac.setPower(atoi(argv[2]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kTeknopointStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendTeknopoint(raw, kTeknopointStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+
     // ----- TCL96AC raw send -----
 
     if (strcmp(fn, "sendTcl96Ac") == 0) {
