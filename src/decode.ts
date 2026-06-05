@@ -424,6 +424,18 @@ import type { Tcl112State } from "./protocols/tcl112.js";
 import { decodeTeknopoint } from "./protocols/teknopoint.js";
 import type { TeknopointState } from "./protocols/teknopoint.js";
 import { decodeTcl96 } from "./protocols/tcl96.js";
+import { decodePanasonic } from "./protocols/panasonic.js";
+import type { PanasonicState } from "./protocols/panasonic.js";
+import { decodePanasonicAc32 } from "./protocols/panasonic_ac32.js";
+import type { PanasonicAc32State } from "./protocols/panasonic_ac32.js";
+import { decodePanasonicAc } from "./protocols/panasonic_ac.js";
+import type { PanasonicAcState } from "./protocols/panasonic_ac.js";
+import { decodeSamsung } from "./protocols/samsung.js";
+import type { SamsungState } from "./protocols/samsung.js";
+import { decodeSamsung36 } from "./protocols/samsung36.js";
+import type { Samsung36State } from "./protocols/samsung36.js";
+import { decodeSamsungAc } from "./protocols/samsung_ac.js";
+import type { SamsungAcState } from "./protocols/samsung_ac.js";
 
 /** All supported protocol names. */
 export type ProtocolName =
@@ -435,6 +447,8 @@ export type ProtocolName =
   | "kelon" | "kelon168"
   | "teco"
   | "mitsubishi" | "mitsubishi2" | "mitsubishi_ac" | "mitsubishi136" | "mitsubishi112"
+  | "panasonic" | "panasonic_ac" | "panasonic_ac32"
+  | "samsung" | "samsung36" | "samsung_ac"
   | "godrej"
   | "voltas"
   | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
@@ -450,7 +464,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -479,6 +493,12 @@ export type DecodeResult =
   | { protocol: "mitsubishi112"; brand: "mitsubishi"; type: "ac"; state: Mitsubishi112State; confidence: "checksum_valid" }
   | { protocol: "mitsubishi"; brand: "mitsubishi"; type: "simple"; state: MitsubishiState; confidence: "timing_match" }
   | { protocol: "mitsubishi2"; brand: "mitsubishi"; type: "simple"; state: Mitsubishi2State; confidence: "timing_match" }
+  | { protocol: "panasonic"; brand: "panasonic"; type: "simple"; state: PanasonicState; confidence: "checksum_valid" }
+  | { protocol: "panasonic_ac"; brand: "panasonic"; type: "ac"; state: PanasonicAcState; confidence: "checksum_valid" }
+  | { protocol: "panasonic_ac32"; brand: "panasonic"; type: "ac"; state: PanasonicAc32State; confidence: "timing_match" }
+  | { protocol: "samsung"; brand: "samsung"; type: "simple"; state: SamsungState; confidence: "timing_match" }
+  | { protocol: "samsung36"; brand: "samsung"; type: "simple"; state: Samsung36State; confidence: "timing_match" }
+  | { protocol: "samsung_ac"; brand: "samsung"; type: "ac"; state: SamsungAcState; confidence: "checksum_valid" }
   | { protocol: "godrej"; brand: "godrej"; type: "ac"; state: GodrejState; confidence: "checksum_valid" }
   | { protocol: "voltas"; brand: "voltas"; type: "ac"; state: VoltasState; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac"; brand: "hitachi"; type: "ac"; state: HitachiAcState; confidence: "checksum_valid" }
@@ -728,6 +748,33 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
       return s ? { protocol: "teknopoint", brand: "teknopoint", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
+  // Panasonic AC (27-byte, two sections): gated by the 0x02 0x20 section
+  // signatures + byte-sum checksum.
+  {
+    protocol: "panasonic_ac", brand: "panasonic", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodePanasonicAc(timings, offset, ho);
+      return s ? { protocol: "panasonic_ac", brand: "panasonic", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Panasonic AC32: distinctive 3543/3450 header + 13946 section gaps; no
+  // checksum, but the two-section / duplicated-byte structure gates matches.
+  {
+    protocol: "panasonic_ac32", brand: "panasonic", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodePanasonicAc32(timings, offset, ho);
+      return s ? { protocol: "panasonic_ac32", brand: "panasonic", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Samsung AC (14-byte, two 7-byte sections): distinctive 690/17844 header +
+  // 3086/8864 sections; gated by per-section population-count checksums.
+  {
+    protocol: "samsung_ac", brand: "samsung", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSamsungAc(timings, offset, ho);
+      return s ? { protocol: "samsung_ac", brand: "samsung", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
   {
     protocol: "godrej", brand: "godrej", type: "ac",
     tryDecode(timings, offset, ho) {
@@ -741,6 +788,30 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeNEC(timings, offset, undefined, undefined, ho);
       return s ? { protocol: "nec", brand: "nec", type: "simple", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Panasonic 48-bit: gated by the 0x4004 manufacturer code + XOR checksum.
+  {
+    protocol: "panasonic", brand: "panasonic", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodePanasonic(timings, offset, ho);
+      return s ? { protocol: "panasonic", brand: "panasonic", type: "simple", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Samsung 36-bit (two blocks) before the 32-bit form: more specific framing.
+  {
+    protocol: "samsung36", brand: "samsung", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSamsung36(timings, offset, ho);
+      return s ? { protocol: "samsung36", brand: "samsung", type: "simple", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Samsung 32-bit: gated by the repeated customer byte + inverted command.
+  {
+    protocol: "samsung", brand: "samsung", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSamsung(timings, offset, ho);
+      return s ? { protocol: "samsung", brand: "samsung", type: "simple", state: s, confidence: "timing_match" } : null;
     },
   },
   // Mitsubishi2 before Mitsubishi: the headerless Mitsubishi matcher is the

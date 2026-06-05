@@ -388,3 +388,65 @@ export {
   sendTcl96,
   decodeTcl96,
 } from "./protocols/tcl96.js";
+export {
+  encodePanasonicData,
+  encodePanasonicRaw,
+  sendPanasonic,
+  decodePanasonic,
+  PANASONIC_BITS,
+  PANASONIC_MANUFACTURER,
+} from "./protocols/panasonic.js";
+export type { PanasonicState } from "./protocols/panasonic.js";
+export {
+  buildPanasonicAc32Raw,
+  encodePanasonicAc32Raw,
+  sendPanasonicAc32,
+  decodePanasonicAc32,
+  parsePanasonicAc32,
+  PanasonicAc32Mode,
+  PanasonicAc32Fan,
+  PanasonicAc32SwingV,
+  PANASONIC_AC32_BITS,
+  PANASONIC_AC32_KNOWN_GOOD,
+} from "./protocols/panasonic_ac32.js";
+export type { PanasonicAc32State, PanasonicAc32ModeValue, PanasonicAc32FanValue, PanasonicAc32SwingVValue } from "./protocols/panasonic_ac32.js";
+export {
+  buildPanasonicAcRaw,
+  encodePanasonicAcRaw,
+  sendPanasonicAc,
+  decodePanasonicAc,
+  parsePanasonicAcState,
+  detectPanasonicAcModel,
+  PanasonicAcMode,
+  PanasonicAcFan,
+  PanasonicAcSwingV,
+  PanasonicAcSwingH,
+  PanasonicAcModel,
+} from "./protocols/panasonic_ac.js";
+export type { PanasonicAcState, PanasonicAcModeValue, PanasonicAcFanValue, PanasonicAcSwingVValue, PanasonicAcSwingHValue, PanasonicAcModelValue } from "./protocols/panasonic_ac.js";
+export {
+  encodeSamsungData,
+  encodeSamsungRaw,
+  sendSamsung,
+  decodeSamsung,
+  SAMSUNG_BITS,
+} from "./protocols/samsung.js";
+export type { SamsungState } from "./protocols/samsung.js";
+export {
+  encodeSamsung36Raw,
+  sendSamsung36,
+  decodeSamsung36,
+  SAMSUNG36_BITS,
+} from "./protocols/samsung36.js";
+export type { Samsung36State } from "./protocols/samsung36.js";
+export {
+  buildSamsungAcRaw,
+  encodeSamsungAcRaw,
+  sendSamsungAc,
+  decodeSamsungAc,
+  parseSamsungAcState,
+  samsungAcValidChecksum,
+  SamsungAcMode,
+  SamsungAcFan,
+} from "./protocols/samsung_ac.js";
+export type { SamsungAcState, SamsungAcModeValue, SamsungAcFanValue } from "./protocols/samsung_ac.js";

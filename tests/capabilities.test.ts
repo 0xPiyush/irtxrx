@@ -80,8 +80,10 @@ describe("capabilities registry", () => {
     );
     expect(getProtocolsForBrand("godrej").map((p) => p.protocol)).toEqual(["godrej"]);
     expect(getProtocolsForBrand("teknopoint").map((p) => p.protocol)).toEqual(["teknopoint"]);
-    expect(getProtocolsForBrand("samsung")).toEqual([]); // unknown brand → empty
-    expect(listBrands().sort()).toEqual(["coolix", "daikin", "godrej", "gree", "hitachi", "kelon", "mitsubishi", "nec", "tcl", "teco", "teknopoint", "voltas"]);
+    expect(getProtocolsForBrand("panasonic").map((p) => p.protocol)).toEqual(["panasonic", "panasonic_ac", "panasonic_ac32"]);
+    expect(getProtocolsForBrand("samsung").map((p) => p.protocol)).toEqual(["samsung_ac", "samsung", "samsung36"]);
+    expect(getProtocolsForBrand("sony")).toEqual([]); // unknown brand → empty
+    expect(listBrands().sort()).toEqual(["coolix", "daikin", "godrej", "gree", "hitachi", "kelon", "mitsubishi", "nec", "panasonic", "samsung", "tcl", "teco", "teknopoint", "voltas"]);
   });
 
   it("getProtocolInfo returns undefined for unknown protocols", () => {

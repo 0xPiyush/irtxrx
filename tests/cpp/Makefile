@@ -67,6 +67,18 @@ CPPFLAGS := -DUNIT_TEST \
             -DSEND_MITSUBISHI_AC=true \
             -DSEND_MITSUBISHI136=true \
             -DSEND_MITSUBISHI112=true \
+            -DSEND_PANASONIC=true \
+            -DDECODE_PANASONIC=true \
+            -DSEND_PANASONIC_AC=true \
+            -DDECODE_PANASONIC_AC=true \
+            -DSEND_PANASONIC_AC32=true \
+            -DDECODE_PANASONIC_AC32=true \
+            -DSEND_SAMSUNG=true \
+            -DDECODE_SAMSUNG=true \
+            -DSEND_SAMSUNG36=true \
+            -DDECODE_SAMSUNG36=true \
+            -DSEND_SAMSUNG_AC=true \
+            -DDECODE_SAMSUNG_AC=true \
             -I$(VENDOR)/src \
             -I$(VENDOR)/test
 
@@ -87,6 +99,8 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_Tcl.cpp \
         $(VENDOR)/src/ir_Teknopoint.cpp \
         $(VENDOR)/src/ir_Mitsubishi.cpp \
+        $(VENDOR)/src/ir_Panasonic.cpp \
+        $(VENDOR)/src/ir_Samsung.cpp \
         $(VENDOR)/src/IRrecv.cpp
 
 runner: $(SRCS)

@@ -38,6 +38,9 @@ import { HitachiAc344SwingH } from "./protocols/hitachi344.js";
 import { HitachiAc296Mode, HitachiAc296Fan } from "./protocols/hitachi296.js";
 import { Tcl112Mode, Tcl112Fan, Tcl112SwingV } from "./protocols/tcl112.js";
 import { TeknopointMode, TeknopointFan, TeknopointSwingV } from "./protocols/teknopoint.js";
+import { PanasonicAc32Mode, PanasonicAc32Fan, PanasonicAc32SwingV } from "./protocols/panasonic_ac32.js";
+import { PanasonicAcMode, PanasonicAcFan, PanasonicAcSwingV, PanasonicAcSwingH } from "./protocols/panasonic_ac.js";
+import { SamsungAcMode, SamsungAcFan } from "./protocols/samsung_ac.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -232,6 +235,28 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
   info("nec", "nec", "simple"),
   info("mitsubishi", "mitsubishi", "simple"),
   info("mitsubishi2", "mitsubishi", "simple"),
+  // Samsung A/C — vertical/horizontal swing are simple on/off.
+  info("samsung_ac", "samsung", "ac", {
+    modes: named(SamsungAcMode), fans: named(SamsungAcFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: true,
+  }),
+  // Panasonic 48-bit remote protocol — a value carrier, no structured fields.
+  info("panasonic", "panasonic", "simple"),
+  // Samsung remote protocols — value carriers, no structured fields.
+  info("samsung", "samsung", "simple"),
+  info("samsung36", "samsung", "simple"),
+  info("panasonic_ac", "panasonic", "ac", {
+    modes: named(PanasonicAcMode), fans: named(PanasonicAcFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: true,
+    swingVOptions: named(PanasonicAcSwingV), swingHOptions: named(PanasonicAcSwingH),
+  }),
+  info("panasonic_ac32", "panasonic", "ac", {
+    modes: named(PanasonicAc32Mode), fans: named(PanasonicAc32Fan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: true, swingVOptions: named(PanasonicAc32SwingV),
+  }),
 ];
 
 // ---------------------------------------------------------------------------

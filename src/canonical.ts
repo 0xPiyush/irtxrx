@@ -43,6 +43,9 @@ import { TecoMode, TecoFan } from "./protocols/teco.js";
 import { VoltasMode, VoltasFan, VoltasModel } from "./protocols/voltas.js";
 import { Tcl112Mode, Tcl112Fan, Tcl112SwingV, Tcl112Model } from "./protocols/tcl112.js";
 import { TeknopointMode, TeknopointFan, TeknopointSwingV, TeknopointModel } from "./protocols/teknopoint.js";
+import { PanasonicAc32Mode, PanasonicAc32Fan, PanasonicAc32SwingV } from "./protocols/panasonic_ac32.js";
+import { PanasonicAcMode, PanasonicAcFan, PanasonicAcSwingV, PanasonicAcSwingH, PanasonicAcModel } from "./protocols/panasonic_ac.js";
+import { SamsungAcMode, SamsungAcFan } from "./protocols/samsung_ac.js";
 import { HitachiAcMode, HitachiAcFan } from "./protocols/hitachi.js";
 import { HitachiAc1Mode, HitachiAc1Fan, HitachiAc1Model } from "./protocols/hitachi1.js";
 import { HitachiAc264Fan } from "./protocols/hitachi264.js";
@@ -649,6 +652,59 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 720, step: 20, unit: "minutes" },
       { kind: "enum", canonical: "model", key: "model", constants: TeknopointModel, map: { TAC09CHSD: "tac09chsd", GZ055BE1: "gz055be1" } },
     ],
+  },
+
+  panasonic_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: PanasonicAcMode, map: { Auto: "auto", Dry: "dry", Cool: "cool", Heat: "heat", Fan: "fan" } },
+    fan: { constants: PanasonicAcFan, map: { Min: "min", Low: "low", Med: "medium", High: "high", Max: "max", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: PanasonicAcSwingV, map: {
+      Highest: "highest", High: "high", Middle: "middle", Low: "low", Lowest: "lowest", Auto: "auto",
+    } } },
+    swingH: { key: "swingH", kind: "position", positions: { constants: PanasonicAcSwingH, map: {
+      Middle: "middle", FullLeft: "left_max", Left: "left", Right: "right", FullRight: "right_max", Auto: "auto",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+      { kind: "boolean", canonical: "turbo", key: "powerful" },
+      { kind: "boolean", canonical: "purify", key: "ion" },
+      { kind: "range", canonical: "clock", key: "clock", min: 0, max: 1439, unit: "minutes" },
+      { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 1439, step: 10, unit: "minutes", enabledKey: "onTimerEnabled" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 1439, step: 10, unit: "minutes", enabledKey: "offTimerEnabled" },
+      { kind: "enum", canonical: "model", key: "model", constants: PanasonicAcModel, map: { Lke: "lke", Nke: "nke", Dke: "dke", Jke: "jke", Ckp: "ckp", Rkr: "rkr" } },
+    ],
+  },
+
+  samsung_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: SamsungAcMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: SamsungAcFan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high", Turbo: "max" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "bool" },
+    swingH: { key: "swingH", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+      { kind: "boolean", canonical: "turbo", key: "powerful" },
+      { kind: "boolean", canonical: "comfort", key: "breeze" },
+      { kind: "boolean", canonical: "econo", key: "econo" },
+      { kind: "boolean", canonical: "clean", key: "clean" },
+      { kind: "boolean", canonical: "beep", key: "beep" },
+      { kind: "boolean", canonical: "light", key: "display" },
+      { kind: "boolean", canonical: "purify", key: "ion" },
+    ],
+  },
+
+  panasonic_ac32: {
+    power: { kind: "toggle", key: "powerToggle" },
+    modes: { constants: PanasonicAc32Mode, map: { Fan: "fan", Cool: "cool", Dry: "dry", Heat: "heat", Auto: "auto" } },
+    fan: { constants: PanasonicAc32Fan, map: { Min: "min", Low: "low", Med: "medium", High: "high", Max: "max", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: PanasonicAc32SwingV, map: {
+      Highest: "highest", High: "high", Middle: "middle", Low: "low", Lowest: "lowest", Auto: "auto",
+    } } },
+    swingH: { key: "swingH", kind: "bool" },
+    features: [],
   },
 
   hitachi_ac: {

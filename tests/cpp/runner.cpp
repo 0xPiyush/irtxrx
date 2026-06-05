@@ -29,6 +29,8 @@
 #include "ir_Hitachi.h"
 #include "ir_Tcl.h"
 #include "ir_Mitsubishi.h"
+#include "ir_Panasonic.h"
+#include "ir_Samsung.h"
 #include "IRrecv.h"
 #include "IRutils.h"
 
@@ -1335,6 +1337,289 @@ int main(int argc, char* argv[]) {
         irsend.begin();
         irsend.sendTcl96Ac(data, nbytes, repeat);
         printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Panasonic 48-bit -----
+
+    if (strcmp(fn, "sendPanasonic64") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: runner sendPanasonic64 <data_hex> <nbits> [repeat]\n");
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = static_cast<uint16_t>(atoi(argv[3]));
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendPanasonic64(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "encodePanasonic") == 0) {
+        if (argc < 6) {
+            fprintf(stderr, "Usage: runner encodePanasonic <mfr_hex> <device> <subdevice> <function>\n");
+            return 1;
+        }
+        uint16_t mfr = static_cast<uint16_t>(strtoul(argv[2], nullptr, 16));
+        uint8_t device = static_cast<uint8_t>(atoi(argv[3]));
+        uint8_t subdevice = static_cast<uint8_t>(atoi(argv[4]));
+        uint8_t function = static_cast<uint8_t>(atoi(argv[5]));
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        printf("%012llX\n", static_cast<unsigned long long>(
+            irsend.encodePanasonic(mfr, device, subdevice, function)));
+        return 0;
+    }
+
+    // ----- Panasonic AC raw send (27-byte state) -----
+
+    if (strcmp(fn, "sendPanasonicAC") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendPanasonicAC <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendPanasonicAC(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Panasonic AC via class setters -----
+
+    if (strcmp(fn, "panasonicAc") == 0) {
+        // Args: model power temp mode fan swingV swingH quiet powerful ion
+        //       clock onTimer onTimerEn offTimer offTimerEn
+        if (argc < 16) {
+            fprintf(stderr, "Usage: runner panasonicAc <model> <power> <temp> "
+                "<mode> <fan> <swingV> <swingH> <quiet> <powerful> <ion> "
+                "<clock> <onTimer> <onTimerEn> <offTimer> <offTimerEn>\n");
+            return 1;
+        }
+        IRPanasonicAc ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setModel(static_cast<panasonic_ac_remote_model_t>(atoi(argv[2])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingVertical(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setSwingHorizontal(static_cast<uint8_t>(atoi(argv[8])));
+        ac.setQuiet(atoi(argv[9]) != 0);
+        ac.setPowerful(atoi(argv[10]) != 0);
+        ac.setIon(atoi(argv[11]) != 0);
+        ac.setClock(static_cast<uint16_t>(atoi(argv[12])));
+        ac.setOnTimer(static_cast<uint16_t>(atoi(argv[13])), atoi(argv[14]) != 0);
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[15])), argc > 16 ? atoi(argv[16]) != 0 : true);
+        ac.setPower(atoi(argv[3]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kPanasonicAcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
+        return 0;
+    }
+
+    // ----- Panasonic AC32 raw send -----
+
+    if (strcmp(fn, "sendPanasonicAC32") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: runner sendPanasonicAC32 <data_hex> <nbits> [repeat]\n");
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = static_cast<uint16_t>(atoi(argv[3]));
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendPanasonicAC32(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Panasonic AC32 via class setters -----
+
+    if (strcmp(fn, "panasonicAc32") == 0) {
+        // Args: powerToggle temp mode fan swingV swingH
+        if (argc < 8) {
+            fprintf(stderr, "Usage: runner panasonicAc32 <powerToggle> <temp> "
+                "<mode> <fan> <swingV> <swingH>\n");
+            return 1;
+        }
+        IRPanasonicAc32 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingHorizontal(atoi(argv[7]) != 0);
+        ac.setPowerToggle(atoi(argv[2]) != 0);
+
+        printf("%08lX\n", static_cast<unsigned long>(ac.getRaw()));
+        return 0;
+    }
+
+    // ----- Samsung 32-bit -----
+
+    if (strcmp(fn, "sendSAMSUNG") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: runner sendSAMSUNG <data_hex> <nbits> [repeat]\n");
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = static_cast<uint16_t>(atoi(argv[3]));
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendSAMSUNG(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "encodeSAMSUNG") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: runner encodeSAMSUNG <customer> <command>\n");
+            return 1;
+        }
+        uint8_t customer = static_cast<uint8_t>(atoi(argv[2]));
+        uint8_t command = static_cast<uint8_t>(atoi(argv[3]));
+        IRsendTest irsend(4);
+        irsend.begin();
+        printf("%08lX\n", static_cast<unsigned long>(irsend.encodeSAMSUNG(customer, command)));
+        return 0;
+    }
+
+    // ----- Samsung 36-bit -----
+
+    if (strcmp(fn, "sendSamsung36") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: runner sendSamsung36 <data_hex> <nbits> [repeat]\n");
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = static_cast<uint16_t>(atoi(argv[3]));
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendSamsung36(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Samsung AC raw send -----
+
+    if (strcmp(fn, "sendSamsungAC") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendSamsungAC <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendSamsungAC(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Samsung AC via class setters (standard 14-byte message) -----
+
+    if (strcmp(fn, "samsungAc") == 0) {
+        // Args: power temp mode fan swingV swingH quiet powerful breeze econo
+        //       clean beep display ion
+        if (argc < 16) {
+            fprintf(stderr, "Usage: runner samsungAc <power> <temp> <mode> <fan> "
+                "<swingV> <swingH> <quiet> <powerful> <breeze> <econo> <clean> "
+                "<beep> <display> <ion>\n");
+            return 1;
+        }
+        IRSamsungAc ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwing(atoi(argv[6]) != 0);
+        ac.setSwingH(atoi(argv[7]) != 0);
+        ac.setQuiet(atoi(argv[8]) != 0);
+        ac.setPowerful(atoi(argv[9]) != 0);
+        ac.setBreeze(atoi(argv[10]) != 0);
+        ac.setEcono(atoi(argv[11]) != 0);
+        ac.setClean(atoi(argv[12]) != 0);
+        ac.setBeep(atoi(argv[13]) != 0);
+        ac.setDisplay(atoi(argv[14]) != 0);
+        ac.setIon(atoi(argv[15]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kSamsungAcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendSamsungAC(raw, kSamsungAcStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Generic value decode: feed raw timings into IRrecv::decode -----
+    // Prints "<PROTOCOL_NAME>\n<value_hex>" or "FAIL". For value-based
+    // protocols (Panasonic 48-bit / AC32) that store the result in `value`.
+
+    if (strcmp(fn, "decodeValue") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner decodeValue <csv_timings_usec>\n");
+            return 1;
+        }
+        static uint16_t rawbuf[1024];
+        uint16_t n = 0;
+        const char* p = argv[2];
+        while (*p && n < 1022) {
+            char* end;
+            long v = strtol(p, &end, 10);
+            if (end == p) break;
+            long ticks = v / kRawTick;
+            rawbuf[++n] = static_cast<uint16_t>(ticks > UINT16_MAX ? UINT16_MAX : ticks);
+            p = end;
+            while (*p == ',' || *p == ' ') p++;
+        }
+
+        decode_results results;
+        results.rawbuf = rawbuf;
+        results.rawlen = n + 1;
+        results.overflow = false;
+        results.decode_type = UNKNOWN;
+
+        IRrecv irrecv(4);
+        if (irrecv.decode(&results)) {
+            printf("%s\n", typeToString(results.decode_type, false).c_str());
+            printf("%llX\n", static_cast<unsigned long long>(results.value));
+        } else {
+            printf("FAIL\n");
+        }
         return 0;
     }
 

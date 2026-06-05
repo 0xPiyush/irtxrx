@@ -74,6 +74,18 @@ import { sendTeknopoint } from "./protocols/teknopoint.js";
 import type { TeknopointState } from "./protocols/teknopoint.js";
 import { sendTcl96 } from "./protocols/tcl96.js";
 import { sendNEC, encodeNEC } from "./protocols/nec.js";
+import { sendPanasonic } from "./protocols/panasonic.js";
+import type { PanasonicState } from "./protocols/panasonic.js";
+import { sendPanasonicAc32 } from "./protocols/panasonic_ac32.js";
+import type { PanasonicAc32State } from "./protocols/panasonic_ac32.js";
+import { sendPanasonicAc } from "./protocols/panasonic_ac.js";
+import type { PanasonicAcState } from "./protocols/panasonic_ac.js";
+import { sendSamsung } from "./protocols/samsung.js";
+import type { SamsungState } from "./protocols/samsung.js";
+import { sendSamsung36 } from "./protocols/samsung36.js";
+import type { Samsung36State } from "./protocols/samsung36.js";
+import { sendSamsungAc } from "./protocols/samsung_ac.js";
+import type { SamsungAcState } from "./protocols/samsung_ac.js";
 
 /** The state shape each protocol's encoder accepts, keyed by protocol name. */
 export interface ProtocolStateMap {
@@ -114,6 +126,12 @@ export interface ProtocolStateMap {
   tcl96: Uint8Array;
   /** NEC re-encodes from the decoded address + command. */
   nec: { address: number; command: number };
+  panasonic: PanasonicState;
+  panasonic_ac: PanasonicAcState;
+  panasonic_ac32: PanasonicAc32State;
+  samsung: SamsungState;
+  samsung36: Samsung36State;
+  samsung_ac: SamsungAcState;
 }
 
 type EncoderMap = {
@@ -154,6 +172,12 @@ const ENCODERS: EncoderMap = {
   teknopoint: (s, r) => sendTeknopoint(s, r),
   tcl96: (s, r) => sendTcl96(s, r),
   nec: (s, r) => sendNEC(encodeNEC(s.address, s.command), undefined, r),
+  panasonic: (s, r) => sendPanasonic(s, r),
+  panasonic_ac: (s, r) => sendPanasonicAc(s, r),
+  panasonic_ac32: (s, r) => sendPanasonicAc32(s, r),
+  samsung: (s, r) => sendSamsung(s, r),
+  samsung36: (s, r) => sendSamsung36(s, r),
+  samsung_ac: (s, r) => sendSamsungAc(s, r),
 };
 
 /**
