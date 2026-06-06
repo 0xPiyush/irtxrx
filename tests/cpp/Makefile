@@ -79,6 +79,27 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_SAMSUNG36=true \
             -DSEND_SAMSUNG_AC=true \
             -DDECODE_SAMSUNG_AC=true \
+            -DSEND_LG=true \
+            -DDECODE_LG=true \
+            -DSEND_LG2=true \
+            -DSEND_CARRIER_AC=true \
+            -DDECODE_CARRIER_AC=true \
+            -DSEND_CARRIER_AC40=true \
+            -DDECODE_CARRIER_AC40=true \
+            -DSEND_CARRIER_AC64=true \
+            -DDECODE_CARRIER_AC64=true \
+            -DSEND_CARRIER_AC84=true \
+            -DDECODE_CARRIER_AC84=true \
+            -DSEND_CARRIER_AC128=true \
+            -DDECODE_CARRIER_AC128=true \
+            -DSEND_HAIER_AC=true \
+            -DDECODE_HAIER_AC=true \
+            -DSEND_HAIER_AC_YRW02=true \
+            -DDECODE_HAIER_AC_YRW02=true \
+            -DSEND_HAIER_AC160=true \
+            -DDECODE_HAIER_AC160=true \
+            -DSEND_HAIER_AC176=true \
+            -DDECODE_HAIER_AC176=true \
             -I$(VENDOR)/src \
             -I$(VENDOR)/test
 
@@ -101,6 +122,9 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_Mitsubishi.cpp \
         $(VENDOR)/src/ir_Panasonic.cpp \
         $(VENDOR)/src/ir_Samsung.cpp \
+        $(VENDOR)/src/ir_LG.cpp \
+        $(VENDOR)/src/ir_Carrier.cpp \
+        $(VENDOR)/src/ir_Haier.cpp \
         $(VENDOR)/src/IRrecv.cpp
 
 runner: $(SRCS)

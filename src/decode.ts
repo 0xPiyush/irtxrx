@@ -436,6 +436,26 @@ import { decodeSamsung36 } from "./protocols/samsung36.js";
 import type { Samsung36State } from "./protocols/samsung36.js";
 import { decodeSamsungAc } from "./protocols/samsung_ac.js";
 import type { SamsungAcState } from "./protocols/samsung_ac.js";
+import { decodeLg } from "./protocols/lg.js";
+import type { LgState } from "./protocols/lg.js";
+import { decodeLgAc } from "./protocols/lg_ac.js";
+import type { LgAcState } from "./protocols/lg_ac.js";
+import { decodeCarrierAc } from "./protocols/carrier_ac.js";
+import type { CarrierAcState } from "./protocols/carrier_ac.js";
+import { decodeCarrierAc40 } from "./protocols/carrier_ac40.js";
+import type { CarrierAc40State } from "./protocols/carrier_ac40.js";
+import { decodeCarrierAc64 } from "./protocols/carrier_ac64.js";
+import type { CarrierAc64State } from "./protocols/carrier_ac64.js";
+import { decodeCarrierAc84 } from "./protocols/carrier_ac84.js";
+import { decodeCarrierAc128 } from "./protocols/carrier_ac128.js";
+import { decodeHaierAc } from "./protocols/haier_ac.js";
+import type { HaierAcState } from "./protocols/haier_ac.js";
+import { decodeHaierAcYrw02 } from "./protocols/haier_ac_yrw02.js";
+import type { HaierAcYrw02State } from "./protocols/haier_ac_yrw02.js";
+import { decodeHaierAc160 } from "./protocols/haier_ac160.js";
+import type { HaierAc160State } from "./protocols/haier_ac160.js";
+import { decodeHaierAc176 } from "./protocols/haier_ac176.js";
+import type { HaierAc176State } from "./protocols/haier_ac176.js";
 
 /** All supported protocol names. */
 export type ProtocolName =
@@ -449,6 +469,9 @@ export type ProtocolName =
   | "mitsubishi" | "mitsubishi2" | "mitsubishi_ac" | "mitsubishi136" | "mitsubishi112"
   | "panasonic" | "panasonic_ac" | "panasonic_ac32"
   | "samsung" | "samsung36" | "samsung_ac"
+  | "lg" | "lg_ac"
+  | "carrier_ac" | "carrier_ac40" | "carrier_ac64" | "carrier_ac84" | "carrier_ac128"
+  | "haier_ac" | "haier_ac_yrw02" | "haier_ac160" | "haier_ac176"
   | "godrej"
   | "voltas"
   | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
@@ -464,7 +487,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -499,6 +522,17 @@ export type DecodeResult =
   | { protocol: "samsung"; brand: "samsung"; type: "simple"; state: SamsungState; confidence: "timing_match" }
   | { protocol: "samsung36"; brand: "samsung"; type: "simple"; state: Samsung36State; confidence: "timing_match" }
   | { protocol: "samsung_ac"; brand: "samsung"; type: "ac"; state: SamsungAcState; confidence: "checksum_valid" }
+  | { protocol: "lg"; brand: "lg"; type: "simple"; state: LgState; confidence: "checksum_valid" }
+  | { protocol: "lg_ac"; brand: "lg"; type: "ac"; state: LgAcState; confidence: "checksum_valid" }
+  | { protocol: "carrier_ac"; brand: "carrier"; type: "ac"; state: CarrierAcState; confidence: "checksum_valid" }
+  | { protocol: "carrier_ac40"; brand: "carrier"; type: "ac"; state: CarrierAc40State; confidence: "timing_match" }
+  | { protocol: "carrier_ac64"; brand: "carrier"; type: "ac"; state: CarrierAc64State; confidence: "checksum_valid" }
+  | { protocol: "carrier_ac84"; brand: "carrier"; type: "ac"; state: Uint8Array; confidence: "timing_match" }
+  | { protocol: "carrier_ac128"; brand: "carrier"; type: "ac"; state: Uint8Array; confidence: "timing_match" }
+  | { protocol: "haier_ac"; brand: "haier"; type: "ac"; state: HaierAcState; confidence: "checksum_valid" }
+  | { protocol: "haier_ac_yrw02"; brand: "haier"; type: "ac"; state: HaierAcYrw02State; confidence: "checksum_valid" }
+  | { protocol: "haier_ac160"; brand: "haier"; type: "ac"; state: HaierAc160State; confidence: "checksum_valid" }
+  | { protocol: "haier_ac176"; brand: "haier"; type: "ac"; state: HaierAc176State; confidence: "checksum_valid" }
   | { protocol: "godrej"; brand: "godrej"; type: "ac"; state: GodrejState; confidence: "checksum_valid" }
   | { protocol: "voltas"; brand: "voltas"; type: "ac"; state: VoltasState; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac"; brand: "hitachi"; type: "ac"; state: HitachiAcState; confidence: "checksum_valid" }
@@ -775,6 +809,82 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
       return s ? { protocol: "samsung_ac", brand: "samsung", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
+  // LG A/C (28-bit, LG/LG2 wire): the 0x88 signature + nibble checksum. Must
+  // precede the generic `lg` remote so A/C frames aren't swallowed as remotes.
+  {
+    protocol: "lg_ac", brand: "lg", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeLgAc(timings, offset, ho);
+      return s ? { protocol: "lg_ac", brand: "lg", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Haier family — all share the 3000/3000 lead-in + 3000/4300 header and are
+  // told apart by payload length, prefix/model bytes, and byte-sum checksums.
+  {
+    protocol: "haier_ac176", brand: "haier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHaierAc176(timings, offset, ho);
+      return s ? { protocol: "haier_ac176", brand: "haier", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "haier_ac160", brand: "haier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHaierAc160(timings, offset, ho);
+      return s ? { protocol: "haier_ac160", brand: "haier", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "haier_ac_yrw02", brand: "haier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHaierAcYrw02(timings, offset, ho);
+      return s ? { protocol: "haier_ac_yrw02", brand: "haier", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "haier_ac", brand: "haier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeHaierAc(timings, offset, ho);
+      return s ? { protocol: "haier_ac", brand: "haier", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Carrier family. AC64 (checksum) + the two-section AC128 / const-bit-time
+  // AC84 are gated structurally; the bare 32/40-bit value forms come last.
+  {
+    protocol: "carrier_ac64", brand: "carrier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeCarrierAc64(timings, offset, ho);
+      return s ? { protocol: "carrier_ac64", brand: "carrier", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "carrier_ac128", brand: "carrier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeCarrierAc128(timings, offset, ho);
+      return s ? { protocol: "carrier_ac128", brand: "carrier", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  {
+    protocol: "carrier_ac84", brand: "carrier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeCarrierAc84(timings, offset, ho);
+      return s ? { protocol: "carrier_ac84", brand: "carrier", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  {
+    protocol: "carrier_ac", brand: "carrier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeCarrierAc(timings, offset, ho);
+      return s ? { protocol: "carrier_ac", brand: "carrier", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "carrier_ac40", brand: "carrier", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeCarrierAc40(timings, offset, ho);
+      return s ? { protocol: "carrier_ac40", brand: "carrier", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
   {
     protocol: "godrej", brand: "godrej", type: "ac",
     tryDecode(timings, offset, ho) {
@@ -812,6 +922,15 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeSamsung(timings, offset, ho);
       return s ? { protocol: "samsung", brand: "samsung", type: "simple", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // LG 28-bit remote (LG/LG2): nibble-checksum gated. After lg_ac so non-A/C
+  // (sign != 0x88) remote frames land here.
+  {
+    protocol: "lg", brand: "lg", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodeLg(timings, offset, ho);
+      return s ? { protocol: "lg", brand: "lg", type: "simple", state: s, confidence: "checksum_valid" } : null;
     },
   },
   // Mitsubishi2 before Mitsubishi: the headerless Mitsubishi matcher is the

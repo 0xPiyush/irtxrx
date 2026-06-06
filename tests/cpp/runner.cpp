@@ -31,6 +31,9 @@
 #include "ir_Mitsubishi.h"
 #include "ir_Panasonic.h"
 #include "ir_Samsung.h"
+#include "ir_LG.h"
+#include "ir_Carrier.h"
+#include "ir_Haier.h"
 #include "IRrecv.h"
 #include "IRutils.h"
 
@@ -1585,6 +1588,210 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // ----- LG / LG2 28-bit -----
+
+    if (strcmp(fn, "sendLG") == 0 || strcmp(fn, "sendLG2") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: runner %s <data_hex> <nbits> [repeat]\n", fn);
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = static_cast<uint16_t>(atoi(argv[3]));
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        if (strcmp(fn, "sendLG2") == 0) irsend.sendLG2(data, nbits, repeat);
+        else irsend.sendLG(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "encodeLG") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: runner encodeLG <address> <command>\n");
+            return 1;
+        }
+        uint16_t address = static_cast<uint16_t>(atoi(argv[2]));
+        uint16_t command = static_cast<uint16_t>(atoi(argv[3]));
+        IRsendTest irsend(4);
+        irsend.begin();
+        printf("%07lX\n", static_cast<unsigned long>(irsend.encodeLG(address, command)));
+        return 0;
+    }
+
+    // ----- LG A/C via class setters (main command) -----
+
+    if (strcmp(fn, "lgAc") == 0) {
+        // Args: model power mode temp fan
+        if (argc < 7) {
+            fprintf(stderr, "Usage: runner lgAc <model> <power> <mode> <temp> <fan>\n");
+            return 1;
+        }
+        IRLgAc ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setModel(static_cast<lg_ac_remote_model_t>(atoi(argv[2])));
+        ac.setPower(atoi(argv[3]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        printf("%07lX\n", static_cast<unsigned long>(ac.getRaw()));
+        return 0;
+    }
+
+    // ----- Carrier value protocols (AC 32 / AC40 / AC64) -----
+
+    if (strcmp(fn, "sendCarrierAC") == 0 || strcmp(fn, "sendCarrierAC40") == 0 ||
+        strcmp(fn, "sendCarrierAC64") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: runner %s <data_hex> <nbits> [repeat]\n", fn);
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = static_cast<uint16_t>(atoi(argv[3]));
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        if (strcmp(fn, "sendCarrierAC40") == 0) irsend.sendCarrierAC40(data, nbits, repeat);
+        else if (strcmp(fn, "sendCarrierAC64") == 0) irsend.sendCarrierAC64(data, nbits, repeat);
+        else irsend.sendCarrierAC(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "carrierAc64") == 0) {
+        // Args: power mode temp fan swingV sleep onTimerMins offTimerMins
+        if (argc < 10) {
+            fprintf(stderr, "Usage: runner carrierAc64 <power> <mode> <temp> <fan> "
+                "<swingV> <sleep> <onTimerMins> <offTimerMins>\n");
+            return 1;
+        }
+        IRCarrierAc64 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingV(atoi(argv[6]) != 0);
+        ac.setOnTimer(static_cast<uint16_t>(atoi(argv[8])));
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[9])));
+        ac.setSleep(atoi(argv[7]) != 0);
+        ac.setPower(atoi(argv[2]) != 0);
+        printf("%016llX\n", static_cast<unsigned long long>(ac.getRaw()));
+        return 0;
+    }
+
+    // ----- Carrier byte-array protocols (AC128 / AC84) -----
+
+    if (strcmp(fn, "sendCarrierAC128") == 0 || strcmp(fn, "sendCarrierAC84") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner %s <hex_bytes> [repeat]\n", fn);
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        if (strcmp(fn, "sendCarrierAC84") == 0) irsend.sendCarrierAC84(data, nbytes, repeat);
+        else irsend.sendCarrierAC128(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Haier (all variants share sendHaierAC; length picks the decode) -----
+
+    if (strcmp(fn, "sendHaier") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendHaier <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendHaierAC(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Haier AC176 / YRW02 via class setters -----
+
+    if (strcmp(fn, "haier176") == 0 || strcmp(fn, "haierYrw02") == 0) {
+        // Args: model power temp mode fan swingV swingH health sleep turbo quiet button
+        if (argc < 14) {
+            fprintf(stderr, "Usage: runner %s <model> <power> <temp> <mode> <fan> "
+                "<swingV> <swingH> <health> <sleep> <turbo> <quiet> <button>\n", fn);
+            return 1;
+        }
+        const bool yrw02 = strcmp(fn, "haierYrw02") == 0;
+        IRHaierAC176 ac176(4);
+        IRHaierACYRW02 acy(4);
+        IRHaierAC176& ac = yrw02 ? static_cast<IRHaierAC176&>(acy) : ac176;
+        ac.begin();
+        ac.stateReset();
+        ac.setModel(static_cast<haier_ac176_remote_model_t>(atoi(argv[2])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[4])), false);
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingV(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setSwingH(static_cast<uint8_t>(atoi(argv[8])));
+        ac.setHealth(atoi(argv[9]) != 0);
+        ac.setSleep(atoi(argv[10]) != 0);
+        ac.setTurbo(atoi(argv[11]) != 0);
+        ac.setQuiet(atoi(argv[12]) != 0);
+        ac.setPower(atoi(argv[3]) != 0);
+        ac.setButton(static_cast<uint8_t>(atoi(argv[13])));
+        uint8_t* raw = ac.getRaw();
+        const int len = yrw02 ? kHaierACYRW02StateLength : kHaierAC176StateLength;
+        for (int i = 0; i < len; i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
+    // ----- Haier AC160 via class setters -----
+
+    if (strcmp(fn, "haier160") == 0) {
+        // Args: power temp mode fan swingV health sleep turbo quiet clean auxHeating button
+        if (argc < 14) {
+            fprintf(stderr, "Usage: runner haier160 <power> <temp> <mode> <fan> "
+                "<swingV> <health> <sleep> <turbo> <quiet> <clean> <auxHeating> <button>\n");
+            return 1;
+        }
+        IRHaierAC160 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])), false);
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingV(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setHealth(atoi(argv[7]) != 0);
+        ac.setSleep(atoi(argv[8]) != 0);
+        ac.setTurbo(atoi(argv[9]) != 0);
+        ac.setQuiet(atoi(argv[10]) != 0);
+        ac.setClean(atoi(argv[11]) != 0);
+        ac.setAuxHeating(atoi(argv[12]) != 0);
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setButton(static_cast<uint8_t>(atoi(argv[13])));
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kHaierAC160StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
     // ----- Generic value decode: feed raw timings into IRrecv::decode -----
     // Prints "<PROTOCOL_NAME>\n<value_hex>" or "FAIL". For value-based
     // protocols (Panasonic 48-bit / AC32) that store the result in `value`.
@@ -1653,7 +1860,9 @@ int main(int argc, char* argv[]) {
         IRrecv irrecv(4);
         if (irrecv.decode(&results)) {
             printf("%s\n", typeToString(results.decode_type, false).c_str());
-            for (uint16_t i = 0; i < results.bits / 8; i++)
+            // Round up so non-byte-aligned protocols (e.g. CARRIER_AC84's 84
+            // bits across 11 bytes) print their full state.
+            for (uint16_t i = 0; i < (results.bits + 7) / 8; i++)
                 printf("%02X", results.state[i]);
             printf("\n");
         } else {

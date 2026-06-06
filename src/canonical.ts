@@ -46,6 +46,10 @@ import { TeknopointMode, TeknopointFan, TeknopointSwingV, TeknopointModel } from
 import { PanasonicAc32Mode, PanasonicAc32Fan, PanasonicAc32SwingV } from "./protocols/panasonic_ac32.js";
 import { PanasonicAcMode, PanasonicAcFan, PanasonicAcSwingV, PanasonicAcSwingH, PanasonicAcModel } from "./protocols/panasonic_ac.js";
 import { SamsungAcMode, SamsungAcFan } from "./protocols/samsung_ac.js";
+import { LgAcMode, LgAcFan, LgAcModel } from "./protocols/lg_ac.js";
+import { CarrierAc64Mode, CarrierAc64Fan } from "./protocols/carrier_ac64.js";
+import { HaierAcYrw02Mode, HaierAcYrw02Fan, HaierAc176SwingV, HaierAc176SwingH } from "./protocols/haier_ac176.js";
+import { HaierAc160SwingV } from "./protocols/haier_ac160.js";
 import { HitachiAcMode, HitachiAcFan } from "./protocols/hitachi.js";
 import { HitachiAc1Mode, HitachiAc1Fan, HitachiAc1Model } from "./protocols/hitachi1.js";
 import { HitachiAc264Fan } from "./protocols/hitachi264.js";
@@ -673,6 +677,86 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 1439, step: 10, unit: "minutes", enabledKey: "onTimerEnabled" },
       { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 1439, step: 10, unit: "minutes", enabledKey: "offTimerEnabled" },
       { kind: "enum", canonical: "model", key: "model", constants: PanasonicAcModel, map: { Lke: "lke", Nke: "nke", Dke: "dke", Jke: "jke", Ckp: "ckp", Rkr: "rkr" } },
+    ],
+  },
+
+  lg_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: LgAcMode, map: { Cool: "cool", Dry: "dry", Fan: "fan", Auto: "auto", Heat: "heat" } },
+    fan: { constants: LgAcFan, map: { Lowest: "min", Low: "low", Medium: "medium", High: "high", Max: "max", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    features: [
+      { kind: "enum", canonical: "model", key: "model", constants: LgAcModel, map: {
+        GE6711AR2853M: "ge6711ar2853m", AKB75215403: "akb75215403", AKB74955603: "akb74955603", AKB73757604: "akb73757604", LG6711A20083V: "lg6711a20083v",
+      } },
+    ],
+  },
+
+  carrier_ac64: {
+    power: { kind: "stateful" },
+    modes: { constants: CarrierAc64Mode, map: { Heat: "heat", Cool: "cool", Fan: "fan" } },
+    fan: { constants: CarrierAc64Fan, map: { Auto: "auto", Low: "low", Medium: "medium", High: "high" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 540, step: 60, unit: "minutes" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 540, step: 60, unit: "minutes" },
+    ],
+  },
+
+  haier_ac_yrw02: {
+    power: { kind: "stateful" },
+    modes: { constants: HaierAcYrw02Mode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Heat: "heat", Fan: "fan" } },
+    fan: { constants: HaierAcYrw02Fan, map: { High: "high", Med: "medium", Low: "low", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: HaierAc176SwingV, map: {
+      Off: "off", Top: "highest", Middle: "middle", Bottom: "lowest", Down: "down", Auto: "auto",
+    } } },
+    swingH: { key: "swingH", kind: "position", positions: { constants: HaierAc176SwingH, map: {
+      Middle: "middle", LeftMax: "left_max", Left: "left", Right: "right", RightMax: "right_max", Auto: "auto",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "health", key: "health" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+    ],
+  },
+
+  haier_ac176: {
+    power: { kind: "stateful" },
+    modes: { constants: HaierAcYrw02Mode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Heat: "heat", Fan: "fan" } },
+    fan: { constants: HaierAcYrw02Fan, map: { High: "high", Med: "medium", Low: "low", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: HaierAc176SwingV, map: {
+      Off: "off", Top: "highest", Middle: "middle", Bottom: "lowest", Down: "down", Auto: "auto",
+    } } },
+    swingH: { key: "swingH", kind: "position", positions: { constants: HaierAc176SwingH, map: {
+      Middle: "middle", LeftMax: "left_max", Left: "left", Right: "right", RightMax: "right_max", Auto: "auto",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "health", key: "health" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+    ],
+  },
+
+  haier_ac160: {
+    power: { kind: "stateful" },
+    modes: { constants: HaierAcYrw02Mode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Heat: "heat", Fan: "fan" } },
+    fan: { constants: HaierAcYrw02Fan, map: { High: "high", Med: "medium", Low: "low", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: HaierAc160SwingV, map: {
+      Off: "off", Top: "up", Highest: "highest", High: "high", Middle: "middle", Low: "low", Lowest: "lowest", Auto: "auto",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "health", key: "health" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+      { kind: "boolean", canonical: "clean", key: "clean" },
     ],
   },
 

@@ -450,3 +450,56 @@ export {
   SamsungAcFan,
 } from "./protocols/samsung_ac.js";
 export type { SamsungAcState, SamsungAcModeValue, SamsungAcFanValue } from "./protocols/samsung_ac.js";
+export {
+  encodeLgData,
+  encodeLgRaw,
+  sendLg,
+  decodeLg,
+  LG_BITS,
+} from "./protocols/lg.js";
+export type { LgState } from "./protocols/lg.js";
+export {
+  buildLgAcRaw,
+  sendLgAc,
+  decodeLgAc,
+  parseLgAcState,
+  lgAcModelIsLg2,
+  LgAcMode,
+  LgAcFan,
+  LgAcModel,
+} from "./protocols/lg_ac.js";
+export type { LgAcState, LgAcModeValue, LgAcFanValue, LgAcModelValue } from "./protocols/lg_ac.js";
+export { encodeCarrierAcRaw, sendCarrierAc, decodeCarrierAc, CARRIER_AC_BITS } from "./protocols/carrier_ac.js";
+export type { CarrierAcState } from "./protocols/carrier_ac.js";
+export { encodeCarrierAc40Raw, sendCarrierAc40, decodeCarrierAc40, CARRIER_AC40_BITS } from "./protocols/carrier_ac40.js";
+export type { CarrierAc40State } from "./protocols/carrier_ac40.js";
+export {
+  buildCarrierAc64Raw, encodeCarrierAc64Raw, sendCarrierAc64, decodeCarrierAc64,
+  parseCarrierAc64State, carrierAc64Checksum, carrierAc64ValidChecksum,
+  CarrierAc64Mode, CarrierAc64Fan, CARRIER_AC64_BITS, CARRIER_AC64_KNOWN_GOOD,
+} from "./protocols/carrier_ac64.js";
+export type { CarrierAc64State, CarrierAc64ModeValue, CarrierAc64FanValue } from "./protocols/carrier_ac64.js";
+export { encodeCarrierAc84Raw, sendCarrierAc84, decodeCarrierAc84, CARRIER_AC84_STATE_LENGTH } from "./protocols/carrier_ac84.js";
+export { encodeCarrierAc128Raw, sendCarrierAc128, decodeCarrierAc128, CARRIER_AC128_STATE_LENGTH } from "./protocols/carrier_ac128.js";
+export {
+  buildHaierAcRaw, encodeHaierAcRaw, sendHaierAc, decodeHaierAc, parseHaierAcState,
+  HaierAcCommand, HaierAcMode, HaierAcFan, HaierAcSwingV,
+} from "./protocols/haier_ac.js";
+export type { HaierAcState, HaierAcCommandValue, HaierAcModeValue, HaierAcFanValue, HaierAcSwingVValue } from "./protocols/haier_ac.js";
+export {
+  buildHaierAc176Raw, encodeHaierAc176Raw, sendHaierAc176, decodeHaierAc176, parseHaierAc176State,
+  HaierAcYrw02Mode, HaierAcYrw02Fan, HaierAc176SwingV, HaierAc176SwingH, HaierAc176Model,
+} from "./protocols/haier_ac176.js";
+export type {
+  HaierAc176State, HaierAcYrw02ModeValue, HaierAcYrw02FanValue,
+  HaierAc176SwingVValue, HaierAc176SwingHValue, HaierAc176ModelValue,
+} from "./protocols/haier_ac176.js";
+export {
+  buildHaierAcYrw02Raw, encodeHaierAcYrw02Raw, sendHaierAcYrw02, decodeHaierAcYrw02, parseHaierAcYrw02State,
+} from "./protocols/haier_ac_yrw02.js";
+export type { HaierAcYrw02State } from "./protocols/haier_ac_yrw02.js";
+export {
+  buildHaierAc160Raw, encodeHaierAc160Raw, sendHaierAc160, decodeHaierAc160, parseHaierAc160State,
+  haierAc160LightToggle, HaierAc160SwingV,
+} from "./protocols/haier_ac160.js";
+export type { HaierAc160State, HaierAc160SwingVValue } from "./protocols/haier_ac160.js";

@@ -41,6 +41,11 @@ import { TeknopointMode, TeknopointFan, TeknopointSwingV } from "./protocols/tek
 import { PanasonicAc32Mode, PanasonicAc32Fan, PanasonicAc32SwingV } from "./protocols/panasonic_ac32.js";
 import { PanasonicAcMode, PanasonicAcFan, PanasonicAcSwingV, PanasonicAcSwingH } from "./protocols/panasonic_ac.js";
 import { SamsungAcMode, SamsungAcFan } from "./protocols/samsung_ac.js";
+import { LgAcMode, LgAcFan } from "./protocols/lg_ac.js";
+import { CarrierAc64Mode, CarrierAc64Fan } from "./protocols/carrier_ac64.js";
+import { HaierAcMode, HaierAcFan, HaierAcSwingV } from "./protocols/haier_ac.js";
+import { HaierAcYrw02Mode, HaierAcYrw02Fan, HaierAc176SwingV, HaierAc176SwingH } from "./protocols/haier_ac176.js";
+import { HaierAc160SwingV } from "./protocols/haier_ac160.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -256,6 +261,47 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     modes: named(PanasonicAc32Mode), fans: named(PanasonicAc32Fan),
     temp: { min: 16, max: 30, step: 1 },
     swingV: true, swingH: true, swingVOptions: named(PanasonicAc32SwingV),
+  }),
+  // LG A/C — swing/light are separate command codes (out of scope here).
+  info("lg_ac", "lg", "ac", {
+    modes: named(LgAcMode), fans: named(LgAcFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: false, swingH: false,
+  }),
+  // LG 28-bit remote protocol — a value carrier, no structured fields.
+  info("lg", "lg", "simple"),
+  // Carrier family.
+  info("carrier_ac64", "carrier", "ac", {
+    modes: named(CarrierAc64Mode), fans: named(CarrierAc64Fan),
+    temp: { min: 16, max: 30, step: 1 }, swingV: true, swingH: false,
+  }),
+  // Raw value/byte carriers — no structured fields.
+  info("carrier_ac", "carrier", "ac"),
+  info("carrier_ac40", "carrier", "ac"),
+  info("carrier_ac84", "carrier", "ac"),
+  info("carrier_ac128", "carrier", "ac"),
+  // Haier family.
+  info("haier_ac", "haier", "ac", {
+    modes: named(HaierAcMode), fans: named(HaierAcFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: false, swingVOptions: named(HaierAcSwingV),
+  }),
+  info("haier_ac_yrw02", "haier", "ac", {
+    modes: named(HaierAcYrw02Mode), fans: named(HaierAcYrw02Fan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: true,
+    swingVOptions: named(HaierAc176SwingV), swingHOptions: named(HaierAc176SwingH),
+  }),
+  info("haier_ac160", "haier", "ac", {
+    modes: named(HaierAcYrw02Mode), fans: named(HaierAcYrw02Fan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: false, swingVOptions: named(HaierAc160SwingV),
+  }),
+  info("haier_ac176", "haier", "ac", {
+    modes: named(HaierAcYrw02Mode), fans: named(HaierAcYrw02Fan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: true,
+    swingVOptions: named(HaierAc176SwingV), swingHOptions: named(HaierAc176SwingH),
   }),
 ];
 

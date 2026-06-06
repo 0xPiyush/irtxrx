@@ -86,6 +86,26 @@ import { sendSamsung36 } from "./protocols/samsung36.js";
 import type { Samsung36State } from "./protocols/samsung36.js";
 import { sendSamsungAc } from "./protocols/samsung_ac.js";
 import type { SamsungAcState } from "./protocols/samsung_ac.js";
+import { sendLg } from "./protocols/lg.js";
+import type { LgState } from "./protocols/lg.js";
+import { sendLgAc } from "./protocols/lg_ac.js";
+import type { LgAcState } from "./protocols/lg_ac.js";
+import { sendCarrierAc } from "./protocols/carrier_ac.js";
+import type { CarrierAcState } from "./protocols/carrier_ac.js";
+import { sendCarrierAc40 } from "./protocols/carrier_ac40.js";
+import type { CarrierAc40State } from "./protocols/carrier_ac40.js";
+import { sendCarrierAc64 } from "./protocols/carrier_ac64.js";
+import type { CarrierAc64State } from "./protocols/carrier_ac64.js";
+import { sendCarrierAc84 } from "./protocols/carrier_ac84.js";
+import { sendCarrierAc128 } from "./protocols/carrier_ac128.js";
+import { sendHaierAc } from "./protocols/haier_ac.js";
+import type { HaierAcState } from "./protocols/haier_ac.js";
+import { sendHaierAcYrw02 } from "./protocols/haier_ac_yrw02.js";
+import type { HaierAcYrw02State } from "./protocols/haier_ac_yrw02.js";
+import { sendHaierAc160 } from "./protocols/haier_ac160.js";
+import type { HaierAc160State } from "./protocols/haier_ac160.js";
+import { sendHaierAc176 } from "./protocols/haier_ac176.js";
+import type { HaierAc176State } from "./protocols/haier_ac176.js";
 
 /** The state shape each protocol's encoder accepts, keyed by protocol name. */
 export interface ProtocolStateMap {
@@ -132,6 +152,19 @@ export interface ProtocolStateMap {
   samsung: SamsungState;
   samsung36: Samsung36State;
   samsung_ac: SamsungAcState;
+  lg: LgState;
+  lg_ac: LgAcState;
+  carrier_ac: CarrierAcState;
+  carrier_ac40: CarrierAc40State;
+  carrier_ac64: CarrierAc64State;
+  /** Raw 11-byte payload. */
+  carrier_ac84: Uint8Array;
+  /** Raw 16-byte payload. */
+  carrier_ac128: Uint8Array;
+  haier_ac: HaierAcState;
+  haier_ac_yrw02: HaierAcYrw02State;
+  haier_ac160: HaierAc160State;
+  haier_ac176: HaierAc176State;
 }
 
 type EncoderMap = {
@@ -178,6 +211,17 @@ const ENCODERS: EncoderMap = {
   samsung: (s, r) => sendSamsung(s, r),
   samsung36: (s, r) => sendSamsung36(s, r),
   samsung_ac: (s, r) => sendSamsungAc(s, r),
+  lg: (s, r) => sendLg(s, r),
+  lg_ac: (s, r) => sendLgAc(s, r),
+  carrier_ac: (s, r) => sendCarrierAc(s, r),
+  carrier_ac40: (s, r) => sendCarrierAc40(s, r),
+  carrier_ac64: (s, r) => sendCarrierAc64(s, r),
+  carrier_ac84: (s, r) => sendCarrierAc84(s, r),
+  carrier_ac128: (s, r) => sendCarrierAc128(s, r),
+  haier_ac: (s, r) => sendHaierAc(s, r),
+  haier_ac_yrw02: (s, r) => sendHaierAcYrw02(s, r),
+  haier_ac160: (s, r) => sendHaierAc160(s, r),
+  haier_ac176: (s, r) => sendHaierAc176(s, r),
 };
 
 /**
