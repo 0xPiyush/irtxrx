@@ -255,7 +255,8 @@ export function decodeHitachiAc424(
     HITACHI_AC424_BIT_MARK, HITACHI_AC424_ONE_SPACE,
     HITACHI_AC424_BIT_MARK, HITACHI_AC424_ZERO_SPACE,
     HITACHI_AC424_BIT_MARK, HITACHI_MIN_GAP,
-    true, undefined, undefined, false,
+    // C++ decodeHitachiAc424 pins mark-excess to 0 (not the global 50µs).
+    true, undefined, 0, false,
     headerOptional,
   );
   if (!frame) return null;

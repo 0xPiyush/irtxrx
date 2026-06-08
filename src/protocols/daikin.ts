@@ -294,7 +294,7 @@ function skipLeader(
     BIT_MARK, ONE_SPACE,              // oneMark, oneSpace
     BIT_MARK, ZERO_SPACE,             // zeroMark, zeroSpace
     BIT_MARK, FOOTER_GAP,             // footerMark, gap
-    true,                             // atLeast for gap
+    true, 35,                         // atLeast for gap; C++ kDaikinTolerance=35
   );
   return result ? offset + result.used : offset;
 }
@@ -323,7 +323,7 @@ export function decodeDaikinESP(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, FOOTER_GAP,
-    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+    true, 35, undefined, false, // C++ kDaikinTolerance=35; excess defaults to 50 (=kDaikinMarkExcess)
     headerOptional,
   );
   if (!s1) return null;
@@ -336,7 +336,7 @@ export function decodeDaikinESP(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, FOOTER_GAP,
-    true, undefined, undefined, false,
+    true, 35, undefined, false, // C++ kDaikinTolerance=35; excess defaults to 50 (=kDaikinMarkExcess)
   );
   if (!s2) return null;
   pos += s2.used;
@@ -348,7 +348,7 @@ export function decodeDaikinESP(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, FOOTER_GAP,
-    true, undefined, undefined, false,
+    true, 35, undefined, false, // C++ kDaikinTolerance=35; excess defaults to 50 (=kDaikinMarkExcess)
   );
   if (!s3) return null;
 

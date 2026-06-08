@@ -15,14 +15,13 @@ export const kTolerance = 25;
 /**
  * Default mark excess in microseconds.
  * Compensates for sensor lag: marks are captured too long, spaces too short.
- * Set to 0 for ideal timings (encoder output); increase for real hardware.
- * IRremoteESP8266 uses 50µs globally; decoders that need to match real-hardware
- * captures pass {@link kHardwareMarkExcess} explicitly per call.
+ * Matches IRremoteESP8266's global `kMarkExcess` (50µs) so real-hardware
+ * captures decode identically to the C++ reference. Ideal encoder output also
+ * matches, since exact timings stay within the shifted tolerance windows.
  */
-export const kMarkExcess = 0;
+export const kMarkExcess = 50;
 
-/** IRremoteESP8266's global mark-excess (50µs), passed per-decoder where a
- *  protocol must tolerate real-hardware mark/space bias like the C++ reference. */
+/** Alias of {@link kMarkExcess}; kept for call sites that pass it explicitly. */
 export const kHardwareMarkExcess = 50;
 
 // ---------------------------------------------------------------------------

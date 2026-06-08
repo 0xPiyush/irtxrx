@@ -87,7 +87,8 @@ export function decodeMitsubishi2(
       timings, pos, 8,
       M2_BIT_MARK, M2_ONE_SPACE,
       M2_BIT_MARK, M2_ZERO_SPACE,
-      M2_TOLERANCE, 0, true,
+      // C++ decodeMitsubishi2 uses the global mark-excess (50µs).
+      M2_TOLERANCE, undefined, true,
     );
     if (!r.success) return null;
     value = (value << 8) | Number(r.data & 0xffn);

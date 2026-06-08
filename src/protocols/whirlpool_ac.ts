@@ -276,7 +276,8 @@ export function decodeWhirlpoolAc(
     timings, pos, timings.length - pos, 7,
     0, 0,
     BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
-    BIT_MARK, MESSAGE_GAP,
+    // C++ decodeWhirlpoolAC uses kWhirlpoolAcGap (7920) for the section-3 footer.
+    BIT_MARK, SECTION_GAP,
     true, undefined, undefined, false, false,
   );
   if (!s3) return null;

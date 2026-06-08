@@ -34,7 +34,7 @@ const STATE_LENGTH = 39;
 const SECTION1_LEN = 20;
 const HEADER_BITS = 5;
 const UNUSED_TIME = 0x600;
-const DAIKIN312_TOLERANCE = 30;
+const DAIKIN312_TOLERANCE = 35; // C++ kDaikinTolerance
 
 // ---------------------------------------------------------------------------
 // State interface
@@ -268,7 +268,7 @@ function skipLeader(
     BIT_MARK, ZERO_SPACE,             // zeroMark, zeroSpace
     BIT_MARK, HDR_GAP,               // footerMark, gap
     true,                             // atLeast for gap
-    DAIKIN312_TOLERANCE,
+    DAIKIN312_TOLERANCE, 0,           // C++ decodeDaikin312 uses mark-excess 0
   );
   return result ? offset + result.used : offset;
 }
@@ -321,7 +321,8 @@ export function decodeDaikin312(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, SECTION_GAP,
-    true, DAIKIN312_TOLERANCE, undefined, false,
+    // C++ decodeDaikin312 pins mark-excess to 0 (not the global 50µs).
+    true, DAIKIN312_TOLERANCE, 0, false,
     headerOptional,
   );
   if (!s1) return null;
@@ -335,7 +336,7 @@ export function decodeDaikin312(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, SECTION_GAP,
-    true, DAIKIN312_TOLERANCE, undefined, false,
+    true, DAIKIN312_TOLERANCE, 0, false,
   );
   if (!s2) return null;
 

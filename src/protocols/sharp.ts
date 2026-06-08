@@ -110,12 +110,13 @@ export function decodeSharp(
   _headerOptional: boolean = false,
 ): SharpState | null {
   void _headerOptional;
+  // C++ decodeSharp uses tolerance 35% and atLeast=true for both blocks.
   const b1 = matchGeneric(
     timings, offset, timings.length - offset, SHARP_BITS,
     0, 0,
     BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    false, undefined, undefined, true, false,
+    true, 35, undefined, true, false,
   );
   if (!b1) return null;
 
@@ -124,7 +125,7 @@ export function decodeSharp(
     0, 0,
     BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    true, undefined, undefined, true, false,
+    true, 35, undefined, true, false,
   );
   if (!b2) return null;
 

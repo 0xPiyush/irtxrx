@@ -187,7 +187,8 @@ export function decodeHitachiAc296(
     HITACHI_BIT_MARK, HITACHI_ONE_SPACE,
     HITACHI_BIT_MARK, HITACHI_ZERO_SPACE,
     HITACHI_BIT_MARK, HITACHI_MIN_GAP,
-    true, undefined, undefined, false,
+    // C++ decodeHitachiAc296 pins mark-excess to 0 (not the global 50µs).
+    true, undefined, 0, false,
     headerOptional,
   );
   if (!frame) return null;

@@ -295,7 +295,7 @@ function matchByteLSB(timings: number[], pos: number): { value: number; used: nu
     timings, pos, 8,
     GREE_BIT_MARK, GREE_ONE_SPACE,
     GREE_BIT_MARK, GREE_ZERO_SPACE,
-    GREE_TOLERANCE, 0, false, // LSB-first
+    GREE_TOLERANCE, undefined, false, // LSB-first; C++ decodeGree uses global mark-excess (50µs)
   );
   if (!r.success) return null;
   return { value: Number(r.data & 0xffn), used: r.used };
@@ -345,7 +345,7 @@ export function decodeGreeRaw(
     timings, pos, GREE_BLOCK_FOOTER_BITS,
     GREE_BIT_MARK, GREE_ONE_SPACE,
     GREE_BIT_MARK, GREE_ZERO_SPACE,
-    GREE_TOLERANCE, 0, false,
+    GREE_TOLERANCE, undefined, false,
   );
   if (!footer.success || Number(footer.data) !== GREE_BLOCK_FOOTER) return null;
   pos += footer.used;

@@ -90,7 +90,8 @@ export function decodeHitachiAc3(
       HITACHI_AC3_BIT_MARK, HITACHI_AC3_ONE_SPACE,
       HITACHI_AC3_BIT_MARK, HITACHI_AC3_ZERO_SPACE,
       HITACHI_AC3_BIT_MARK, HITACHI_MIN_GAP,
-      true, undefined, undefined, false,
+      // C++ decodeHitachiAc3 pins mark-excess to 0 (not the global 50µs).
+      true, undefined, 0, false,
       headerOptional,
     );
     if (frame && checkInvertedBytePairs(frame.data, 3, nbytes - 3)) {

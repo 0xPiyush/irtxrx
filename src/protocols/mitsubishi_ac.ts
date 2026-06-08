@@ -270,7 +270,8 @@ export function decodeMitsubishiAc(
     HDR_MARK, HDR_SPACE,
     BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
     RPT_MARK, RPT_SPACE,
-    true, TOLERANCE, undefined, false,
+    // C++ decodeMitsubishiAC pins mark-excess to 0 (not the global 50µs).
+    true, TOLERANCE, 0, false,
     headerOptional,
   );
   if (!frame) return null;

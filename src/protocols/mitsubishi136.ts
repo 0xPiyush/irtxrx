@@ -182,7 +182,8 @@ export function decodeMitsubishi136(
     HDR_MARK, HDR_SPACE,
     BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    true, TOLERANCE, undefined, false,
+    // C++ decodeMitsubishi136 pins mark-excess to 0 (not the global 50µs).
+    true, TOLERANCE, 0, false,
     headerOptional,
   );
   if (!frame) return null;

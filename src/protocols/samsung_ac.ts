@@ -403,8 +403,9 @@ export function decodeSamsungAc(
   // Message header — mark matched loosely (the 690µs mark sits within the
   // bit-mark tolerance window, mirroring the C++ decoder).
   let hasHeader = false;
+  // C++ decodeSamsungAC pins mark-excess to 0 (not the global 50µs).
   if (pos + 1 < timings.length &&
-      matchMark(timings[pos]!, BIT_MARK) && matchSpace(timings[pos + 1]!, HDR_SPACE)) {
+      matchMark(timings[pos]!, BIT_MARK, undefined, 0) && matchSpace(timings[pos + 1]!, HDR_SPACE, undefined, 0)) {
     pos += 2;
     hasHeader = true;
   }
@@ -419,7 +420,7 @@ export function decodeSamsungAc(
       SECTION_MARK, SECTION_SPACE,
       BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
       BIT_MARK, isLast ? MESSAGE_GAP : SECTION_GAP,
-      isLast, undefined, undefined, false, false,
+      isLast, undefined, 0, false, false,
     );
     if (!sec) return null;
     raw.set(sec.data, s * SECTION_LENGTH);

@@ -305,11 +305,11 @@ export function decodeKelon168Raw(
   // 168 data bits(336) + 3 footers(6) + header(2) ≈ 344 entries.
   if (len - offset < 340) return null;
 
-  // Section 1 header
+  // Section 1 header. C++ decodeKelon168 uses mark-excess 0 (not the global 50µs).
   if (
     pos + 1 < len &&
-    matchMark(timings[pos]!, KELON_HDR_MARK, KELON_TOLERANCE) &&
-    matchSpace(timings[pos + 1]!, KELON_HDR_SPACE, KELON_TOLERANCE)
+    matchMark(timings[pos]!, KELON_HDR_MARK, KELON_TOLERANCE, 0) &&
+    matchSpace(timings[pos + 1]!, KELON_HDR_SPACE, KELON_TOLERANCE, 0)
   ) {
     pos += 2;
   } else if (!headerOptional) {
@@ -329,7 +329,7 @@ export function decodeKelon168Raw(
     }
     // Section footer mark
     if (pos >= len) return null;
-    if (!matchMark(timings[pos]!, KELON_BIT_MARK, KELON_TOLERANCE)) return null;
+    if (!matchMark(timings[pos]!, KELON_BIT_MARK, KELON_TOLERANCE, 0)) return null;
     pos++;
     // Section footer space (8000 for §1/§2; large gap for §3, possibly absent at EOF)
     const lastSection = s === sizes.length - 1;
@@ -338,7 +338,7 @@ export function decodeKelon168Raw(
       if (lastSection) {
         if (!matchAtLeast(timings[pos]!, space, KELON_TOLERANCE)) return null;
       } else {
-        if (!matchSpace(timings[pos]!, space, KELON_TOLERANCE)) return null;
+        if (!matchSpace(timings[pos]!, space, KELON_TOLERANCE, 0)) return null;
       }
       pos++;
     } else if (!lastSection) {

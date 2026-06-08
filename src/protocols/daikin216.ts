@@ -168,7 +168,7 @@ export function decodeDaikin216(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    true, undefined, undefined, false, // atLeast, tol, excess, msbFirst=false
+    true, 35, undefined, false, // C++ kDaikinTolerance=35; excess→50 (kDaikinMarkExcess)
     headerOptional,
   );
   if (!section1) return null;
@@ -182,7 +182,7 @@ export function decodeDaikin216(
     BIT_MARK, ONE_SPACE,
     BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    true, undefined, undefined, false,
+    true, 35, undefined, false, // C++ kDaikinTolerance=35; excess→50 (kDaikinMarkExcess)
   );
   if (!section2) return null;
 

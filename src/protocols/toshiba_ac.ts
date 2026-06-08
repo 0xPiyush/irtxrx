@@ -25,7 +25,8 @@ const HDR_SPACE = 4300;
 const BIT_MARK = 580;
 const ONE_SPACE = 1600;
 const ZERO_SPACE = 490;
-const GAP = 7400; // kToshibaAcUsualGap
+const GAP = 7400; // kToshibaAcUsualGap (used when sending)
+const DECODE_GAP = 4600; // kToshibaAcMinGap (C++ decode footer-space lower bound)
 
 const STATE_LENGTH = 9; // "normal" form
 const STATE_LENGTH_LONG = 10; // Eco/Turbo form
@@ -186,7 +187,7 @@ export function decodeToshibaAc(
       timings, offset, timings.length - offset, length,
       HDR_MARK, HDR_SPACE,
       BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
-      BIT_MARK, GAP,
+      BIT_MARK, DECODE_GAP,
       true, undefined, undefined, true, headerOptional,
     );
     if (frame && toshibaAcValidChecksum(frame.data)) return parseToshibaAcState(frame.data);

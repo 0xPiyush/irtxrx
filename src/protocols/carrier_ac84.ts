@@ -92,15 +92,15 @@ export function decodeCarrierAc84(
 
   const out = new Uint8Array(CARRIER_AC84_STATE_LENGTH);
 
-  // Leading nibble.
-  const nibble = matchData(timings, pos, EXTRA_BITS, ONE_MARK, ONE_SPACE, ZERO_MARK, ZERO_SPACE, TOLERANCE, 0, false, true);
+  // Leading nibble. C++ decodeCarrierAC84 uses the global mark-excess (50µs).
+  const nibble = matchData(timings, pos, EXTRA_BITS, ONE_MARK, ONE_SPACE, ZERO_MARK, ZERO_SPACE, TOLERANCE, undefined, false, true);
   if (!nibble.success) return null;
   out[0] = Number(nibble.data & 0xfn);
   pos += nibble.used;
 
   // The remaining whole bytes.
   for (let i = 1; i < CARRIER_AC84_STATE_LENGTH; i++) {
-    const b = matchData(timings, pos, 8, ONE_MARK, ONE_SPACE, ZERO_MARK, ZERO_SPACE, TOLERANCE, 0, false, true);
+    const b = matchData(timings, pos, 8, ONE_MARK, ONE_SPACE, ZERO_MARK, ZERO_SPACE, TOLERANCE, undefined, false, true);
     if (!b.success) return null;
     out[i] = Number(b.data & 0xffn);
     pos += b.used;

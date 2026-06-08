@@ -197,7 +197,8 @@ export function decodeTeco(
     TECO_BIT_MARK, TECO_ONE_SPACE,
     TECO_BIT_MARK, TECO_ZERO_SPACE,
     TECO_BIT_MARK, TECO_GAP,
-    true, TECO_TOLERANCE, 0, false, headerOptional,
+    // C++ decodeTeco uses the global mark-excess (50µs).
+    true, TECO_TOLERANCE, undefined, false, headerOptional,
   );
   if (!result) return null;
   return parseTecoState(result.data);

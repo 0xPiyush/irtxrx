@@ -68,7 +68,8 @@ export function decodeMitsubishi(
     MITSUBISHI_BIT_MARK, MITSUBISHI_ONE_SPACE,
     MITSUBISHI_BIT_MARK, MITSUBISHI_ZERO_SPACE,
     MITSUBISHI_BIT_MARK, MITSUBISHI_MIN_GAP,
-    true, MITSUBISHI_TOLERANCE, 0, true,
+    // C++ decodeMitsubishi uses tolerance 30% and the global mark-excess (50µs).
+    true, MITSUBISHI_TOLERANCE, undefined, true,
   );
   if (!result) return null;
   return { value: Number(result.data & 0xffffn) };

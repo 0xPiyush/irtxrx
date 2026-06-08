@@ -295,9 +295,10 @@ export function decodeCoolixRaw(
   if (len - offset < 97) return null;
 
   // Header — consume if present, fail if required but missing.
+  // C++ decodeCOOLIX pins mark-excess to 0 (it does not use the global 50µs).
   if (pos + 1 < len &&
-      matchMark(timings[pos]!, COOLIX_HDR_MARK, COOLIX_TOLERANCE) &&
-      matchSpace(timings[pos + 1]!, COOLIX_HDR_SPACE, COOLIX_TOLERANCE)) {
+      matchMark(timings[pos]!, COOLIX_HDR_MARK, COOLIX_TOLERANCE, 0) &&
+      matchSpace(timings[pos + 1]!, COOLIX_HDR_SPACE, COOLIX_TOLERANCE, 0)) {
     pos += 2;
   } else if (!headerOptional) {
     return null;
@@ -311,7 +312,7 @@ export function decodeCoolixRaw(
       timings, pos, 8,
       COOLIX_BIT_MARK, COOLIX_ONE_SPACE,
       COOLIX_BIT_MARK, COOLIX_ZERO_SPACE,
-      COOLIX_TOLERANCE,
+      COOLIX_TOLERANCE, 0,
     );
     if (!normal.success) return null;
     pos += normal.used;
@@ -321,7 +322,7 @@ export function decodeCoolixRaw(
       timings, pos, 8,
       COOLIX_BIT_MARK, COOLIX_ONE_SPACE,
       COOLIX_BIT_MARK, COOLIX_ZERO_SPACE,
-      COOLIX_TOLERANCE,
+      COOLIX_TOLERANCE, 0,
     );
     if (!inverted.success) return null;
     pos += inverted.used;
@@ -336,7 +337,7 @@ export function decodeCoolixRaw(
 
   // Footer mark
   if (pos >= len) return null;
-  if (!matchMark(timings[pos]!, COOLIX_BIT_MARK, COOLIX_TOLERANCE)) return null;
+  if (!matchMark(timings[pos]!, COOLIX_BIT_MARK, COOLIX_TOLERANCE, 0)) return null;
   pos++;
 
   // Footer gap (optional — may be last frame)

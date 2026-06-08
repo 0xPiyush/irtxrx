@@ -161,7 +161,8 @@ export function decodeLg(
     0, hdrSpace, // header mark already consumed
     bitMark, ONE_SPACE, bitMark, ZERO_SPACE,
     bitMark, MIN_GAP,
-    true, undefined, undefined, true, false,
+    // C++ decodeLG pins mark-excess to 0 (not the global 50µs).
+    true, undefined, 0, true, false,
   );
   if (!result) return null;
 

@@ -345,7 +345,8 @@ export function decodePanasonicAc32(
     const dr = matchData(
       timings, pos, PANASONIC_AC32_BITS,
       BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
-      TOLERANCE, 0, false, true,
+      // C++ decodePanasonicAC32 uses the global mark-excess (50µs).
+      TOLERANCE, undefined, false, true,
     );
     if (!dr.success) return null;
     pos += dr.used;

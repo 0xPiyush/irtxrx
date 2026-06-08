@@ -35,7 +35,7 @@ const ONE_SPACE = 1160;
 const ZERO_SPACE = 408;
 /** Trailing inter-frame gap (not captured; a reasonable placeholder). */
 const GAP = 8000;
-const TOLERANCE = 30;
+const TOLERANCE = 40;
 
 const STATE_LENGTH = 12;
 export const GODREJ_BITS = STATE_LENGTH * 8;

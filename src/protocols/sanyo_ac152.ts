@@ -68,7 +68,8 @@ export function decodeSanyoAc152(
     HDR_MARK, HDR_SPACE,
     BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    true, undefined, undefined, false, headerOptional,
+    // C++ decodeSanyoAc152: _tolerance(25) + kSanyoAc152ExtraTolerance(13) = 38%.
+    true, 38, undefined, false, headerOptional,
   );
   return frame ? frame.data : null;
 }

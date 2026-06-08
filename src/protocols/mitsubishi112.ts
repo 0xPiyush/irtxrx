@@ -177,11 +177,12 @@ export function decodeMitsubishi112(
 ): Mitsubishi112State | null {
   let pos = offset;
 
+  // C++ decodeMitsubishi112 pins mark-excess to 0 (not the global 50µs).
   let hasHeader = false;
   if (
     pos + 1 < timings.length &&
-    matchMark(timings[pos]!, HDR_MARK, HDR_MARK_TOLERANCE) &&
-    matchSpace(timings[pos + 1]!, HDR_SPACE, DATA_TOLERANCE)
+    matchMark(timings[pos]!, HDR_MARK, HDR_MARK_TOLERANCE, 0) &&
+    matchSpace(timings[pos + 1]!, HDR_SPACE, DATA_TOLERANCE, 0)
   ) {
     pos += 2;
     hasHeader = true;
@@ -193,7 +194,7 @@ export function decodeMitsubishi112(
     0, 0,
     BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
     BIT_MARK, GAP,
-    true, DATA_TOLERANCE, undefined, false,
+    true, DATA_TOLERANCE, 0, false,
     false,
   );
   if (!frame) return null;
