@@ -13,7 +13,7 @@ import { decode, REGISTERED_PROTOCOLS } from "../src/decode";
 import type { ProtocolName } from "../src/decode";
 
 // Protocols with no structured state — deliberately absent from CAPABILITIES.
-const RAW_PROTOCOLS: ProtocolName[] = ["coolix48", "hitachi_ac3", "tcl96", "nec", "mitsubishi", "mitsubishi2", "panasonic", "samsung", "samsung36", "lg", "carrier_ac", "carrier_ac40", "carrier_ac84", "carrier_ac128", "haier_ac"];
+const RAW_PROTOCOLS: ProtocolName[] = ["coolix48", "hitachi_ac3", "tcl96", "nec", "mitsubishi", "mitsubishi2", "panasonic", "samsung", "samsung36", "lg", "carrier_ac", "carrier_ac40", "carrier_ac84", "carrier_ac128", "haier_ac", "sharp", "sanyo_lc7461", "sanyo_ac88", "sanyo_ac152", "mitsubishi_heavy152", "mitsubishi_heavy88", "bluestar_heavy"];
 
 const MAPPED = Object.keys(CAPABILITIES) as ProtocolName[];
 

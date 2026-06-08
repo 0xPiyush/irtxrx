@@ -34,6 +34,11 @@
 #include "ir_LG.h"
 #include "ir_Carrier.h"
 #include "ir_Haier.h"
+#include "ir_Toshiba.h"
+#include "ir_Sharp.h"
+#include "ir_Sanyo.h"
+#include "ir_Whirlpool.h"
+#include "ir_MitsubishiHeavy.h"
 #include "IRrecv.h"
 #include "IRutils.h"
 
@@ -1788,6 +1793,267 @@ int main(int argc, char* argv[]) {
         ac.setButton(static_cast<uint8_t>(atoi(argv[13])));
         uint8_t* raw = ac.getRaw();
         for (int i = 0; i < kHaierAC160StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
+    // ----- Toshiba A/C -----
+
+    if (strcmp(fn, "sendToshibaAC") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendToshibaAC <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) { unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b); }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendToshibaAC(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "toshibaAc") == 0) {
+        // model power temp mode fan filter turbo econo
+        if (argc < 10) { fprintf(stderr, "Usage: runner toshibaAc <model> <power> <temp> <mode> <fan> <filter> <turbo> <econo>\n"); return 1; }
+        IRToshibaAC ac(4); ac.begin(); ac.stateReset();
+        ac.setModel(static_cast<toshiba_ac_remote_model_t>(atoi(argv[2])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setFilter(atoi(argv[7]) != 0);
+        ac.setTurbo(atoi(argv[8]) != 0);
+        ac.setEcono(atoi(argv[9]) != 0);
+        ac.setPower(atoi(argv[3]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (uint16_t i = 0; i < ac.getStateLength(); i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
+    // ----- Sharp 15-bit remote -----
+
+    if (strcmp(fn, "sendSharpRaw") == 0) {
+        if (argc < 4) { fprintf(stderr, "Usage: runner sendSharpRaw <data_hex> <nbits> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = static_cast<uint16_t>(atoi(argv[3]));
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendSharpRaw(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "encodeSharp") == 0) {
+        if (argc < 4) { fprintf(stderr, "Usage: runner encodeSharp <address> <command>\n"); return 1; }
+        IRsendTest irsend(4); irsend.begin();
+        printf("%lX\n", static_cast<unsigned long>(
+            irsend.encodeSharp(static_cast<uint16_t>(atoi(argv[2])), static_cast<uint16_t>(atoi(argv[3])), 1, 0, true)));
+        return 0;
+    }
+
+    // ----- Sharp A/C -----
+
+    if (strcmp(fn, "sendSharpAc") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendSharpAc <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) { unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b); }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendSharpAc(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "sharpAc") == 0) {
+        // model power temp mode fan swingV ion
+        if (argc < 9) { fprintf(stderr, "Usage: runner sharpAc <model> <power> <temp> <mode> <fan> <swingV> <ion>\n"); return 1; }
+        IRSharpAc ac(4); ac.begin();
+        ac.setModel(static_cast<sharp_ac_remote_model_t>(atoi(argv[2])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingV(static_cast<uint8_t>(atoi(argv[7])), true);
+        ac.setIon(atoi(argv[8]) != 0);
+        ac.setPower(atoi(argv[3]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kSharpAcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
+    // ----- Sanyo LC7461 -----
+
+    if (strcmp(fn, "sendSanyoLC7461") == 0) {
+        if (argc < 4) { fprintf(stderr, "Usage: runner sendSanyoLC7461 <data_hex> <nbits> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = static_cast<uint16_t>(atoi(argv[3]));
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendSanyoLC7461(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "encodeSanyoLC7461") == 0) {
+        if (argc < 4) { fprintf(stderr, "Usage: runner encodeSanyoLC7461 <address> <command>\n"); return 1; }
+        IRsendTest irsend(4); irsend.begin();
+        printf("%llX\n", static_cast<unsigned long long>(
+            irsend.encodeSanyoLC7461(static_cast<uint16_t>(atoi(argv[2])), static_cast<uint8_t>(atoi(argv[3])))));
+        return 0;
+    }
+
+    // ----- Sanyo A/C raw sends -----
+
+    if (strcmp(fn, "sendSanyoAc") == 0 || strcmp(fn, "sendSanyoAc88") == 0 || strcmp(fn, "sendSanyoAc152") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner %s <hex> [repeat]\n", fn); return 1; }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) { unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b); }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        if (strcmp(fn, "sendSanyoAc88") == 0) irsend.sendSanyoAc88(data, nbytes, repeat);
+        else if (strcmp(fn, "sendSanyoAc152") == 0) irsend.sendSanyoAc152(data, nbytes, repeat);
+        else irsend.sendSanyoAc(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Sanyo A/C via class setters -----
+
+    if (strcmp(fn, "sanyoAc") == 0) {
+        // power temp mode fan swingV sleep beep sensor sensorTemp offTimerMins
+        if (argc < 12) { fprintf(stderr, "Usage: runner sanyoAc <power> <temp> <mode> <fan> <swingV> <sleep> <beep> <sensor> <sensorTemp> <offTimerMins>\n"); return 1; }
+        IRSanyoAc ac(4); ac.begin(); ac.stateReset();
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingV(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSleep(atoi(argv[7]) != 0);
+        ac.setBeep(atoi(argv[8]) != 0);
+        ac.setSensor(atoi(argv[9]) != 0);
+        ac.setSensorTemp(static_cast<uint8_t>(atoi(argv[10])));
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[11])));
+        ac.setPower(atoi(argv[2]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kSanyoAcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
+    if (strcmp(fn, "sanyoAc88") == 0) {
+        // power temp mode fan swingV filter turbo sleep clockMins
+        if (argc < 11) { fprintf(stderr, "Usage: runner sanyoAc88 <power> <temp> <mode> <fan> <swingV> <filter> <turbo> <sleep> <clockMins>\n"); return 1; }
+        IRSanyoAc88 ac(4); ac.begin(); ac.stateReset();
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingV(atoi(argv[6]) != 0);
+        ac.setFilter(atoi(argv[7]) != 0);
+        ac.setTurbo(atoi(argv[8]) != 0);
+        ac.setSleep(atoi(argv[9]) != 0);
+        ac.setClock(static_cast<uint16_t>(atoi(argv[10])));
+        ac.setPower(atoi(argv[2]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kSanyoAc88StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
+    // ----- Whirlpool A/C -----
+
+    if (strcmp(fn, "sendWhirlpoolAc") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendWhirlpoolAc <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) { unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b); }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendWhirlpoolAC(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "whirlpoolAc") == 0) {
+        // model powerToggle temp mode fan swing light sleep clock onTimer onEn offTimer offEn command
+        if (argc < 16) { fprintf(stderr, "Usage: runner whirlpoolAc <model> <powerToggle> <temp> <mode> <fan> <swing> <light> <sleep> <clock> <onTimer> <onEn> <offTimer> <offEn> <command>\n"); return 1; }
+        IRWhirlpoolAc ac(4); ac.begin(); ac.stateReset();
+        ac.setModel(static_cast<whirlpool_ac_remote_model_t>(atoi(argv[2])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwing(atoi(argv[7]) != 0);
+        ac.setLight(atoi(argv[8]) != 0);
+        ac.setSleep(atoi(argv[9]) != 0);
+        ac.setClock(static_cast<uint16_t>(atoi(argv[10])));
+        ac.setOnTimer(static_cast<uint16_t>(atoi(argv[11])));
+        ac.enableOnTimer(atoi(argv[12]) != 0);
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[13])));
+        ac.enableOffTimer(atoi(argv[14]) != 0);
+        ac.setPowerToggle(atoi(argv[3]) != 0);
+        ac.setCommand(static_cast<uint8_t>(atoi(argv[15])));
+        uint8_t* raw = ac.getRaw(true);
+        for (int i = 0; i < kWhirlpoolAcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
+    // ----- Mitsubishi Heavy + Bluestar raw sends -----
+
+    if (strcmp(fn, "sendMitsubishiHeavy152") == 0 || strcmp(fn, "sendMitsubishiHeavy88") == 0 ||
+        strcmp(fn, "sendBluestarHeavy") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner %s <hex> [repeat]\n", fn); return 1; }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) { unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b); }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        if (strcmp(fn, "sendMitsubishiHeavy88") == 0) irsend.sendMitsubishiHeavy88(data, nbytes, repeat);
+        else if (strcmp(fn, "sendBluestarHeavy") == 0) irsend.sendBluestarHeavy(data, nbytes, repeat);
+        else irsend.sendMitsubishiHeavy152(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Mitsubishi Heavy via class setters -----
+
+    if (strcmp(fn, "mheavy152") == 0) {
+        // power temp mode fan swingV swingH night silent filter clean threeD
+        if (argc < 13) { fprintf(stderr, "Usage: runner mheavy152 <power> <temp> <mode> <fan> <swingV> <swingH> <night> <silent> <filter> <clean> <3d>\n"); return 1; }
+        IRMitsubishiHeavy152Ac ac(4); ac.begin(); ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingHorizontal(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setNight(atoi(argv[8]) != 0);
+        ac.setSilent(atoi(argv[9]) != 0);
+        ac.setFilter(atoi(argv[10]) != 0);
+        ac.setClean(atoi(argv[11]) != 0);
+        ac.set3D(atoi(argv[12]) != 0);
+        ac.setPower(atoi(argv[2]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kMitsubishiHeavy152StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        return 0;
+    }
+
+    if (strcmp(fn, "mheavy88") == 0) {
+        // power temp mode fan swingV swingH clean
+        if (argc < 9) { fprintf(stderr, "Usage: runner mheavy88 <power> <temp> <mode> <fan> <swingV> <swingH> <clean>\n"); return 1; }
+        IRMitsubishiHeavy88Ac ac(4); ac.begin(); ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingVertical(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingHorizontal(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setClean(atoi(argv[8]) != 0);
+        ac.setPower(atoi(argv[2]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kMitsubishiHeavy88StateLength; i++) printf("%02X", raw[i]);
         printf("\n");
         return 0;
     }

@@ -100,6 +100,28 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_HAIER_AC160=true \
             -DSEND_HAIER_AC176=true \
             -DDECODE_HAIER_AC176=true \
+            -DSEND_TOSHIBA_AC=true \
+            -DDECODE_TOSHIBA_AC=true \
+            -DSEND_SHARP=true \
+            -DDECODE_SHARP=true \
+            -DSEND_SHARP_AC=true \
+            -DDECODE_SHARP_AC=true \
+            -DSEND_SANYO=true \
+            -DDECODE_SANYO=true \
+            -DSEND_SANYO_LC7461=true \
+            -DDECODE_SANYO_LC7461=true \
+            -DSEND_SANYO_AC=true \
+            -DDECODE_SANYO_AC=true \
+            -DSEND_SANYO_AC88=true \
+            -DDECODE_SANYO_AC88=true \
+            -DSEND_SANYO_AC152=true \
+            -DDECODE_SANYO_AC152=true \
+            -DSEND_WHIRLPOOL_AC=true \
+            -DDECODE_WHIRLPOOL_AC=true \
+            -DSEND_MITSUBISHIHEAVY=true \
+            -DDECODE_MITSUBISHIHEAVY=true \
+            -DSEND_BLUESTARHEAVY=true \
+            -DDECODE_BLUESTARHEAVY=true \
             -I$(VENDOR)/src \
             -I$(VENDOR)/test
 
@@ -125,6 +147,12 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_LG.cpp \
         $(VENDOR)/src/ir_Carrier.cpp \
         $(VENDOR)/src/ir_Haier.cpp \
+        $(VENDOR)/src/ir_Toshiba.cpp \
+        $(VENDOR)/src/ir_Sharp.cpp \
+        $(VENDOR)/src/ir_Sanyo.cpp \
+        $(VENDOR)/src/ir_Whirlpool.cpp \
+        $(VENDOR)/src/ir_MitsubishiHeavy.cpp \
+        $(VENDOR)/src/ir_BluestarHeavy.cpp \
         $(VENDOR)/src/IRrecv.cpp
 
 runner: $(SRCS)

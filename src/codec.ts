@@ -106,6 +106,26 @@ import { sendHaierAc160 } from "./protocols/haier_ac160.js";
 import type { HaierAc160State } from "./protocols/haier_ac160.js";
 import { sendHaierAc176 } from "./protocols/haier_ac176.js";
 import type { HaierAc176State } from "./protocols/haier_ac176.js";
+import { sendToshibaAc } from "./protocols/toshiba_ac.js";
+import type { ToshibaAcState } from "./protocols/toshiba_ac.js";
+import { sendSharp } from "./protocols/sharp.js";
+import type { SharpState } from "./protocols/sharp.js";
+import { sendSharpAc } from "./protocols/sharp_ac.js";
+import type { SharpAcState } from "./protocols/sharp_ac.js";
+import { sendSanyoLc7461 } from "./protocols/sanyo_lc7461.js";
+import type { SanyoLc7461State } from "./protocols/sanyo_lc7461.js";
+import { sendSanyoAc } from "./protocols/sanyo_ac.js";
+import type { SanyoAcState } from "./protocols/sanyo_ac.js";
+import { sendSanyoAc88 } from "./protocols/sanyo_ac88.js";
+import type { SanyoAc88State } from "./protocols/sanyo_ac88.js";
+import { sendSanyoAc152 } from "./protocols/sanyo_ac152.js";
+import { sendWhirlpoolAc } from "./protocols/whirlpool_ac.js";
+import type { WhirlpoolAcState } from "./protocols/whirlpool_ac.js";
+import { sendMitsubishiHeavy152 } from "./protocols/mitsubishi_heavy152.js";
+import type { MitsubishiHeavy152State } from "./protocols/mitsubishi_heavy152.js";
+import { sendMitsubishiHeavy88 } from "./protocols/mitsubishi_heavy88.js";
+import type { MitsubishiHeavy88State } from "./protocols/mitsubishi_heavy88.js";
+import { sendBluestarHeavy } from "./protocols/bluestar_heavy.js";
 
 /** The state shape each protocol's encoder accepts, keyed by protocol name. */
 export interface ProtocolStateMap {
@@ -165,6 +185,19 @@ export interface ProtocolStateMap {
   haier_ac_yrw02: HaierAcYrw02State;
   haier_ac160: HaierAc160State;
   haier_ac176: HaierAc176State;
+  toshiba_ac: ToshibaAcState;
+  sharp: SharpState;
+  sharp_ac: SharpAcState;
+  sanyo_lc7461: SanyoLc7461State;
+  sanyo_ac: SanyoAcState;
+  sanyo_ac88: SanyoAc88State;
+  /** Raw 19-byte payload. */
+  sanyo_ac152: Uint8Array;
+  whirlpool_ac: WhirlpoolAcState;
+  mitsubishi_heavy152: MitsubishiHeavy152State;
+  mitsubishi_heavy88: MitsubishiHeavy88State;
+  /** Raw 13-byte payload. */
+  bluestar_heavy: Uint8Array;
 }
 
 type EncoderMap = {
@@ -222,6 +255,17 @@ const ENCODERS: EncoderMap = {
   haier_ac_yrw02: (s, r) => sendHaierAcYrw02(s, r),
   haier_ac160: (s, r) => sendHaierAc160(s, r),
   haier_ac176: (s, r) => sendHaierAc176(s, r),
+  toshiba_ac: (s, r) => sendToshibaAc(s, r),
+  sharp: (s, r) => sendSharp(s, r),
+  sharp_ac: (s, r) => sendSharpAc(s, r),
+  sanyo_lc7461: (s, r) => sendSanyoLc7461(s, r),
+  sanyo_ac: (s, r) => sendSanyoAc(s, r),
+  sanyo_ac88: (s, r) => sendSanyoAc88(s, r),
+  sanyo_ac152: (s, r) => sendSanyoAc152(s, r),
+  whirlpool_ac: (s, r) => sendWhirlpoolAc(s, r),
+  mitsubishi_heavy152: (s, r) => sendMitsubishiHeavy152(s, r),
+  mitsubishi_heavy88: (s, r) => sendMitsubishiHeavy88(s, r),
+  bluestar_heavy: (s, r) => sendBluestarHeavy(s, r),
 };
 
 /**

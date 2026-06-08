@@ -456,6 +456,26 @@ import { decodeHaierAc160 } from "./protocols/haier_ac160.js";
 import type { HaierAc160State } from "./protocols/haier_ac160.js";
 import { decodeHaierAc176 } from "./protocols/haier_ac176.js";
 import type { HaierAc176State } from "./protocols/haier_ac176.js";
+import { decodeToshibaAc } from "./protocols/toshiba_ac.js";
+import type { ToshibaAcState } from "./protocols/toshiba_ac.js";
+import { decodeSharp } from "./protocols/sharp.js";
+import type { SharpState } from "./protocols/sharp.js";
+import { decodeSharpAc } from "./protocols/sharp_ac.js";
+import type { SharpAcState } from "./protocols/sharp_ac.js";
+import { decodeSanyoLc7461 } from "./protocols/sanyo_lc7461.js";
+import type { SanyoLc7461State } from "./protocols/sanyo_lc7461.js";
+import { decodeSanyoAc } from "./protocols/sanyo_ac.js";
+import type { SanyoAcState } from "./protocols/sanyo_ac.js";
+import { decodeSanyoAc88 } from "./protocols/sanyo_ac88.js";
+import type { SanyoAc88State } from "./protocols/sanyo_ac88.js";
+import { decodeSanyoAc152 } from "./protocols/sanyo_ac152.js";
+import { decodeWhirlpoolAc } from "./protocols/whirlpool_ac.js";
+import type { WhirlpoolAcState } from "./protocols/whirlpool_ac.js";
+import { decodeMitsubishiHeavy152 } from "./protocols/mitsubishi_heavy152.js";
+import type { MitsubishiHeavy152State } from "./protocols/mitsubishi_heavy152.js";
+import { decodeMitsubishiHeavy88 } from "./protocols/mitsubishi_heavy88.js";
+import type { MitsubishiHeavy88State } from "./protocols/mitsubishi_heavy88.js";
+import { decodeBluestarHeavy } from "./protocols/bluestar_heavy.js";
 
 /** All supported protocol names. */
 export type ProtocolName =
@@ -472,6 +492,11 @@ export type ProtocolName =
   | "lg" | "lg_ac"
   | "carrier_ac" | "carrier_ac40" | "carrier_ac64" | "carrier_ac84" | "carrier_ac128"
   | "haier_ac" | "haier_ac_yrw02" | "haier_ac160" | "haier_ac176"
+  | "toshiba_ac"
+  | "sharp" | "sharp_ac"
+  | "sanyo_lc7461" | "sanyo_ac" | "sanyo_ac88" | "sanyo_ac152"
+  | "whirlpool_ac"
+  | "mitsubishi_heavy152" | "mitsubishi_heavy88" | "bluestar_heavy"
   | "godrej"
   | "voltas"
   | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
@@ -487,7 +512,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -533,6 +558,17 @@ export type DecodeResult =
   | { protocol: "haier_ac_yrw02"; brand: "haier"; type: "ac"; state: HaierAcYrw02State; confidence: "checksum_valid" }
   | { protocol: "haier_ac160"; brand: "haier"; type: "ac"; state: HaierAc160State; confidence: "checksum_valid" }
   | { protocol: "haier_ac176"; brand: "haier"; type: "ac"; state: HaierAc176State; confidence: "checksum_valid" }
+  | { protocol: "toshiba_ac"; brand: "toshiba"; type: "ac"; state: ToshibaAcState; confidence: "checksum_valid" }
+  | { protocol: "sharp"; brand: "sharp"; type: "simple"; state: SharpState; confidence: "timing_match" }
+  | { protocol: "sharp_ac"; brand: "sharp"; type: "ac"; state: SharpAcState; confidence: "checksum_valid" }
+  | { protocol: "sanyo_lc7461"; brand: "sanyo"; type: "simple"; state: SanyoLc7461State; confidence: "timing_match" }
+  | { protocol: "sanyo_ac"; brand: "sanyo"; type: "ac"; state: SanyoAcState; confidence: "checksum_valid" }
+  | { protocol: "sanyo_ac88"; brand: "sanyo"; type: "ac"; state: SanyoAc88State; confidence: "timing_match" }
+  | { protocol: "sanyo_ac152"; brand: "sanyo"; type: "ac"; state: Uint8Array; confidence: "timing_match" }
+  | { protocol: "whirlpool_ac"; brand: "whirlpool"; type: "ac"; state: WhirlpoolAcState; confidence: "checksum_valid" }
+  | { protocol: "mitsubishi_heavy152"; brand: "mitsubishi_heavy"; type: "ac"; state: MitsubishiHeavy152State; confidence: "checksum_valid" }
+  | { protocol: "mitsubishi_heavy88"; brand: "mitsubishi_heavy"; type: "ac"; state: MitsubishiHeavy88State; confidence: "checksum_valid" }
+  | { protocol: "bluestar_heavy"; brand: "bluestar"; type: "ac"; state: Uint8Array; confidence: "timing_match" }
   | { protocol: "godrej"; brand: "godrej"; type: "ac"; state: GodrejState; confidence: "checksum_valid" }
   | { protocol: "voltas"; brand: "voltas"; type: "ac"; state: VoltasState; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac"; brand: "hitachi"; type: "ac"; state: HitachiAcState; confidence: "checksum_valid" }
@@ -886,6 +922,74 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     },
   },
   {
+    protocol: "whirlpool_ac", brand: "whirlpool", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeWhirlpoolAc(timings, offset, ho);
+      return s ? { protocol: "whirlpool_ac", brand: "whirlpool", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "toshiba_ac", brand: "toshiba", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeToshibaAc(timings, offset, ho);
+      return s ? { protocol: "toshiba_ac", brand: "toshiba", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "sharp_ac", brand: "sharp", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSharpAc(timings, offset, ho);
+      return s ? { protocol: "sharp_ac", brand: "sharp", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "sanyo_ac", brand: "sanyo", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSanyoAc(timings, offset, ho);
+      return s ? { protocol: "sanyo_ac", brand: "sanyo", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "sanyo_ac88", brand: "sanyo", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSanyoAc88(timings, offset, ho);
+      return s ? { protocol: "sanyo_ac88", brand: "sanyo", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Mitsubishi Heavy: signature + inverted-byte-pair checksum. The 152-bit
+  // form must precede the unvalidated 19-byte Sanyo AC152 (similar header,
+  // near-inverted bit timings) so an MH152 frame isn't mis-decoded there.
+  {
+    protocol: "mitsubishi_heavy152", brand: "mitsubishi_heavy", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeMitsubishiHeavy152(timings, offset, ho);
+      return s ? { protocol: "mitsubishi_heavy152", brand: "mitsubishi_heavy", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "mitsubishi_heavy88", brand: "mitsubishi_heavy", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeMitsubishiHeavy88(timings, offset, ho);
+      return s ? { protocol: "mitsubishi_heavy88", brand: "mitsubishi_heavy", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "bluestar_heavy", brand: "bluestar", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeBluestarHeavy(timings, offset, ho);
+      return s ? { protocol: "bluestar_heavy", brand: "bluestar", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Sanyo AC152 is a raw 19-byte payload with no checksum; keep it after the
+  // checksummed Sanyo decoders.
+  {
+    protocol: "sanyo_ac152", brand: "sanyo", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSanyoAc152(timings, offset, ho);
+      return s ? { protocol: "sanyo_ac152", brand: "sanyo", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  {
     protocol: "godrej", brand: "godrej", type: "ac",
     tryDecode(timings, offset, ho) {
       const s = decodeGodrej(timings, offset, ho);
@@ -931,6 +1035,23 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeLg(timings, offset, ho);
       return s ? { protocol: "lg", brand: "lg", type: "simple", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Sanyo LC7461: 42-bit NEC variant with inverted address/command halves.
+  {
+    protocol: "sanyo_lc7461", brand: "sanyo", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSanyoLc7461(timings, offset, ho);
+      return s ? { protocol: "sanyo_lc7461", brand: "sanyo", type: "simple", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Sharp 15-bit: headerless, gated by the inverted second block. Kept late as
+  // the least specific matcher.
+  {
+    protocol: "sharp", brand: "sharp", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const s = decodeSharp(timings, offset, ho);
+      return s ? { protocol: "sharp", brand: "sharp", type: "simple", state: s, confidence: "timing_match" } : null;
     },
   },
   // Mitsubishi2 before Mitsubishi: the headerless Mitsubishi matcher is the

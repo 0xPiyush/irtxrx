@@ -503,3 +503,48 @@ export {
   haierAc160LightToggle, HaierAc160SwingV,
 } from "./protocols/haier_ac160.js";
 export type { HaierAc160State, HaierAc160SwingVValue } from "./protocols/haier_ac160.js";
+export {
+  buildToshibaAcRaw, encodeToshibaAcRaw, sendToshibaAc, decodeToshibaAc, parseToshibaAcState,
+  toshibaAcValidChecksum, ToshibaAcMode, ToshibaAcFan, ToshibaAcModel,
+} from "./protocols/toshiba_ac.js";
+export type { ToshibaAcState, ToshibaAcModeValue, ToshibaAcFanValue, ToshibaAcModelValue } from "./protocols/toshiba_ac.js";
+export { encodeSharpData, encodeSharpRaw, sendSharp, decodeSharp, SHARP_BITS } from "./protocols/sharp.js";
+export type { SharpState } from "./protocols/sharp.js";
+export {
+  buildSharpAcRaw, encodeSharpAcRaw, sendSharpAc, decodeSharpAc, parseSharpAcState,
+  sharpAcValidChecksum, SharpAcModel, SharpAcMode, SharpAcFan, SharpAcSwingV,
+} from "./protocols/sharp_ac.js";
+export type { SharpAcState, SharpAcModelValue, SharpAcModeValue, SharpAcFanValue, SharpAcSwingVValue } from "./protocols/sharp_ac.js";
+export {
+  encodeSanyoLc7461Data, encodeSanyoLc7461Raw, sendSanyoLc7461, decodeSanyoLc7461, SANYO_LC7461_BITS,
+} from "./protocols/sanyo_lc7461.js";
+export type { SanyoLc7461State } from "./protocols/sanyo_lc7461.js";
+export {
+  buildSanyoAcRaw, encodeSanyoAcRaw, sendSanyoAc, decodeSanyoAc, parseSanyoAcState,
+  sanyoAcValidChecksum, SanyoAcMode, SanyoAcFan, SanyoAcSwingV,
+} from "./protocols/sanyo_ac.js";
+export type { SanyoAcState, SanyoAcModeValue, SanyoAcFanValue, SanyoAcSwingVValue } from "./protocols/sanyo_ac.js";
+export {
+  buildSanyoAc88Raw, encodeSanyoAc88Raw, sendSanyoAc88, decodeSanyoAc88, parseSanyoAc88State,
+  SanyoAc88Mode, SanyoAc88Fan, SANYO_AC88_MIN_REPEAT,
+} from "./protocols/sanyo_ac88.js";
+export type { SanyoAc88State, SanyoAc88ModeValue, SanyoAc88FanValue } from "./protocols/sanyo_ac88.js";
+export {
+  encodeSanyoAc152Raw, sendSanyoAc152, decodeSanyoAc152, SANYO_AC152_STATE_LENGTH,
+} from "./protocols/sanyo_ac152.js";
+export {
+  buildWhirlpoolAcRaw, encodeWhirlpoolAcRaw, sendWhirlpoolAc, decodeWhirlpoolAc, parseWhirlpoolAcState,
+  whirlpoolAcValidChecksum, WhirlpoolAcMode, WhirlpoolAcFan, WhirlpoolAcModel, WhirlpoolAcCommand,
+} from "./protocols/whirlpool_ac.js";
+export type { WhirlpoolAcState, WhirlpoolAcModeValue, WhirlpoolAcFanValue, WhirlpoolAcModelValue, WhirlpoolAcCommandValue } from "./protocols/whirlpool_ac.js";
+export {
+  buildMitsubishiHeavy152Raw, encodeMitsubishiHeavy152Raw, sendMitsubishiHeavy152, decodeMitsubishiHeavy152, parseMitsubishiHeavy152State,
+  MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH,
+} from "./protocols/mitsubishi_heavy152.js";
+export type { MitsubishiHeavy152State, MitsubishiHeavy152ModeValue, MitsubishiHeavy152FanValue, MitsubishiHeavy152SwingVValue, MitsubishiHeavy152SwingHValue } from "./protocols/mitsubishi_heavy152.js";
+export {
+  buildMitsubishiHeavy88Raw, encodeMitsubishiHeavy88Raw, sendMitsubishiHeavy88, decodeMitsubishiHeavy88, parseMitsubishiHeavy88State,
+  MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH,
+} from "./protocols/mitsubishi_heavy88.js";
+export type { MitsubishiHeavy88State, MitsubishiHeavy88ModeValue, MitsubishiHeavy88FanValue, MitsubishiHeavy88SwingVValue, MitsubishiHeavy88SwingHValue } from "./protocols/mitsubishi_heavy88.js";
+export { encodeBluestarHeavyRaw, sendBluestarHeavy, decodeBluestarHeavy, BLUESTAR_HEAVY_STATE_LENGTH } from "./protocols/bluestar_heavy.js";

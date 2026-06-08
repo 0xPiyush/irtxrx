@@ -46,6 +46,13 @@ import { CarrierAc64Mode, CarrierAc64Fan } from "./protocols/carrier_ac64.js";
 import { HaierAcMode, HaierAcFan, HaierAcSwingV } from "./protocols/haier_ac.js";
 import { HaierAcYrw02Mode, HaierAcYrw02Fan, HaierAc176SwingV, HaierAc176SwingH } from "./protocols/haier_ac176.js";
 import { HaierAc160SwingV } from "./protocols/haier_ac160.js";
+import { ToshibaAcMode, ToshibaAcFan } from "./protocols/toshiba_ac.js";
+import { SharpAcMode, SharpAcFan, SharpAcSwingV } from "./protocols/sharp_ac.js";
+import { SanyoAcMode, SanyoAcFan, SanyoAcSwingV } from "./protocols/sanyo_ac.js";
+import { SanyoAc88Mode, SanyoAc88Fan } from "./protocols/sanyo_ac88.js";
+import { WhirlpoolAcMode, WhirlpoolAcFan } from "./protocols/whirlpool_ac.js";
+import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH } from "./protocols/mitsubishi_heavy152.js";
+import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -303,6 +310,51 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     swingV: true, swingH: true,
     swingVOptions: named(HaierAc176SwingV), swingHOptions: named(HaierAc176SwingH),
   }),
+  // Toshiba A/C — swing is a separate short message (out of scope here).
+  info("toshiba_ac", "toshiba", "ac", {
+    modes: named(ToshibaAcMode), fans: named(ToshibaAcFan), fanSpeedRange: { min: 0, max: 5 },
+    temp: { min: 17, max: 30, step: 1 }, swingV: false, swingH: false,
+  }),
+  // Sharp A/C.
+  info("sharp_ac", "sharp", "ac", {
+    modes: named(SharpAcMode), fans: named(SharpAcFan),
+    temp: { min: 15, max: 30, step: 1 },
+    swingV: true, swingH: false, swingVOptions: named(SharpAcSwingV),
+  }),
+  // Sanyo A/Cs.
+  info("sanyo_ac", "sanyo", "ac", {
+    modes: named(SanyoAcMode), fans: named(SanyoAcFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: false, swingVOptions: named(SanyoAcSwingV),
+  }),
+  info("sanyo_ac88", "sanyo", "ac", {
+    modes: named(SanyoAc88Mode), fans: named(SanyoAc88Fan),
+    temp: { min: 10, max: 30, step: 1 }, swingV: true, swingH: false,
+  }),
+  // Whirlpool A/C.
+  info("whirlpool_ac", "whirlpool", "ac", {
+    modes: named(WhirlpoolAcMode), fans: named(WhirlpoolAcFan),
+    temp: { min: 18, max: 32, step: 1 }, swingV: true, swingH: false,
+  }),
+  // Simple remotes + raw byte carriers — no structured fields.
+  info("sharp", "sharp", "simple"),
+  info("sanyo_lc7461", "sanyo", "simple"),
+  info("sanyo_ac152", "sanyo", "ac"),
+  // Mitsubishi Heavy Industries A/Cs.
+  info("mitsubishi_heavy152", "mitsubishi_heavy", "ac", {
+    modes: named(MitsubishiHeavy152Mode), fans: named(MitsubishiHeavy152Fan),
+    temp: { min: 17, max: 31, step: 1 },
+    swingV: true, swingH: true,
+    swingVOptions: named(MitsubishiHeavy152SwingV), swingHOptions: named(MitsubishiHeavy152SwingH),
+  }),
+  info("mitsubishi_heavy88", "mitsubishi_heavy", "ac", {
+    modes: named(MitsubishiHeavy88Mode), fans: named(MitsubishiHeavy88Fan),
+    temp: { min: 17, max: 31, step: 1 },
+    swingV: true, swingH: true,
+    swingVOptions: named(MitsubishiHeavy88SwingV), swingHOptions: named(MitsubishiHeavy88SwingH),
+  }),
+  // Blue Star — raw byte carrier, no structured fields.
+  info("bluestar_heavy", "bluestar", "ac"),
 ];
 
 // ---------------------------------------------------------------------------

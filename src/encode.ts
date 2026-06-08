@@ -54,6 +54,13 @@ export function sumBytes(data: Uint8Array, start = 0, end = data.length): number
   return sum & 0xff;
 }
 
+/** XOR all bytes in a Uint8Array (or slice). Returns result & 0xFF. */
+export function xorBytes(data: Uint8Array, start = 0, end = data.length): number {
+  let acc = 0;
+  for (let i = start; i < end; i++) acc ^= data[i]!;
+  return acc & 0xff;
+}
+
 /** Sum all nibbles of a uint64 up to `nbits` bits. Returns result & 0xF. */
 export function sumNibbles64(value: bigint, nbits: number): number {
   let data = value & ((1n << BigInt(nbits)) - 1n);

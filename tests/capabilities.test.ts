@@ -85,8 +85,14 @@ describe("capabilities registry", () => {
     expect(getProtocolsForBrand("lg").map((p) => p.protocol)).toEqual(["lg_ac", "lg"]);
     expect(getProtocolsForBrand("carrier").map((p) => p.protocol)).toEqual(["carrier_ac64", "carrier_ac", "carrier_ac40", "carrier_ac84", "carrier_ac128"]);
     expect(getProtocolsForBrand("haier").map((p) => p.protocol)).toEqual(["haier_ac", "haier_ac_yrw02", "haier_ac160", "haier_ac176"]);
+    expect(getProtocolsForBrand("toshiba").map((p) => p.protocol)).toEqual(["toshiba_ac"]);
+    expect(getProtocolsForBrand("sharp").map((p) => p.protocol)).toEqual(["sharp_ac", "sharp"]);
+    expect(getProtocolsForBrand("sanyo").map((p) => p.protocol)).toEqual(["sanyo_ac", "sanyo_ac88", "sanyo_lc7461", "sanyo_ac152"]);
+    expect(getProtocolsForBrand("whirlpool").map((p) => p.protocol)).toEqual(["whirlpool_ac"]);
+    expect(getProtocolsForBrand("mitsubishi_heavy").map((p) => p.protocol)).toEqual(["mitsubishi_heavy152", "mitsubishi_heavy88"]);
+    expect(getProtocolsForBrand("bluestar").map((p) => p.protocol)).toEqual(["bluestar_heavy"]);
     expect(getProtocolsForBrand("sony")).toEqual([]); // unknown brand → empty
-    expect(listBrands().sort()).toEqual(["carrier", "coolix", "daikin", "godrej", "gree", "haier", "hitachi", "kelon", "lg", "mitsubishi", "nec", "panasonic", "samsung", "tcl", "teco", "teknopoint", "voltas"]);
+    expect(listBrands().sort()).toEqual(["bluestar", "carrier", "coolix", "daikin", "godrej", "gree", "haier", "hitachi", "kelon", "lg", "mitsubishi", "mitsubishi_heavy", "nec", "panasonic", "samsung", "sanyo", "sharp", "tcl", "teco", "teknopoint", "toshiba", "voltas", "whirlpool"]);
   });
 
   it("getProtocolInfo returns undefined for unknown protocols", () => {

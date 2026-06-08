@@ -50,6 +50,10 @@ import { LgAcMode, LgAcFan, LgAcModel } from "./protocols/lg_ac.js";
 import { CarrierAc64Mode, CarrierAc64Fan } from "./protocols/carrier_ac64.js";
 import { HaierAcYrw02Mode, HaierAcYrw02Fan, HaierAc176SwingV, HaierAc176SwingH } from "./protocols/haier_ac176.js";
 import { HaierAc160SwingV } from "./protocols/haier_ac160.js";
+import { ToshibaAcMode, ToshibaAcFan, ToshibaAcModel } from "./protocols/toshiba_ac.js";
+import { SharpAcMode, SharpAcFan, SharpAcSwingV, SharpAcModel } from "./protocols/sharp_ac.js";
+import { SanyoAcMode, SanyoAcFan, SanyoAcSwingV } from "./protocols/sanyo_ac.js";
+import { WhirlpoolAcMode, WhirlpoolAcFan, WhirlpoolAcModel } from "./protocols/whirlpool_ac.js";
 import { HitachiAcMode, HitachiAcFan } from "./protocols/hitachi.js";
 import { HitachiAc1Mode, HitachiAc1Fan, HitachiAc1Model } from "./protocols/hitachi1.js";
 import { HitachiAc264Fan } from "./protocols/hitachi264.js";
@@ -689,6 +693,62 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "enum", canonical: "model", key: "model", constants: LgAcModel, map: {
         GE6711AR2853M: "ge6711ar2853m", AKB75215403: "akb75215403", AKB74955603: "akb74955603", AKB73757604: "akb73757604", LG6711A20083V: "lg6711a20083v",
       } },
+    ],
+  },
+
+  toshiba_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: ToshibaAcMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Heat: "heat", Fan: "fan" } },
+    fan: { constants: ToshibaAcFan, map: { Auto: "auto", Min: "min", Med: "medium", Max: "max" } },
+    temp: { min: 17, max: 30, step: 1 },
+    features: [
+      { kind: "boolean", canonical: "purify", key: "filter" },
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "econo", key: "econo" },
+      { kind: "enum", canonical: "model", key: "model", constants: ToshibaAcModel, map: { A: "a", B: "b" } },
+    ],
+  },
+
+  sharp_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: SharpAcMode, map: { Auto: "auto", Heat: "heat", Cool: "cool", Dry: "dry" } },
+    fan: { constants: SharpAcFan, map: { Auto: "auto", Min: "min", Med: "medium", High: "high", Max: "max" } },
+    temp: { min: 15, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: SharpAcSwingV, map: {
+      Ignore: "auto", High: "highest", Off: "off", Mid: "middle", Low: "low", Last: "last", Lowest: "lowest", Toggle: "swing",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "purify", key: "ion" },
+      { kind: "enum", canonical: "model", key: "model", constants: SharpAcModel, map: { A907: "a907", A705: "a705", A903: "a903" } },
+    ],
+  },
+
+  sanyo_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: SanyoAcMode, map: { Heat: "heat", Cool: "cool", Dry: "dry", Auto: "auto" } },
+    fan: { constants: SanyoAcFan, map: { Auto: "auto", High: "high", Low: "low", Medium: "medium" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: SanyoAcSwingV, map: {
+      Auto: "auto", Lowest: "lowest", Low: "low", LowerMiddle: "middle_down", UpperMiddle: "middle_up", High: "high", Highest: "highest",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "beep", key: "beep" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 900, step: 60, unit: "minutes" },
+    ],
+  },
+
+  whirlpool_ac: {
+    power: { kind: "toggle", key: "powerToggle" },
+    modes: { constants: WhirlpoolAcMode, map: { Heat: "heat", Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan" } },
+    fan: { constants: WhirlpoolAcFan, map: { Auto: "auto", High: "high", Medium: "medium", Low: "low" } },
+    temp: { min: 18, max: 32, step: 1 },
+    swingV: { key: "swing", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "light", key: "light" },
+      { kind: "boolean", canonical: "turbo", key: "super" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "enum", canonical: "model", key: "model", constants: WhirlpoolAcModel, map: { DG11J13A: "dg11j13a", DG11J191: "dg11j191" } },
     ],
   },
 
