@@ -126,7 +126,7 @@ export function buildToshibaAcRaw(state: ToshibaAcState): Uint8Array {
 // ---------------------------------------------------------------------------
 
 /** Encode a raw Toshiba A/C payload into IR timings. */
-export function encodeToshibaAcRaw(data: Uint8Array, repeat: number = 0): number[] {
+export function encodeToshibaAcRaw(data: Uint8Array, repeat: number = 1): number[] {
   return sendGenericBytes({
     headerMark: HDR_MARK, headerSpace: HDR_SPACE,
     oneMark: BIT_MARK, oneSpace: ONE_SPACE, zeroMark: BIT_MARK, zeroSpace: ZERO_SPACE,
@@ -136,7 +136,7 @@ export function encodeToshibaAcRaw(data: Uint8Array, repeat: number = 0): number
 }
 
 /** Encode a Toshiba A/C state into raw IR timings. */
-export function sendToshibaAc(state: ToshibaAcState, repeat: number = 0): number[] {
+export function sendToshibaAc(state: ToshibaAcState, repeat: number = 1): number[] {
   return encodeToshibaAcRaw(buildToshibaAcRaw(state), repeat);
 }
 

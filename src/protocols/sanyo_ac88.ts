@@ -114,7 +114,7 @@ export function buildSanyoAc88Raw(state: SanyoAc88State): Uint8Array {
 const MESSAGE_GAP = 100000; // kDefaultMessageGap appended after the last frame
 
 /** Encode a raw Sanyo AC88 payload into IR timings (LSB-first). */
-export function encodeSanyoAc88Raw(data: Uint8Array, repeat: number = 0): number[] {
+export function encodeSanyoAc88Raw(data: Uint8Array, repeat: number = SANYO_AC88_MIN_REPEAT): number[] {
   const result = sendGenericBytes({
     headerMark: HDR_MARK, headerSpace: HDR_SPACE,
     oneMark: BIT_MARK, oneSpace: ONE_SPACE, zeroMark: BIT_MARK, zeroSpace: ZERO_SPACE,
@@ -127,7 +127,7 @@ export function encodeSanyoAc88Raw(data: Uint8Array, repeat: number = 0): number
 }
 
 /** Encode a Sanyo AC88 state into raw IR timings. */
-export function sendSanyoAc88(state: SanyoAc88State, repeat: number = 0): number[] {
+export function sendSanyoAc88(state: SanyoAc88State, repeat: number = SANYO_AC88_MIN_REPEAT): number[] {
   return encodeSanyoAc88Raw(buildSanyoAc88Raw(state), repeat);
 }
 

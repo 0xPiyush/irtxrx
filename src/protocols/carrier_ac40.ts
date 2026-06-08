@@ -45,7 +45,7 @@ export interface CarrierAc40State {
 export function encodeCarrierAc40Raw(
   data: bigint,
   nbits: number = CARRIER_AC40_BITS,
-  repeat: number = 0,
+  repeat: number = 2, // kCarrierAc40MinRepeat
 ): number[] {
   return sendGeneric({
     headerMark: HDR_MARK, headerSpace: HDR_SPACE,
@@ -56,7 +56,7 @@ export function encodeCarrierAc40Raw(
 }
 
 /** Encode a Carrier 40-bit state into raw IR timings. */
-export function sendCarrierAc40(state: CarrierAc40State, repeat: number = 0): number[] {
+export function sendCarrierAc40(state: CarrierAc40State, repeat: number = 2): number[] {
   return encodeCarrierAc40Raw(state.data & MASK40, CARRIER_AC40_BITS, repeat);
 }
 
