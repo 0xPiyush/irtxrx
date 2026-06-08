@@ -56,6 +56,7 @@ import { SanyoAcMode, SanyoAcFan, SanyoAcSwingV } from "./protocols/sanyo_ac.js"
 import { WhirlpoolAcMode, WhirlpoolAcFan, WhirlpoolAcModel } from "./protocols/whirlpool_ac.js";
 import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH } from "./protocols/mitsubishi_heavy152.js";
 import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
+import { SanyoAc88Mode, SanyoAc88Fan } from "./protocols/sanyo_ac88.js";
 import { HitachiAcMode, HitachiAcFan } from "./protocols/hitachi.js";
 import { HitachiAc1Mode, HitachiAc1Fan, HitachiAc1Model } from "./protocols/hitachi1.js";
 import { HitachiAc264Fan } from "./protocols/hitachi264.js";
@@ -70,7 +71,7 @@ import { HitachiAc424Mode, HitachiAc424Fan } from "./protocols/hitachi424.js";
 /** Brand-agnostic operating mode. */
 export type CanonicalMode =
   | "auto" | "cool" | "heat" | "dry" | "fan"
-  | "econo" | "smart"
+  | "econo" | "smart" | "feel_cool" | "feel_heat"
   // Hitachi296 specialised programs:
   | "dry_cool" | "dehumidify" | "auto_dehumidify" | "quick_laundry" | "condensation_control";
 
@@ -119,7 +120,7 @@ export type CanonicalFeature =
 export const LABELS: Readonly<Record<string, string>> = {
   // modes
   auto: "Auto", cool: "Cool", heat: "Heat", dry: "Dry", fan: "Fan",
-  econo: "Economy", smart: "Smart",
+  econo: "Economy", smart: "Smart", feel_cool: "Feel Cool", feel_heat: "Feel Heat",
   dry_cool: "Dry Cool", dehumidify: "Dehumidify", auto_dehumidify: "Auto Dehumidify",
   quick_laundry: "Quick Laundry", condensation_control: "Condensation Control",
   // fan speeds
@@ -753,6 +754,20 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "turbo", key: "super" },
       { kind: "boolean", canonical: "sleep", key: "sleep" },
       { kind: "enum", canonical: "model", key: "model", constants: WhirlpoolAcModel, map: { DG11J13A: "dg11j13a", DG11J191: "dg11j191" } },
+    ],
+  },
+
+  sanyo_ac88: {
+    power: { kind: "stateful" },
+    modes: { constants: SanyoAc88Mode, map: { Auto: "auto", FeelCool: "feel_cool", Cool: "cool", FeelHeat: "feel_heat", Heat: "heat", Fan: "fan" } },
+    fan: { constants: SanyoAc88Fan, map: { Auto: "auto", Low: "low", Medium: "medium", High: "high" } },
+    temp: { min: 10, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "filter", key: "filter" },
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "range", canonical: "clock", key: "clock", min: 0, max: 1439, step: 1, unit: "minutes" },
     ],
   },
 
