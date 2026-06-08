@@ -55,6 +55,26 @@ describe("decodeMitsubishiHeavy88 roundtrip + C++", () => {
   });
 });
 
+describe("real-hardware captures", () => {
+  // Headerless capture (receiver missed the 3140/1630 leader) with marks
+  // reading long (488µs) — needs the C++-equivalent 50µs mark-excess. C++
+  // `identify` can't decode this (it requires the header); irtxrx does.
+  const headerless = [427,335,427,1159,488,335,457,335,457,1129,457,335,457,1159,457,335,457,335,457,1129,457,1159,457,1129,457,335,457,1159,457,335,457,1129,457,1159,457,1129,457,335,457,335,457,335,457,366,427,1159,457,1129,457,335,457,1159,457,1129,457,335,457,366,427,1159,457,335,457,335,457,1159,457,335,457,335,457,1129,457,1159,457,335,457,1129,457,1129,488,1129,457,1129,457,335,457,1159,457,1129,457,1129,457,1159,457,335,457,335,457,335,457,1159,457,335,457,335,457,335,457,335,457,1159,457,1129,457,1129,457,1159,457,1129,457,335,457,1159,457,335,457,1129,457,335,457,366,457,335,457,335,427,1159,457,335,457,1159,457,335,457,335,457,1159,457,1129,457,396,396,1129,457,366,457,1129,457,1129,457,1159,457,335,457,335,457,1129,457,366,457,1129,457,335,457,335,457,0,0,0];
+
+  it("decodes a headerless real capture (marks read long)", () => {
+    const s = decodeMitsubishiHeavy88(headerless, 0, true)!;
+    expect(s).not.toBeNull();
+    expect(s.power).toBe(true);
+    expect(s.temp).toBe(19);
+    expect(s.mode).toBe(M.Cool);
+    expect(s.fan).toBe(F.Low);
+  });
+
+  it("dispatch identifies the headerless capture as mitsubishi_heavy88", () => {
+    expect(decode(headerless)?.protocol).toBe("mitsubishi_heavy88");
+  });
+});
+
 describe("decode() dispatch + rejection", () => {
   it("identifies a Mitsubishi Heavy 88 frame", () => {
     expect(decode(sendMitsubishiHeavy88(cases[0]!.state))?.protocol).toBe("mitsubishi_heavy88");

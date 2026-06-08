@@ -9,7 +9,7 @@
  */
 
 import { sendGenericBytes } from "../encode.js";
-import { matchGenericBytes } from "../decode.js";
+import { matchGenericBytes, kTolerance, kHardwareMarkExcess } from "../decode.js";
 
 export const MH_HDR_MARK = 3140;
 export const MH_HDR_SPACE = 1630;
@@ -54,7 +54,9 @@ export function decodeMitsubishiHeavyBytes(
     MH_HDR_MARK, MH_HDR_SPACE,
     MH_BIT_MARK, MH_ONE_SPACE, MH_BIT_MARK, MH_ZERO_SPACE,
     MH_BIT_MARK, MH_GAP,
-    true, undefined, undefined, false, headerOptional,
+    // Match the C++ reference's global 50µs mark-excess so real-hardware
+    // captures (marks read long, spaces short) decode identically.
+    true, kTolerance, kHardwareMarkExcess, false, headerOptional,
   );
   return frame ? frame.data : null;
 }
