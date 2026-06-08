@@ -54,6 +54,8 @@ import { ToshibaAcMode, ToshibaAcFan, ToshibaAcModel } from "./protocols/toshiba
 import { SharpAcMode, SharpAcFan, SharpAcSwingV, SharpAcModel } from "./protocols/sharp_ac.js";
 import { SanyoAcMode, SanyoAcFan, SanyoAcSwingV } from "./protocols/sanyo_ac.js";
 import { WhirlpoolAcMode, WhirlpoolAcFan, WhirlpoolAcModel } from "./protocols/whirlpool_ac.js";
+import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH } from "./protocols/mitsubishi_heavy152.js";
+import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
 import { HitachiAcMode, HitachiAcFan } from "./protocols/hitachi.js";
 import { HitachiAc1Mode, HitachiAc1Fan, HitachiAc1Model } from "./protocols/hitachi1.js";
 import { HitachiAc264Fan } from "./protocols/hitachi264.js";
@@ -75,14 +77,14 @@ export type CanonicalMode =
 /** Brand-agnostic fan speed. `turbo`/`powerful` exist where a protocol encodes
  *  boost as a fan *speed* rather than a separate flag (Daikin64/128). */
 export type CanonicalFan =
-  | "auto" | "min" | "low" | "medium" | "high" | "max" | "quiet" | "turbo" | "powerful";
+  | "auto" | "min" | "low" | "medium" | "high" | "max" | "quiet" | "turbo" | "powerful" | "econo";
 
 /** Brand-agnostic swing position (vertical or horizontal). */
 export type CanonicalSwingPosition =
   | "off" | "on" | "auto" | "swing" | "last"
   | "up" | "down" | "highest" | "high" | "middle_up" | "middle" | "middle_down" | "low" | "lowest"
   | "up_auto" | "down_auto" | "middle_auto"
-  | "left_max" | "left" | "right" | "right_max" | "wide";
+  | "left_max" | "left" | "right" | "right_max" | "wide" | "right_left" | "left_right" | "3d";
 
 /** Brand-agnostic feature token (booleans, numeric/timer fields, enums). */
 export type CanonicalFeature =
@@ -91,7 +93,8 @@ export type CanonicalFeature =
   // lighting / display
   | "light" | "light_ceiling" | "light_wall" | "display_temp"
   // air handling
-  | "xfan" | "clean" | "purify" | "fresh_air" | "fresh_air_high" | "health" | "humid"
+  | "xfan" | "clean" | "purify" | "filter" | "fresh_air" | "fresh_air_high" | "health" | "humid"
+  | "night" | "3d"
   // sensing / presence
   | "ifeel" | "isee" | "absence_detect" | "eye" | "eye_auto" | "natural_flow"
   // connectivity / model
@@ -128,8 +131,9 @@ export const LABELS: Readonly<Record<string, string>> = {
   middle_down: "Middle Down", lowest: "Lowest",
   up_auto: "Up Auto", down_auto: "Down Auto", middle_auto: "Middle Auto",
   left_max: "Left Max", left: "Left", right: "Right", right_max: "Right Max", wide: "Wide",
+  right_left: "Right-Left", left_right: "Left-Right", "3d": "3D Airflow",
   // features
-  sleep: "Sleep", comfort: "Comfort",
+  sleep: "Sleep", comfort: "Comfort", night: "Night", filter: "Filter",
   light: "Light", light_ceiling: "Ceiling Light", light_wall: "Wall Light",
   display_temp: "Display Temperature",
   xfan: "X-Fan / Mold Prevention", clean: "Clean", purify: "Purify",
@@ -749,6 +753,44 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "turbo", key: "super" },
       { kind: "boolean", canonical: "sleep", key: "sleep" },
       { kind: "enum", canonical: "model", key: "model", constants: WhirlpoolAcModel, map: { DG11J13A: "dg11j13a", DG11J191: "dg11j191" } },
+    ],
+  },
+
+  mitsubishi_heavy152: {
+    power: { kind: "stateful" },
+    modes: { constants: MitsubishiHeavy152Mode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: MitsubishiHeavy152Fan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high", Max: "max", Econo: "econo", Turbo: "turbo" } },
+    temp: { min: 17, max: 31, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: MitsubishiHeavy152SwingV, map: {
+      Auto: "auto", Highest: "highest", High: "high", Middle: "middle", Low: "low", Lowest: "lowest", Off: "off",
+    } } },
+    swingH: { key: "swingH", kind: "position", positions: { constants: MitsubishiHeavy152SwingH, map: {
+      Auto: "auto", LeftMax: "left_max", Left: "left", Middle: "middle", Right: "right", RightMax: "right_max",
+      RightLeft: "right_left", LeftRight: "left_right", Off: "off",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "night", key: "night" },
+      { kind: "boolean", canonical: "quiet", key: "silent" },
+      { kind: "boolean", canonical: "filter", key: "filter" },
+      { kind: "boolean", canonical: "clean", key: "clean" },
+      { kind: "boolean", canonical: "3d", key: "threeD" },
+    ],
+  },
+
+  mitsubishi_heavy88: {
+    power: { kind: "stateful" },
+    modes: { constants: MitsubishiHeavy88Mode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: MitsubishiHeavy88Fan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high", Turbo: "turbo", Econo: "econo" } },
+    temp: { min: 17, max: 31, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: MitsubishiHeavy88SwingV, map: {
+      Off: "off", Auto: "auto", Highest: "highest", High: "high", Middle: "middle", Low: "low", Lowest: "lowest",
+    } } },
+    swingH: { key: "swingH", kind: "position", positions: { constants: MitsubishiHeavy88SwingH, map: {
+      Off: "off", Auto: "auto", LeftMax: "left_max", Left: "left", Middle: "middle", Right: "right",
+      RightMax: "right_max", RightLeft: "right_left", LeftRight: "left_right", ThreeD: "3d",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "clean", key: "clean" },
     ],
   },
 
