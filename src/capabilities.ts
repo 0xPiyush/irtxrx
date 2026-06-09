@@ -340,6 +340,9 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
   info("sharp", "sharp", "simple"),
   info("sanyo_lc7461", "sanyo", "simple"),
   info("sanyo_ac152", "sanyo", "ac"),
+  // Goodweather + Transcold — value carriers, no structured fields exposed.
+  info("goodweather", "goodweather", "ac"),
+  info("transcold", "transcold", "ac"),
   // Mitsubishi Heavy Industries A/Cs.
   info("mitsubishi_heavy152", "mitsubishi_heavy", "ac", {
     modes: named(MitsubishiHeavy152Mode), fans: named(MitsubishiHeavy152Fan),

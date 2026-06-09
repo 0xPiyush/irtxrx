@@ -61,6 +61,10 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_TCL96AC=true \
             -DSEND_TEKNOPOINT=true \
             -DDECODE_TEKNOPOINT=true \
+            -DSEND_GOODWEATHER=true \
+            -DDECODE_GOODWEATHER=true \
+            -DSEND_TRANSCOLD=true \
+            -DDECODE_TRANSCOLD=true \
             -DDECODE_MITSUBISHI112=true \
             -DSEND_MITSUBISHI=true \
             -DSEND_MITSUBISHI2=true \
@@ -141,6 +145,8 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_Hitachi.cpp \
         $(VENDOR)/src/ir_Tcl.cpp \
         $(VENDOR)/src/ir_Teknopoint.cpp \
+        $(VENDOR)/src/ir_Goodweather.cpp \
+        $(VENDOR)/src/ir_Transcold.cpp \
         $(VENDOR)/src/ir_Mitsubishi.cpp \
         $(VENDOR)/src/ir_Panasonic.cpp \
         $(VENDOR)/src/ir_Samsung.cpp \

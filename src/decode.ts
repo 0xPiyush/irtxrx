@@ -481,6 +481,10 @@ import type { MitsubishiHeavy152State } from "./protocols/mitsubishi_heavy152.js
 import { decodeMitsubishiHeavy88 } from "./protocols/mitsubishi_heavy88.js";
 import type { MitsubishiHeavy88State } from "./protocols/mitsubishi_heavy88.js";
 import { decodeBluestarHeavy } from "./protocols/bluestar_heavy.js";
+import { decodeGoodweather } from "./protocols/goodweather.js";
+import type { GoodweatherState } from "./protocols/goodweather.js";
+import { decodeTranscold } from "./protocols/transcold.js";
+import type { TranscoldState } from "./protocols/transcold.js";
 
 /** All supported protocol names. */
 export type ProtocolName =
@@ -502,6 +506,7 @@ export type ProtocolName =
   | "sanyo_lc7461" | "sanyo_ac" | "sanyo_ac88" | "sanyo_ac152"
   | "whirlpool_ac"
   | "mitsubishi_heavy152" | "mitsubishi_heavy88" | "bluestar_heavy"
+  | "goodweather" | "transcold"
   | "godrej"
   | "voltas"
   | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
@@ -517,7 +522,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar" | "goodweather" | "transcold";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -574,6 +579,8 @@ export type DecodeResult =
   | { protocol: "mitsubishi_heavy152"; brand: "mitsubishi_heavy"; type: "ac"; state: MitsubishiHeavy152State; confidence: "checksum_valid" }
   | { protocol: "mitsubishi_heavy88"; brand: "mitsubishi_heavy"; type: "ac"; state: MitsubishiHeavy88State; confidence: "checksum_valid" }
   | { protocol: "bluestar_heavy"; brand: "bluestar"; type: "ac"; state: Uint8Array; confidence: "timing_match" }
+  | { protocol: "goodweather"; brand: "goodweather"; type: "ac"; state: GoodweatherState; confidence: "checksum_valid" }
+  | { protocol: "transcold"; brand: "transcold"; type: "ac"; state: TranscoldState; confidence: "checksum_valid" }
   | { protocol: "godrej"; brand: "godrej"; type: "ac"; state: GodrejState; confidence: "checksum_valid" }
   | { protocol: "voltas"; brand: "voltas"; type: "ac"; state: VoltasState; confidence: "checksum_valid" }
   | { protocol: "hitachi_ac"; brand: "hitachi"; type: "ac"; state: HitachiAcState; confidence: "checksum_valid" }
@@ -992,6 +999,20 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeSanyoAc152(timings, offset, ho);
       return s ? { protocol: "sanyo_ac152", brand: "sanyo", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  {
+    protocol: "goodweather", brand: "goodweather", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeGoodweather(timings, offset, ho);
+      return s ? { protocol: "goodweather", brand: "goodweather", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "transcold", brand: "transcold", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTranscold(timings, offset, ho);
+      return s ? { protocol: "transcold", brand: "transcold", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
   {

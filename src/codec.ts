@@ -126,6 +126,10 @@ import type { MitsubishiHeavy152State } from "./protocols/mitsubishi_heavy152.js
 import { sendMitsubishiHeavy88 } from "./protocols/mitsubishi_heavy88.js";
 import type { MitsubishiHeavy88State } from "./protocols/mitsubishi_heavy88.js";
 import { sendBluestarHeavy } from "./protocols/bluestar_heavy.js";
+import { sendGoodweather } from "./protocols/goodweather.js";
+import type { GoodweatherState } from "./protocols/goodweather.js";
+import { sendTranscold } from "./protocols/transcold.js";
+import type { TranscoldState } from "./protocols/transcold.js";
 
 /** The state shape each protocol's encoder accepts, keyed by protocol name. */
 export interface ProtocolStateMap {
@@ -198,6 +202,8 @@ export interface ProtocolStateMap {
   mitsubishi_heavy88: MitsubishiHeavy88State;
   /** Raw 13-byte payload. */
   bluestar_heavy: Uint8Array;
+  goodweather: GoodweatherState;
+  transcold: TranscoldState;
 }
 
 type EncoderMap = {
@@ -266,6 +272,8 @@ const ENCODERS: EncoderMap = {
   mitsubishi_heavy152: (s, r) => sendMitsubishiHeavy152(s, r),
   mitsubishi_heavy88: (s, r) => sendMitsubishiHeavy88(s, r),
   bluestar_heavy: (s, r) => sendBluestarHeavy(s, r),
+  goodweather: (s, r) => sendGoodweather(s, r),
+  transcold: (s, r) => sendTranscold(s, r),
 };
 
 /**

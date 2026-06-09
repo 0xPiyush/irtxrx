@@ -39,6 +39,8 @@
 #include "ir_Sanyo.h"
 #include "ir_Whirlpool.h"
 #include "ir_MitsubishiHeavy.h"
+#include "ir_Goodweather.h"
+#include "ir_Transcold.h"
 #include "IRrecv.h"
 #include "IRutils.h"
 
@@ -1885,6 +1887,24 @@ int main(int argc, char* argv[]) {
 
     // ----- Sanyo LC7461 -----
 
+    if (strcmp(fn, "sendGoodweather") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendGoodweather <data_hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendGoodweather(data, kGoodweatherBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendTranscold") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendTranscold <data_hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendTranscold(data, kTranscoldBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
     if (strcmp(fn, "sendSanyoLC7461") == 0) {
         if (argc < 4) { fprintf(stderr, "Usage: runner sendSanyoLC7461 <data_hex> <nbits> [repeat]\n"); return 1; }
         uint64_t data = strtoull(argv[2], nullptr, 16);
