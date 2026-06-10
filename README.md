@@ -138,7 +138,7 @@ if (canEncode(protocol)) {
 
 ## Supported protocols
 
-The protocols below span 10 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
+The protocols below span 25 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 | Protocol | Bits | Brand | Type | Features |
 |----------|------|-------|------|----------|
@@ -175,6 +175,37 @@ The protocols below span 10 brands. See [CHANGELOG.md](CHANGELOG.md) for release
 | HitachiAc424 | 424 | Hitachi | AC | Leader pulse, temp, mode, fan, swing V toggle, byte-pair inversion |
 | TCL112AC | 112 | TCL | AC | 0.5°C temp, mode, fan, swing V/H, econo, health, light, turbo, timers, model |
 | TCL96AC | 96 | TCL | AC | 2-bits-per-symbol raw frame (no integrity check; timing-match only) |
+| Teknopoint | 112 | Teknopoint | AC | Mode, temp, fan, swing V; shares the TCL112 layout (GZ055BE1), wider tolerance |
+| Panasonic | 48 | Panasonic | Simple | Kaseikyo 48-bit value (manufacturer + device + command) |
+| PanasonicAC | 216 | Panasonic | AC | Temp, mode, fan, swing V/H, quiet, powerful, ion, clock, on/off timers; 2-section, model auto-detect |
+| PanasonicAC32 | 32 | Panasonic | AC | Mode/temp/fan/swing toggles; multi-section, no checksum |
+| Samsung | 32 | Samsung | Simple | Address + command value |
+| Samsung36 | 36 | Samsung | Simple | 36-bit value, two sections |
+| SamsungAC | 112/168 | Samsung | AC | Temp, mode, fan, swing, quiet, purify; per-section checksums |
+| LG | 28 | LG | Simple | 28-bit value + nibble checksum; LG/LG2 header auto-detect |
+| LgAc | 28 | LG | AC | Temp, mode, fan, swing; LG/LG2 wire + nibble checksum |
+| CarrierAC | 32 | Carrier | AC | 32-bit value, normal + inverted halves |
+| CarrierAC40 | 40 | Carrier | AC | 40-bit value, normal + inverted (min-repeat 2) |
+| CarrierAC64 | 64 | Carrier | AC | Temp, mode, fan, swing, sleep; 64-bit |
+| CarrierAC84 | 84 | Carrier | AC | Const-bit-time encoding, leading nibble + byte pairs |
+| CarrierAC128 | 128 | Carrier | AC | 16-byte, 2-section frame |
+| HaierAC | 72 | Haier | AC | 9-byte command-based (mode, temp, fan, swing, health, timers) |
+| HaierAcYrw02 | 112 | Haier | AC | Temp, mode, fan, swing V/H, health, sleep, turbo, quiet; YR-W02 remote, checksum |
+| HaierAC160 | 160 | Haier | AC | Temp, mode, fan, swing, health, sleep, self-clean, lock |
+| HaierAC176 | 176 | Haier | AC | Superset of YR-W02 with extra swing positions/features |
+| ToshibaAC | 72–80 | Toshiba | AC | Variable 9/10-byte; mode, temp, fan, turbo/econo; byte-pair inversion + XOR |
+| Sharp | 15 | Sharp | Simple | 15-bit remote (address + command), inverted second block |
+| SharpAC | 104 | Sharp | AC | Temp, mode, fan, swing V, ion; models A907/A705/A903, folded-XOR checksum |
+| SanyoLC7461 | 42 | Sanyo | Simple | 42-bit NEC variant (address + command, inverted halves) |
+| SanyoAC | 72 | Sanyo | AC | Temp, mode, fan, swing V, sleep, beep, sensor; nibble-sum checksum |
+| SanyoAC88 | 88 | Sanyo | AC | Temp, mode (incl. feel), fan, swing, filter, turbo, clock; fixed prefix (no checksum) |
+| SanyoAC152 | 152 | Sanyo | AC | 19-byte raw payload (no checksum, timing match) |
+| WhirlpoolAC | 168 | Whirlpool | AC | Temp, mode, fan, swing, light, super, sleep, timers; 3-section, dual XOR, power toggle |
+| MitsubishiHeavy152 | 152 | Mitsubishi Heavy | AC | Temp, mode, fan, swing V/H, 3D, night, silent, filter, clean; signature + inverted byte pairs |
+| MitsubishiHeavy88 | 88 | Mitsubishi Heavy | AC | Temp, mode, fan, swing V/H (bit-split), clean; signature + inverted byte pairs |
+| BluestarHeavy | 104 | Blue Star | AC | 13-byte raw payload (no checksum, timing match) |
+| Goodweather | 48 | Goodweather | AC | 48-bit value, normal + inverted bytes (inverted bit-timing) |
+| Transcold | 24 | Transcold | AC | 24-bit value, normal + inverted bytes (Coolix-style) |
 
 ### Discovering protocols at runtime
 
@@ -204,7 +235,7 @@ A **brand** is the protocol's originating manufacturer — the true creator of t
 ```ts
 import { decode, getProtocolsForBrand, listBrands } from "irtxrx";
 
-listBrands();                          // → ["coolix", "daikin", "godrej", "gree", "hitachi", "kelon", "mitsubishi", "nec", "tcl", "teco", "voltas"]
+listBrands();                          // → ["coolix", "gree", "kelon", "teco", "mitsubishi", "godrej", "daikin", "voltas", "hitachi", "tcl", "teknopoint", "nec", "samsung", "panasonic", "lg", "carrier", "haier", "toshiba", "sharp", "sanyo", "whirlpool", "goodweather", "transcold", "mitsubishi_heavy", "bluestar"]
 getProtocolsForBrand("coolix");        // → Coolix protocol variants (coolix, coolix48)
 decode(timings, { brand: "daikin" });  // → narrow the search to Daikin protocols
 ```
