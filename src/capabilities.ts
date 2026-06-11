@@ -54,6 +54,7 @@ import { WhirlpoolAcMode, WhirlpoolAcFan } from "./protocols/whirlpool_ac.js";
 import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH } from "./protocols/mitsubishi_heavy152.js";
 import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
 import { LloydMode, LloydFan, LloydSwingV } from "./protocols/lloyd.js";
+import { FujitsuMode, FujitsuFan } from "./protocols/fujitsu.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -349,6 +350,11 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     modes: named(LloydMode), fans: named(LloydFan),
     temp: { min: 16, max: 30, step: 1 },
     swingV: true, swingH: true, swingVOptions: named(LloydSwingV),
+  }),
+  // Fujitsu (incl. Fujitsu General / OGeneral) — 6 models, variable-length frame.
+  info("fujitsu_ac", "fujitsu", "ac", {
+    modes: named(FujitsuMode), fans: named(FujitsuFan),
+    temp: { min: 16, max: 30, step: 1 }, swingV: true, swingH: true,
   }),
   // Mitsubishi Heavy Industries A/Cs.
   info("mitsubishi_heavy152", "mitsubishi_heavy", "ac", {

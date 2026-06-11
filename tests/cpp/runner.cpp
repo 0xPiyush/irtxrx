@@ -41,6 +41,7 @@
 #include "ir_MitsubishiHeavy.h"
 #include "ir_Goodweather.h"
 #include "ir_Transcold.h"
+#include "ir_Fujitsu.h"
 #include "IRrecv.h"
 #include "IRutils.h"
 
@@ -2075,6 +2076,70 @@ int main(int argc, char* argv[]) {
         uint8_t* raw = ac.getRaw();
         for (int i = 0; i < kMitsubishiHeavy88StateLength; i++) printf("%02X", raw[i]);
         printf("\n");
+        return 0;
+    }
+
+    // ----- Fujitsu raw send -----
+
+    if (strcmp(fn, "sendFujitsuAc") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendFujitsuAc <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) { unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b); }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendFujitsuAC(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Fujitsu via class setters -----
+    // Prints "<state_hex>\n<timings>". Builds a valid frame for the given model.
+
+    if (strcmp(fn, "fujitsuAc") == 0) {
+        // model power mode temp fan swing clean filter outsideQuiet cmd
+        //   [id celsius tenCHeat timerType timerValue]
+        if (argc < 12) {
+            fprintf(stderr, "Usage: runner fujitsuAc <model> <power> <mode> <temp> <fan> "
+                "<swing> <clean> <filter> <outsideQuiet> <cmd> "
+                "[id celsius tenCHeat timerType timerValue]\n");
+            return 1;
+        }
+        const bool celsius = argc > 13 ? atoi(argv[13]) != 0 : true;
+        const int tenCHeat = argc > 14 ? atoi(argv[14]) : 0;
+        const int timerType = argc > 15 ? atoi(argv[15]) : 0;
+        const int timerValue = argc > 16 ? atoi(argv[16]) : 0;
+
+        IRFujitsuAC ac(4, static_cast<fujitsu_ac_remote_model_t>(atoi(argv[2])));
+        ac.begin();
+        if (argc > 12) ac.setId(static_cast<uint8_t>(atoi(argv[12])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<float>(atof(argv[5])), celsius);
+        ac.setFanSpeed(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwing(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setClean(atoi(argv[8]) != 0);
+        ac.setFilter(atoi(argv[9]) != 0);
+        ac.setOutsideQuiet(atoi(argv[10]) != 0);
+        switch (timerType) {
+            case 1: ac.setSleepTimer(static_cast<uint16_t>(timerValue)); break;
+            case 2: ac.setOffTimer(static_cast<uint16_t>(timerValue)); break;
+            case 3: ac.setOnTimer(static_cast<uint16_t>(timerValue)); break;
+            default: break;
+        }
+        if (tenCHeat) ac.set10CHeat(true);
+        uint8_t cmd = static_cast<uint8_t>(strtoul(argv[11], nullptr, 16));
+        if (cmd != 0)
+            ac.setCmd(cmd);
+        else
+            ac.setPower(atoi(argv[3]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        uint8_t len = ac.getStateLength();
+        for (uint8_t i = 0; i < len; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
         return 0;
     }
 

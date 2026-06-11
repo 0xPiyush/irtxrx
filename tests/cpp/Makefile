@@ -126,6 +126,8 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_MITSUBISHIHEAVY=true \
             -DSEND_BLUESTARHEAVY=true \
             -DDECODE_BLUESTARHEAVY=true \
+            -DSEND_FUJITSU_AC=true \
+            -DDECODE_FUJITSU_AC=true \
             -I$(VENDOR)/src \
             -I$(VENDOR)/test
 
@@ -159,6 +161,7 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_Whirlpool.cpp \
         $(VENDOR)/src/ir_MitsubishiHeavy.cpp \
         $(VENDOR)/src/ir_BluestarHeavy.cpp \
+        $(VENDOR)/src/ir_Fujitsu.cpp \
         $(VENDOR)/src/IRrecv.cpp
 
 runner: $(SRCS)

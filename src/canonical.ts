@@ -64,6 +64,7 @@ import { HitachiAc296Mode, HitachiAc296Fan } from "./protocols/hitachi296.js";
 import { HitachiAc344SwingH } from "./protocols/hitachi344.js";
 import { HitachiAc424Mode, HitachiAc424Fan } from "./protocols/hitachi424.js";
 import { LloydMode, LloydFan } from "./protocols/lloyd.js";
+import { FujitsuModel, FujitsuMode, FujitsuFan } from "./protocols/fujitsu.js";
 
 // ===========================================================================
 // Layer 1 — canonical vocabulary
@@ -156,6 +157,8 @@ export const LABELS: Readonly<Record<string, string>> = {
   set: "Set", inside: "Inside", outside: "Outside",
   full: "Full Function", lzf: "122LZF", a: "Model A", b: "Model B",
   tac09chsd: "TAC09CHSD", gz055be1: "GZ055BE1",
+  arrah2e: "AR-RAH2E", ardb1: "AR-DB1", arreb1e: "AR-REB1E",
+  arjw2: "AR-JW2", arry4: "AR-RY4", arrew4e: "AR-REW4E",
   temp: "Temperature", super: "Super", on_timer: "On Timer", off_timer: "Off Timer",
   mode: "Mode", fan_speed: "Fan Speed", power: "Power",
 };
@@ -588,6 +591,24 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "sleep", key: "sleep" },
       { kind: "boolean", canonical: "econo", key: "eco" },
       { kind: "boolean", canonical: "light", key: "display" },
+    ],
+  },
+
+  fujitsu_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: FujitsuMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: FujitsuFan, map: { Auto: "auto", High: "max", Med: "medium", Low: "low", Quiet: "quiet" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "bool" },
+    swingH: { key: "swingH", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "clean", key: "clean" },
+      { kind: "boolean", canonical: "filter", key: "filter" },
+      { kind: "boolean", canonical: "quiet", key: "outsideQuiet" },
+      { kind: "enum", canonical: "model", key: "model", constants: FujitsuModel, map: {
+        ARRAH2E: "arrah2e", ARDB1: "ardb1", ARREB1E: "arreb1e",
+        ARJW2: "arjw2", ARRY4: "arry4", ARREW4E: "arrew4e",
+      } },
     ],
   },
 

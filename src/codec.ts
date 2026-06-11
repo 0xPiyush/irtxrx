@@ -132,6 +132,8 @@ import { sendTranscold } from "./protocols/transcold.js";
 import type { TranscoldState } from "./protocols/transcold.js";
 import { sendLloyd } from "./protocols/lloyd.js";
 import type { LloydState } from "./protocols/lloyd.js";
+import { sendFujitsu } from "./protocols/fujitsu.js";
+import type { FujitsuState } from "./protocols/fujitsu.js";
 
 /** The state shape each protocol's encoder accepts, keyed by protocol name. */
 export interface ProtocolStateMap {
@@ -207,6 +209,7 @@ export interface ProtocolStateMap {
   goodweather: GoodweatherState;
   transcold: TranscoldState;
   lloyd: LloydState;
+  fujitsu_ac: FujitsuState;
 }
 
 type EncoderMap = {
@@ -278,6 +281,7 @@ const ENCODERS: EncoderMap = {
   goodweather: (s, r) => sendGoodweather(s, r),
   transcold: (s, r) => sendTranscold(s, r),
   lloyd: (s, r) => sendLloyd(s, r),
+  fujitsu_ac: (s, r) => sendFujitsu(s, r),
 };
 
 /**

@@ -557,3 +557,13 @@ export {
   lloydChecksum, defaultLloydState, LloydMode, LloydFan, LloydSwingV, LLOYD_STATE_LENGTH,
 } from "./protocols/lloyd.js";
 export type { LloydState, LloydModeValue, LloydFanValue, LloydSwingVValue } from "./protocols/lloyd.js";
+export {
+  encodeFujitsuRaw, decodeFujitsuRaw, buildFujitsuRaw, parseFujitsuState,
+  sendFujitsu, decodeFujitsu, validFujitsuFrame,
+  FujitsuModel, FujitsuMode, FujitsuFan, FujitsuSwing, FujitsuCmd, FujitsuTimer,
+  FUJITSU_AC_LENGTHS, FUJITSU_AC_STATE_LENGTH, FUJITSU_AC_STATE_LENGTH_SHORT,
+} from "./protocols/fujitsu.js";
+export type {
+  FujitsuState, FujitsuModelValue, FujitsuModeValue, FujitsuFanValue,
+  FujitsuSwingValue, FujitsuCmdValue, FujitsuTimerValue,
+} from "./protocols/fujitsu.js";
