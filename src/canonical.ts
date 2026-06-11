@@ -50,6 +50,7 @@ import { LgAcMode, LgAcFan, LgAcModel } from "./protocols/lg_ac.js";
 import { CarrierAc64Mode, CarrierAc64Fan } from "./protocols/carrier_ac64.js";
 import { HaierAcYrw02Mode, HaierAcYrw02Fan, HaierAc176SwingV, HaierAc176SwingH } from "./protocols/haier_ac176.js";
 import { HaierAc160SwingV } from "./protocols/haier_ac160.js";
+import { HaierAcMode, HaierAcFan, HaierAcSwingV } from "./protocols/haier_ac.js";
 import { ToshibaAcMode, ToshibaAcFan, ToshibaAcModel } from "./protocols/toshiba_ac.js";
 import { SharpAcMode, SharpAcFan, SharpAcSwingV, SharpAcModel } from "./protocols/sharp_ac.js";
 import { SanyoAcMode, SanyoAcFan, SanyoAcSwingV } from "./protocols/sanyo_ac.js";
@@ -857,6 +858,20 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "sleep", key: "sleep" },
       { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 540, step: 60, unit: "minutes" },
       { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 540, step: 60, unit: "minutes" },
+    ],
+  },
+
+  haier_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: HaierAcMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Heat: "heat", Fan: "fan" } },
+    fan: { constants: HaierAcFan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: HaierAcSwingV, map: {
+      Off: "off", Up: "up", Down: "down", Chg: "swing",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "health", key: "health" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
     ],
   },
 

@@ -73,6 +73,10 @@ const RAW_TO_FAN: Record<number, number> = { 0: 0, 1: 3, 2: 2, 3: 1 };
 export interface HaierAcState {
   /** Which button the message represents. */
   command?: HaierAcCommandValue;
+  /** Power on/off. When `command` is omitted, `power: false` sends the Off
+   *  button and `power: true` (or unset) sends On. On decode, reflects whether
+   *  the frame's command is anything other than Off. */
+  power?: boolean;
   /** Temperature in °C (16–30). */
   temp?: number;
   mode?: HaierAcModeValue;
@@ -101,7 +105,8 @@ export function buildHaierAcRaw(state: HaierAcState): Uint8Array {
   const raw = new Uint8Array(STATE_LENGTH);
   raw[0] = PREFIX;
 
-  const command = state.command ?? HaierAcCommand.On;
+  const command = state.command ??
+    (state.power === false ? HaierAcCommand.Off : HaierAcCommand.On);
   const temp = clamp(state.temp ?? 25, TEMP_MIN, TEMP_MAX) - TEMP_MIN;
   raw[1] = (command & 0x0f) | ((temp & 0x0f) << 4);
 
@@ -165,6 +170,7 @@ export function parseHaierAcState(raw: Uint8Array): HaierAcState {
   const offMins = raw[5]! & 0x3f;
   return {
     command: (raw[1]! & 0x0f) as HaierAcCommandValue,
+    power: (raw[1]! & 0x0f) !== HaierAcCommand.Off,
     temp: ((raw[1]! >> 4) & 0x0f) + TEMP_MIN,
     mode: ((raw[6]! >> 5) & 0x07) as HaierAcModeValue,
     fan: (RAW_TO_FAN[(raw[5]! >> 6) & 0x03] ?? 0) as HaierAcFanValue,
