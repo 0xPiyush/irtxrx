@@ -26,6 +26,7 @@ import {
   HITACHI_AC3_ONE_SPACE,
   HITACHI_AC3_ZERO_SPACE,
   HITACHI_MIN_GAP,
+  HITACHI_BASE_TOLERANCE,
   invertBytePairs,
   checkInvertedBytePairs,
 } from "./hitachi_common.js";
@@ -90,8 +91,10 @@ export function decodeHitachiAc3(
       HITACHI_AC3_BIT_MARK, HITACHI_AC3_ONE_SPACE,
       HITACHI_AC3_BIT_MARK, HITACHI_AC3_ZERO_SPACE,
       HITACHI_AC3_BIT_MARK, HITACHI_MIN_GAP,
-      // C++ decodeHitachiAc3 pins mark-excess to 0 (not the global 50µs).
-      true, undefined, 0, false,
+      // C++ decodeHitachiAc3 pins mark-excess to 0. Tolerance widened from the
+      // C++ default (25%) to the Hitachi family's 30% for real-hardware
+      // robustness (short 0-bit spaces); nominal frames decode identically.
+      true, HITACHI_BASE_TOLERANCE, 0, false,
       headerOptional,
     );
     if (frame && checkInvertedBytePairs(frame.data, 3, nbytes - 3)) {

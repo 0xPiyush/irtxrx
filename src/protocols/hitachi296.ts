@@ -21,6 +21,7 @@ import {
   HITACHI_ONE_SPACE,
   HITACHI_ZERO_SPACE,
   HITACHI_MIN_GAP,
+  HITACHI_BASE_TOLERANCE,
   invertBytePairs,
   checkInvertedBytePairs,
 } from "./hitachi_common.js";
@@ -187,8 +188,11 @@ export function decodeHitachiAc296(
     HITACHI_BIT_MARK, HITACHI_ONE_SPACE,
     HITACHI_BIT_MARK, HITACHI_ZERO_SPACE,
     HITACHI_BIT_MARK, HITACHI_MIN_GAP,
-    // C++ decodeHitachiAc296 pins mark-excess to 0 (not the global 50µs).
-    true, undefined, 0, false,
+    // C++ decodeHitachiAc296 pins mark-excess to 0. We widen the tolerance from
+    // the C++ default (25%) to the Hitachi family's 30% — real AR-RCL-style
+    // remotes send 0-bit spaces (~366µs) just under the 25% floor of the
+    // nominal 500µs zero-space. Nominal frames still decode identically.
+    true, HITACHI_BASE_TOLERANCE, 0, false,
     headerOptional,
   );
   if (!frame) return null;
