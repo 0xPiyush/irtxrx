@@ -130,6 +130,8 @@ import { sendGoodweather } from "./protocols/goodweather.js";
 import type { GoodweatherState } from "./protocols/goodweather.js";
 import { sendTranscold } from "./protocols/transcold.js";
 import type { TranscoldState } from "./protocols/transcold.js";
+import { sendLloyd } from "./protocols/lloyd.js";
+import type { LloydState } from "./protocols/lloyd.js";
 
 /** The state shape each protocol's encoder accepts, keyed by protocol name. */
 export interface ProtocolStateMap {
@@ -204,6 +206,7 @@ export interface ProtocolStateMap {
   bluestar_heavy: Uint8Array;
   goodweather: GoodweatherState;
   transcold: TranscoldState;
+  lloyd: LloydState;
 }
 
 type EncoderMap = {
@@ -274,6 +277,7 @@ const ENCODERS: EncoderMap = {
   bluestar_heavy: (s, r) => sendBluestarHeavy(s, r),
   goodweather: (s, r) => sendGoodweather(s, r),
   transcold: (s, r) => sendTranscold(s, r),
+  lloyd: (s, r) => sendLloyd(s, r),
 };
 
 /**

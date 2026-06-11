@@ -94,7 +94,7 @@ describe("capabilities registry", () => {
     expect(getProtocolsForBrand("goodweather").map((p) => p.protocol)).toEqual(["goodweather"]);
     expect(getProtocolsForBrand("transcold").map((p) => p.protocol)).toEqual(["transcold"]);
     expect(getProtocolsForBrand("sony")).toEqual([]); // unknown brand → empty
-    expect(listBrands().sort()).toEqual(["bluestar", "carrier", "coolix", "daikin", "godrej", "goodweather", "gree", "haier", "hitachi", "kelon", "lg", "mitsubishi", "mitsubishi_heavy", "nec", "panasonic", "samsung", "sanyo", "sharp", "tcl", "teco", "teknopoint", "toshiba", "transcold", "voltas", "whirlpool"]);
+    expect(listBrands().sort()).toEqual(["bluestar", "carrier", "coolix", "daikin", "godrej", "goodweather", "gree", "haier", "hitachi", "kelon", "lg", "lloyd", "mitsubishi", "mitsubishi_heavy", "nec", "panasonic", "samsung", "sanyo", "sharp", "tcl", "teco", "teknopoint", "toshiba", "transcold", "voltas", "whirlpool"]);
   });
 
   it("getProtocolInfo returns undefined for unknown protocols", () => {

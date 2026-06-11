@@ -138,7 +138,7 @@ if (canEncode(protocol)) {
 
 ## Supported protocols
 
-The protocols below span 25 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
+The protocols below span 26 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 | Protocol | Bits | Brand | Type | Features |
 |----------|------|-------|------|----------|
@@ -206,6 +206,7 @@ The protocols below span 25 brands. See [CHANGELOG.md](CHANGELOG.md) for release
 | BluestarHeavy | 104 | Blue Star | AC | 13-byte raw payload (no checksum, timing match) |
 | Goodweather | 48 | Goodweather | AC | 48-bit value, normal + inverted bytes (inverted bit-timing) |
 | Transcold | 24 | Transcold | AC | 24-bit value, normal + inverted bytes (Coolix-style) |
+| Lloyd | 120 | Lloyd | AC | Power, mode, fan, temp, turbo, sleep, eco, swing V (positional) / H, display; reverse-engineered, one's-complement checksum. **Partial — timer/clock not yet mapped.** |
 
 ### Discovering protocols at runtime
 

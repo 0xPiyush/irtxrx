@@ -552,3 +552,8 @@ export { encodeGoodweatherRaw, sendGoodweather, decodeGoodweather, GOODWEATHER_B
 export type { GoodweatherState } from "./protocols/goodweather.js";
 export { encodeTranscoldRaw, sendTranscold, decodeTranscold, TRANSCOLD_BITS } from "./protocols/transcold.js";
 export type { TranscoldState } from "./protocols/transcold.js";
+export {
+  buildLloydRaw, encodeLloydRaw, sendLloyd, decodeLloyd, parseLloydState,
+  lloydChecksum, defaultLloydState, LloydMode, LloydFan, LloydSwingV, LLOYD_STATE_LENGTH,
+} from "./protocols/lloyd.js";
+export type { LloydState, LloydModeValue, LloydFanValue, LloydSwingVValue } from "./protocols/lloyd.js";

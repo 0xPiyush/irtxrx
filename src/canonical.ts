@@ -63,6 +63,7 @@ import { HitachiAc264Fan } from "./protocols/hitachi264.js";
 import { HitachiAc296Mode, HitachiAc296Fan } from "./protocols/hitachi296.js";
 import { HitachiAc344SwingH } from "./protocols/hitachi344.js";
 import { HitachiAc424Mode, HitachiAc424Fan } from "./protocols/hitachi424.js";
+import { LloydMode, LloydFan } from "./protocols/lloyd.js";
 
 // ===========================================================================
 // Layer 1 — canonical vocabulary
@@ -571,6 +572,22 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "humid", key: "humid" },
       { kind: "boolean", canonical: "econo", key: "save" },
       { kind: "range", canonical: "timer", key: "timerMinutes", min: 0, max: 1440, unit: "minutes" },
+    ],
+  },
+
+  lloyd: {
+    power: { kind: "stateful" },
+    modes: { constants: LloydMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Heat: "heat", Fan: "fan" } },
+    fan: { constants: LloydFan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 16, max: 30, step: 1 },
+    // Raw 0–7 swing code; exact angle↔code semantics are not yet confirmed.
+    swingV: { key: "swingV", kind: "numeric", min: 0, max: 7 },
+    swingH: { key: "swingH", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "econo", key: "eco" },
+      { kind: "boolean", canonical: "light", key: "display" },
     ],
   },
 
