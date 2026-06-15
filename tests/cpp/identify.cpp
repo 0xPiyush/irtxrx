@@ -51,6 +51,11 @@ int main(int argc, char* argv[]) {
   results.decode_type = UNKNOWN;
 
   IRrecv irrecv(4);
+  // Match irtxrx's decode tolerance. irtxrx widens several families (notably
+  // the Hitachi A/C protocols) from the C++ default 25% to 30% because real
+  // hardware captures drift well past 25%; without this, identify reports
+  // UNKNOWN for signals irtxrx decodes fine (e.g. HITACHI_AC296 / AC3).
+  irrecv.setTolerance(30);
   // strictly=false so non-strict decoders (e.g. variable-length) get a chance.
   if (!irrecv.decode(&results)) {
     printf("FAIL (no protocol matched %u edges)\n", static_cast<unsigned>(n - 1));
