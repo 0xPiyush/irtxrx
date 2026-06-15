@@ -946,6 +946,9 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "beep", key: "beep" },
       { kind: "boolean", canonical: "light", key: "display" },
       { kind: "boolean", canonical: "purify", key: "ion" },
+      { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 1440, step: 10, unit: "minutes" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 1440, step: 10, unit: "minutes" },
+      { kind: "range", canonical: "sleep", key: "sleepTimer", min: 0, max: 1440, step: 10, unit: "minutes" },
     ],
   },
 

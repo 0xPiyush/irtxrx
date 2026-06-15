@@ -1596,6 +1596,39 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // ----- Samsung AC: decode an extended (21-byte) state via the class -----
+    // Loads a raw 21-byte extended message into IRSamsungAc and reports the
+    // settings + timer/sleep/power fields the vendor recovers from it. This is
+    // the authoritative cross-check for the extended byte layout.
+    if (strcmp(fn, "samsungAcGetExt") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner samsungAcGetExt <hex_bytes>\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[kSamsungAcExtendedStateLength];
+        for (uint16_t i = 0; i < nbytes && i < kSamsungAcExtendedStateLength; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        IRSamsungAc ac(4);
+        ac.stateReset();
+        ac.setRaw(data, nbytes);
+        // power temp mode fan swingV swingH quiet powerful breeze econo clean
+        // beep display ion onTimer offTimer sleepTimer
+        printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               ac.getPower() ? 1 : 0, ac.getTemp(), ac.getMode(), ac.getFan(),
+               ac.getSwing() ? 1 : 0, ac.getSwingH() ? 1 : 0,
+               ac.getQuiet() ? 1 : 0, ac.getPowerful() ? 1 : 0,
+               ac.getBreeze() ? 1 : 0, ac.getEcono() ? 1 : 0,
+               ac.getClean() ? 1 : 0, ac.getBeep() ? 1 : 0,
+               ac.getDisplay() ? 1 : 0, ac.getIon() ? 1 : 0,
+               ac.getOnTimer(), ac.getOffTimer(), ac.getSleepTimer());
+        return 0;
+    }
+
     // ----- LG / LG2 28-bit -----
 
     if (strcmp(fn, "sendLG") == 0 || strcmp(fn, "sendLG2") == 0) {

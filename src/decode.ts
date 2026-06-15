@@ -856,8 +856,9 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
       return s ? { protocol: "panasonic_ac32", brand: "panasonic", type: "ac", state: s, confidence: "timing_match" } : null;
     },
   },
-  // Samsung AC (14-byte, two 7-byte sections): distinctive 690/17844 header +
-  // 3086/8864 sections; gated by per-section population-count checksums.
+  // Samsung AC (14-byte standard or 21-byte extended, 7-byte sections):
+  // distinctive 690/17844 header + 3086/8864 sections; gated by per-section
+  // population-count checksums. Extended messages carry timers/sleep/power.
   {
     protocol: "samsung_ac", brand: "samsung", type: "ac",
     tryDecode(timings, offset, ho) {

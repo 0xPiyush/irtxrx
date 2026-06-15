@@ -6,9 +6,16 @@
  *
  * Wire format: a message header (690/17844) followed by 7-byte sections, each
  * framed by a 3086/8864 section header and a 2886µs section gap, sent LSB-first.
- * Each section carries a population-count nibble checksum. Only the standard
- * 14-byte (two-section) message is modelled here; the 21-byte extended message
- * (timers / sleep / explicit power) is out of scope.
+ * Each section carries a population-count nibble checksum.
+ *
+ * Two message variants are supported (matching `IRSamsungAc`):
+ *   - **Standard** (14-byte, two sections) — used for normal mode/temp/fan/swing
+ *     changes while the unit is running.
+ *   - **Extended** (21-byte, three sections) — required whenever the power
+ *     on/off state, an On/Off timer, or Sleep is being changed. The middle
+ *     section is a fixed marker carrying the timer/sleep bits; the third section
+ *     is a copy of the standard settings section. Decode transparently handles
+ *     both lengths and re-collapses an extended message to its settings.
  *
  * Powerful/Breeze(WindFree)/Econo share the `FanSpecial` field and are mutually
  * exclusive; Quiet and Powerful are also mutually exclusive. These interactions
@@ -36,10 +43,30 @@ const ZERO_SPACE = 436;
 const MESSAGE_GAP = 100000; // kDefaultMessageGap
 
 const STATE_LENGTH = 14;
+const EXTENDED_STATE_LENGTH = 21;
 const SECTION_LENGTH = 7;
 
 const TEMP_MIN = 16;
 const TEMP_MAX = 30;
+
+const TIMER_MAX = 24 * 60; // 1 day, in minutes
+
+/** The fixed middle (2nd) section inserted into an extended message. */
+const EXTENDED_MIDDLE: readonly number[] = [0x01, 0xd2, 0x0f, 0x00, 0x00, 0x00, 0x00];
+
+/** Fixed extended payload sent by `IRSamsungAc::sendOn` (power on). */
+const SEND_ON_STATE: readonly number[] = [
+  0x02, 0x92, 0x0f, 0x00, 0x00, 0x00, 0xf0,
+  0x01, 0xd2, 0x0f, 0x00, 0x00, 0x00, 0x00,
+  0x01, 0xe2, 0xfe, 0x71, 0x80, 0x11, 0xf0,
+];
+
+/** Fixed extended payload sent by `IRSamsungAc::sendOff` (power off). */
+const SEND_OFF_STATE: readonly number[] = [
+  0x02, 0xb2, 0x0f, 0x00, 0x00, 0x00, 0xc0,
+  0x01, 0xd2, 0x0f, 0x00, 0x00, 0x00, 0x00,
+  0x01, 0x02, 0xff, 0x71, 0x80, 0x11, 0xc0,
+];
 
 // ---------------------------------------------------------------------------
 // Enumerations
@@ -109,6 +136,24 @@ export interface SamsungAcState {
   display?: boolean;
   /** Ion / filter. */
   ion?: boolean;
+  /**
+   * On timer in minutes (0 = off). Resolution is 10 minutes; capped at 24h.
+   * Setting any timer (or {@link extended}) emits a 21-byte extended message.
+   */
+  onTimer?: number;
+  /** Off timer in minutes (0 = off). Resolution 10 min; capped at 24h. */
+  offTimer?: number;
+  /**
+   * Sleep timer in minutes (0 = off). Resolution 10 min; capped at 24h.
+   * Sleep shares the hardware Off timer, so setting it clears the On timer.
+   */
+  sleepTimer?: number;
+  /**
+   * Force a 21-byte extended message even with no timers set. Samsung requires
+   * an extended message to change the power on/off state, so set this when the
+   * intent is a power toggle. Decode sets it on any extended capture.
+   */
+  extended?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -342,9 +387,107 @@ export function encodeSamsungAcRaw(data: Uint8Array, repeat: number = 0): number
   return result;
 }
 
-/** Encode a Samsung A/C state into raw IR timings. */
+/** Round a timer value to the hardware's 10-minute resolution, capped at 24h. */
+function timerResolution(mins: number): number {
+  return Math.floor(Math.min(Math.max(mins, 0), TIMER_MAX) / 10) * 10;
+}
+
+/**
+ * Resolve the raw On/Off/Sleep timer values from a state, mirroring the
+ * `IRSamsungAc::setOnTimer` / `setOffTimer` / `setSleepTimer` precedence: a
+ * sleep timer takes over the Off timer and cancels any On timer.
+ */
+function resolveTimers(state: SamsungAcState): { onTimer: number; offTimer: number; sleep: boolean } {
+  let onTimer = timerResolution(state.onTimer ?? 0);
+  let offTimer = timerResolution(state.offTimer ?? 0);
+  let sleep = false;
+  if ((state.sleepTimer ?? 0) > 0) {
+    offTimer = timerResolution(state.sleepTimer!);
+    if (offTimer > 0) onTimer = 0;
+    sleep = offTimer > 0;
+  }
+  return { onTimer, offTimer, sleep };
+}
+
+/** True when a state must be sent as a 21-byte extended message. */
+function needsExtended(state: SamsungAcState): boolean {
+  return state.extended === true ||
+    (state.onTimer ?? 0) > 0 || (state.offTimer ?? 0) > 0 || (state.sleepTimer ?? 0) > 0;
+}
+
+/**
+ * Build the raw 21-byte extended Samsung A/C state from a state object.
+ *
+ * Mirrors `IRSamsungAc::sendExtended`: the standard settings section becomes the
+ * 3rd section, a fixed marker section is inserted as the 2nd, and the On/Off/
+ * Sleep timer bits are written into it. All three section checksums are set.
+ */
+export function buildSamsungAcExtendedRaw(state: SamsungAcState): Uint8Array {
+  const settings = buildSamsungAcRaw(state); // section 1 + settings section
+  const raw = new Uint8Array(EXTENDED_STATE_LENGTH);
+  raw.set(settings.subarray(0, SECTION_LENGTH), 0); // 1st section
+  raw.set(EXTENDED_MIDDLE, SECTION_LENGTH); // 2nd (marker) section
+  raw.set(settings.subarray(SECTION_LENGTH, STATE_LENGTH), 2 * SECTION_LENGTH); // 3rd section
+
+  const { onTimer, offTimer, sleep } = resolveTimers(state);
+  const onEnable = onTimer > 0;
+  const offEnable = offTimer > 0;
+
+  // _setOnTimer — On time fields live in bytes 10/11, enable/day in byte 12.
+  setBits(raw, 12, 1, 1, onEnable ? 1 : 0); // OnTimerEnable
+  if (onTimer >= TIMER_MAX) {
+    setBits(raw, 12, 4, 1, 1); // OnTimeDay
+  } else {
+    setBits(raw, 12, 4, 1, 0);
+    setBits(raw, 10, 4, 3, Math.floor((onTimer % 60) / 10)); // OnTimeMins
+    const hours = Math.floor(onTimer / 60);
+    setBits(raw, 10, 7, 1, hours & 0b1); // OnTimeHrs1
+    setBits(raw, 11, 0, 4, hours >> 1); // OnTimeHrs2
+  }
+
+  // _setOffTimer — Off time fields live in bytes 9/10, enable/day in byte 12.
+  setBits(raw, 12, 2, 1, offEnable ? 1 : 0); // OffTimerEnable
+  if (offTimer >= TIMER_MAX) {
+    setBits(raw, 12, 0, 1, 1); // OffTimeDay
+  } else {
+    setBits(raw, 12, 0, 1, 0);
+    setBits(raw, 9, 4, 3, Math.floor((offTimer % 60) / 10)); // OffTimeMins
+    const hours = Math.floor(offTimer / 60);
+    setBits(raw, 9, 7, 1, hours & 0b1); // OffTimeHrs1
+    setBits(raw, 10, 0, 4, hours >> 1); // OffTimeHrs2
+  }
+
+  // _setSleepTimer — Sleep only engages when an Off time is set.
+  const sleepBit = sleep && offEnable ? 1 : 0;
+  setBits(raw, 5, 4, 1, sleepBit); // Sleep5 (1st section)
+  setBits(raw, 12, 3, 1, sleepBit); // Sleep12 (marker section)
+
+  setSectionChecksum(raw, 0);
+  setSectionChecksum(raw, SECTION_LENGTH);
+  setSectionChecksum(raw, 2 * SECTION_LENGTH);
+  return raw;
+}
+
+/**
+ * Encode a Samsung A/C state into raw IR timings.
+ *
+ * Emits a 21-byte extended message when a timer/sleep is set or
+ * {@link SamsungAcState.extended} is true, otherwise a standard 14-byte message
+ * — matching `IRSamsungAc::send`.
+ */
 export function sendSamsungAc(state: SamsungAcState, repeat: number = 0): number[] {
-  return encodeSamsungAcRaw(buildSamsungAcRaw(state), repeat);
+  const raw = needsExtended(state) ? buildSamsungAcExtendedRaw(state) : buildSamsungAcRaw(state);
+  return encodeSamsungAcRaw(raw, repeat);
+}
+
+/** Encode the fixed extended "power on" message (`IRSamsungAc::sendOn`). */
+export function sendSamsungAcOn(repeat: number = 0): number[] {
+  return encodeSamsungAcRaw(Uint8Array.from(SEND_ON_STATE), repeat);
+}
+
+/** Encode the fixed extended "power off" message (`IRSamsungAc::sendOff`). */
+export function sendSamsungAcOff(repeat: number = 0): number[] {
+  return encodeSamsungAcRaw(Uint8Array.from(SEND_OFF_STATE), repeat);
 }
 
 // ---------------------------------------------------------------------------
@@ -386,10 +529,47 @@ export function parseSamsungAcState(raw: Uint8Array): SamsungAcState {
 }
 
 /**
- * Decode raw IR timings as a Samsung A/C (standard 14-byte) message.
+ * Extract the On/Off/Sleep timer settings from a raw 21-byte extended state,
+ * mirroring `IRSamsungAc::setRaw` (length > 14) plus the public timer getters.
+ */
+export function parseSamsungAcExtended(raw: Uint8Array): SamsungAcState {
+  // Collapse the extended message back to its 14-byte settings: 1st section +
+  // 3rd section (the 2nd marker section is discarded), matching setRaw().
+  const settings = new Uint8Array(STATE_LENGTH);
+  settings.set(raw.subarray(0, SECTION_LENGTH), 0);
+  settings.set(raw.subarray(2 * SECTION_LENGTH, EXTENDED_STATE_LENGTH), SECTION_LENGTH);
+
+  // Timer/sleep bits live in the 2nd (marker) section, bytes 9–12.
+  const onMins = getBits(raw, 10, 4, 3);
+  const onHrs1 = getBits(raw, 10, 7, 1);
+  const onHrs2 = getBits(raw, 11, 0, 4);
+  const onDay = getBits(raw, 12, 4, 1);
+  const offMins = getBits(raw, 9, 4, 3);
+  const offHrs1 = getBits(raw, 9, 7, 1);
+  const offHrs2 = getBits(raw, 10, 0, 4);
+  const offDay = getBits(raw, 12, 0, 1);
+  const sleep = getBits(raw, 5, 4, 1) === 1 && getBits(raw, 12, 3, 1) === 1;
+
+  const onTimer = onDay ? TIMER_MAX : (onHrs2 * 2 + onHrs1) * 60 + onMins * 10;
+  const offTimer = offDay ? TIMER_MAX : (offHrs2 * 2 + offHrs1) * 60 + offMins * 10;
+
+  // Sleep & Off share the same timer; the getters report only the active one.
+  return {
+    ...parseSamsungAcState(settings),
+    extended: true,
+    onTimer,
+    offTimer: sleep ? 0 : offTimer,
+    sleepTimer: sleep ? offTimer : 0,
+  };
+}
+
+/**
+ * Decode raw IR timings as a Samsung A/C message (standard 14-byte or extended
+ * 21-byte).
  *
- * Matches the message header, the 7-byte section framing, and validates the
- * per-section population-count checksums.
+ * Matches the message header, then 7-byte sections until one is followed by an
+ * inter-message gap, and validates the per-section population-count checksums.
+ * Extended messages additionally yield the On/Off/Sleep timer fields.
  *
  * @returns Decoded state, or null on mismatch / bad checksum.
  */
@@ -411,22 +591,43 @@ export function decodeSamsungAc(
   }
   if (!hasHeader && !headerOptional) return null;
 
-  const raw = new Uint8Array(STATE_LENGTH);
-  const sections = STATE_LENGTH / SECTION_LENGTH;
-  for (let s = 0; s < sections; s++) {
-    const isLast = s === sections - 1;
-    const sec = matchGenericBytes(
+  // Read 7-byte sections until one ends on an inter-message gap (the last). A
+  // non-last section is followed by the short 2886µs section gap; the last by
+  // the long ≈100ms message gap — the two are unambiguous, so no count is
+  // needed up-front (supports both the 14- and 21-byte variants).
+  const bytes: number[] = [];
+  let matchedLast = false;
+  for (let s = 0; s < EXTENDED_STATE_LENGTH / SECTION_LENGTH; s++) {
+    // Try the section as non-last (short section gap) first, then as the last
+    // section (long message gap, matched "at least").
+    let sec = matchGenericBytes(
       timings, pos, timings.length - pos, SECTION_LENGTH,
       SECTION_MARK, SECTION_SPACE,
       BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
-      BIT_MARK, isLast ? MESSAGE_GAP : SECTION_GAP,
-      isLast, undefined, 0, false, false,
+      BIT_MARK, SECTION_GAP,
+      false, undefined, 0, false, false,
     );
+    let isLast = false;
+    if (!sec) {
+      sec = matchGenericBytes(
+        timings, pos, timings.length - pos, SECTION_LENGTH,
+        SECTION_MARK, SECTION_SPACE,
+        BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
+        BIT_MARK, MESSAGE_GAP,
+        true, undefined, 0, false, false,
+      );
+      isLast = true;
+    }
     if (!sec) return null;
-    raw.set(sec.data, s * SECTION_LENGTH);
+    for (const b of sec.data) bytes.push(b);
     pos += sec.used;
+    if (isLast) { matchedLast = true; break; }
   }
 
+  if (!matchedLast) return null;
+  if (bytes.length !== STATE_LENGTH && bytes.length !== EXTENDED_STATE_LENGTH) return null;
+
+  const raw = Uint8Array.from(bytes);
   if (!samsungAcValidChecksum(raw)) return null;
-  return parseSamsungAcState(raw);
+  return raw.length === EXTENDED_STATE_LENGTH ? parseSamsungAcExtended(raw) : parseSamsungAcState(raw);
 }

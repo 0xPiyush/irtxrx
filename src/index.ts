@@ -441,10 +441,14 @@ export {
 export type { Samsung36State } from "./protocols/samsung36.js";
 export {
   buildSamsungAcRaw,
+  buildSamsungAcExtendedRaw,
   encodeSamsungAcRaw,
   sendSamsungAc,
+  sendSamsungAcOn,
+  sendSamsungAcOff,
   decodeSamsungAc,
   parseSamsungAcState,
+  parseSamsungAcExtended,
   samsungAcValidChecksum,
   SamsungAcMode,
   SamsungAcFan,
