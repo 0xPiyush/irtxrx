@@ -158,6 +158,8 @@ import type { SanyoAc88State } from "./protocols/sanyo_ac88.js";
 import { sendSanyoAc152 } from "./protocols/sanyo_ac152.js";
 import { sendWhirlpoolAc } from "./protocols/whirlpool_ac.js";
 import type { WhirlpoolAcState } from "./protocols/whirlpool_ac.js";
+import { sendWhirlpoolMagicool } from "./protocols/whirlpool_magicool.js";
+import type { WhirlpoolMagicoolState } from "./protocols/whirlpool_magicool.js";
 import { sendMitsubishiHeavy152 } from "./protocols/mitsubishi_heavy152.js";
 import type { MitsubishiHeavy152State } from "./protocols/mitsubishi_heavy152.js";
 import { sendMitsubishiHeavy88 } from "./protocols/mitsubishi_heavy88.js";
@@ -263,6 +265,7 @@ export interface ProtocolStateMap {
   /** Raw 19-byte payload. */
   sanyo_ac152: Uint8Array;
   whirlpool_ac: WhirlpoolAcState;
+  whirlpool_magicool: WhirlpoolMagicoolState;
   mitsubishi_heavy152: MitsubishiHeavy152State;
   mitsubishi_heavy88: MitsubishiHeavy88State;
   /** Raw 13-byte payload. */
@@ -359,6 +362,7 @@ const ENCODERS: EncoderMap = {
   sanyo_ac88: (s, r) => sendSanyoAc88(s, r),
   sanyo_ac152: (s, r) => sendSanyoAc152(s, r),
   whirlpool_ac: (s, r) => sendWhirlpoolAc(s, r),
+  whirlpool_magicool: (s, r) => sendWhirlpoolMagicool(s, r),
   mitsubishi_heavy152: (s, r) => sendMitsubishiHeavy152(s, r),
   mitsubishi_heavy88: (s, r) => sendMitsubishiHeavy88(s, r),
   bluestar_heavy: (s, r) => sendBluestarHeavy(s, r),

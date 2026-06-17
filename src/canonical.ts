@@ -72,6 +72,7 @@ import { ToshibaAcMode, ToshibaAcFan, ToshibaAcModel } from "./protocols/toshiba
 import { SharpAcMode, SharpAcFan, SharpAcSwingV, SharpAcModel } from "./protocols/sharp_ac.js";
 import { SanyoAcMode, SanyoAcFan, SanyoAcSwingV } from "./protocols/sanyo_ac.js";
 import { WhirlpoolAcMode, WhirlpoolAcFan, WhirlpoolAcModel } from "./protocols/whirlpool_ac.js";
+import { WhirlpoolMagicoolMode, WhirlpoolMagicoolFan, WhirlpoolMagicoolSwing } from "./protocols/whirlpool_magicool.js";
 import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH } from "./protocols/mitsubishi_heavy152.js";
 import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
 import { SanyoAc88Mode, SanyoAc88Fan } from "./protocols/sanyo_ac88.js";
@@ -1067,6 +1068,17 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "sleep", key: "sleep" },
       { kind: "enum", canonical: "model", key: "model", constants: WhirlpoolAcModel, map: { DG11J13A: "dg11j13a", DG11J191: "dg11j191" } },
     ],
+  },
+
+  whirlpool_magicool: {
+    power: { kind: "stateful" },
+    modes: { constants: WhirlpoolMagicoolMode, map: { Cool: "cool", Dry: "dry", Fan: "fan" } },
+    fan: { constants: WhirlpoolMagicoolFan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swing", kind: "position", positions: { constants: WhirlpoolMagicoolSwing, map: {
+      Off: "off", Pos1: "highest", Pos2: "high", Pos3: "middle", Pos4: "low", Pos5: "lowest", Full: "swing",
+    } } },
+    features: [],
   },
 
   sanyo_ac88: {

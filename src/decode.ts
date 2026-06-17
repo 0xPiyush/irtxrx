@@ -513,6 +513,8 @@ import type { SanyoAc88State } from "./protocols/sanyo_ac88.js";
 import { decodeSanyoAc152 } from "./protocols/sanyo_ac152.js";
 import { decodeWhirlpoolAc } from "./protocols/whirlpool_ac.js";
 import type { WhirlpoolAcState } from "./protocols/whirlpool_ac.js";
+import { decodeWhirlpoolMagicool } from "./protocols/whirlpool_magicool.js";
+import type { WhirlpoolMagicoolState } from "./protocols/whirlpool_magicool.js";
 import { decodeMitsubishiHeavy152 } from "./protocols/mitsubishi_heavy152.js";
 import type { MitsubishiHeavy152State } from "./protocols/mitsubishi_heavy152.js";
 import { decodeMitsubishiHeavy88 } from "./protocols/mitsubishi_heavy88.js";
@@ -563,6 +565,7 @@ export type ProtocolName =
   | "sharp" | "sharp_ac"
   | "sanyo_lc7461" | "sanyo_ac" | "sanyo_ac88" | "sanyo_ac152"
   | "whirlpool_ac"
+  | "whirlpool_magicool"
   | "mitsubishi_heavy152" | "mitsubishi_heavy88" | "bluestar_heavy"
   | "goodweather" | "transcold"
   | "lloyd"
@@ -657,6 +660,7 @@ export type DecodeResult =
   | { protocol: "sanyo_ac88"; brand: "sanyo"; type: "ac"; state: SanyoAc88State; confidence: "timing_match" }
   | { protocol: "sanyo_ac152"; brand: "sanyo"; type: "ac"; state: Uint8Array; confidence: "timing_match" }
   | { protocol: "whirlpool_ac"; brand: "whirlpool"; type: "ac"; state: WhirlpoolAcState; confidence: "checksum_valid" }
+  | { protocol: "whirlpool_magicool"; brand: "whirlpool"; type: "ac"; state: WhirlpoolMagicoolState; confidence: "checksum_valid" }
   | { protocol: "mitsubishi_heavy152"; brand: "mitsubishi_heavy"; type: "ac"; state: MitsubishiHeavy152State; confidence: "checksum_valid" }
   | { protocol: "mitsubishi_heavy88"; brand: "mitsubishi_heavy"; type: "ac"; state: MitsubishiHeavy88State; confidence: "checksum_valid" }
   | { protocol: "bluestar_heavy"; brand: "bluestar"; type: "ac"; state: Uint8Array; confidence: "timing_match" }
@@ -1195,6 +1199,13 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeWhirlpoolAc(timings, offset, ho);
       return s ? { protocol: "whirlpool_ac", brand: "whirlpool", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "whirlpool_magicool", brand: "whirlpool", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeWhirlpoolMagicool(timings, offset, ho);
+      return s ? { protocol: "whirlpool_magicool", brand: "whirlpool", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
   {
