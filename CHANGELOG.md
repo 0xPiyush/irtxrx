@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.20.0]
+
+### Added
+
+- **Two Whirlpool Magicool A/C protocols**, both reverse-engineered from real
+  remote captures (neither exists in IRremoteESP8266; "Magicool" is a remote
+  line that spans multiple, unrelated wire protocols). Also seen on Marq and
+  rebadged Kelvinator remotes.
+  - **`whirlpool_magicool`** — 14-byte / 112-bit frame, ~3346/1350 header, `WLP`
+    (`0x57 0x4C 0x50`) signature, byte-sum checksum. Power, mode
+    (cool/dry/fan/6th-sense), temp, fan (incl. sleep), 5-step + full swing,
+    turbo, eco, silent, display/dim.
+  - **`whirlpool_magicool2`** — a different remote model with a wholly separate
+    NEC-style format: 15-byte / 120-bit frame, 8514/4241 header, `0x56`
+    signature, nibble-sum checksum. Power, mode (cool/dry/fan), temp, fan,
+    5-step + full swing, 6th-sense, turbo, eco, silent, sleep, dim.
+  - Both are wired through the decode registry, codec, capabilities and the
+    canonical capability model, and validated against the real captures plus
+    lossless round-trips (there is no C++ reference to cross-check against).
+
+### Notes
+
+- The **timer** function is not yet mapped on either Magicool protocol; frames
+  with a timer set are not decoded.
+
 ## [0.19.0]
 
 ### Added
