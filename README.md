@@ -201,7 +201,7 @@ The protocols below span 45 brands. See [CHANGELOG.md](CHANGELOG.md) for release
 | SanyoAC88 | 88 | Sanyo | AC | Temp, mode (incl. feel), fan, swing, filter, turbo, clock; fixed prefix (no checksum) |
 | SanyoAC152 | 152 | Sanyo | AC | 19-byte raw payload (no checksum, timing match) |
 | WhirlpoolAC | 168 | Whirlpool | AC | Temp, mode, fan, swing, light, super, sleep, timers; 3-section, dual XOR, power toggle |
-| WhirlpoolMagicool | 112 | Whirlpool | AC | Power, mode (cool/dry/fan), temp, fan, 5-step + full swing; 14-byte "WLP" frame, byte-sum checksum. Reverse-engineered (not in IRremoteESP8266); also Marq / rebadged Kelvinator |
+| WhirlpoolMagicool | 112 | Whirlpool | AC | Power, mode (cool/dry/fan/6th-sense), temp, fan (incl. sleep), 5-step + full swing, turbo, eco, silent, display/dim; 14-byte "WLP" frame, byte-sum checksum. Reverse-engineered (not in IRremoteESP8266); also Marq / rebadged Kelvinator |
 | MitsubishiHeavy152 | 152 | Mitsubishi Heavy | AC | Temp, mode, fan, swing V/H, 3D, night, silent, filter, clean; signature + inverted byte pairs |
 | MitsubishiHeavy88 | 88 | Mitsubishi Heavy | AC | Temp, mode, fan, swing V/H (bit-split), clean; signature + inverted byte pairs |
 | BluestarHeavy | 104 | Blue Star | AC | 13-byte raw payload (no checksum, timing match) |

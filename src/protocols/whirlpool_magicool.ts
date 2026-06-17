@@ -15,19 +15,23 @@
  *
  * Byte layout (LSB-first):
  * ```
- * 57 4c 50 | 00 00 | 2P | 2M | 31-T | SSSFFF | 00 00 | 0c | NN | CK
- *  0  1  2    3  4   5    6    7       8        9 10    11   12   13
+ * 57 4c 50 | 00 | E | 2P*T | DM | 31-T | t SSS FFF | 00 00 | NN NN | CK
+ *  0  1  2    3   4   5      6    7       8           9 10    11 12   13
  * ```
- * - bytes 0–2 = `57 4c 50`, bytes 3–4 = `00 00`, bytes 9–10 = `00 00`,
- *   byte 11 = `0x0c` — all constant.
- * - byte 5 = `0x20 | (power << 2)` — power on `0x24`, off `0x20`.
- * - byte 6 = `0x20 | mode` — Cool `3`, Dry `2`, Fan `7` (no Heat on this unit).
+ * - bytes 0–2 = `57 4c 50`, byte 3 = `00`, bytes 9–10 = `00` — constant.
+ * - byte 4: bit 6 = **Eco**, bit 7 = **Silent**.
+ * - byte 5: base `0x20`, bit 2 = **power**, bit 6 = **turbo**.
+ * - byte 6: bits[3:0] = **mode** (Cool 3 / Dry 2 / Fan 7 / 6th-Sense 8),
+ *   bit 5 = **display** lit (the "Dim" button clears it).
  * - byte 7 = `31 - tempC` (16–30 °C).
- * - byte 8 = `(swing << 3) | fan` — swing bits[5:3] (off 0, steps 1–5, full 7),
- *   fan bits[2:0] (auto 0, low 2, med 3, high 5).
- * - byte 12 = a session nonce/counter the unit ignores (preserved on decode for
- *   lossless round-trips; emitted as `0x00` by default).
+ * - byte 8: bit 6 = **turbo**, bits[5:3] = **swing** (off 0, steps 1–5, full 7),
+ *   bits[2:0] = **fan** (auto 0, sleep 1, low 2, med 3, high 5).
+ * - bytes 11–12 = a remote rolling counter/nonce the unit ignores (preserved on
+ *   decode for lossless round-trips; emitted as `0x0c00` by default).
  * - byte 13 = `sum(bytes 0..12) & 0xFF`.
+ *
+ * Turbo and 6th-Sense have no "off" frame — they are cleared by changing mode.
+ * The timer (likely in bytes 9–10) is not yet mapped; timer frames don't decode.
  */
 
 import { sendGenericBytes, sumBytes } from "../encode.js";
@@ -41,11 +45,14 @@ const HDR_MARK = 3346;
 const HDR_SPACE = 1350;
 const BIT_MARK = 580;
 const ONE_SPACE = 1064;
-const ZERO_SPACE = 300;
+const ZERO_SPACE = 320; // centred on the captured zero-space spread (~244–396µs)
 const MIN_GAP = 100000; // inter-frame gap unobserved in captures; default large gap
-const TOLERANCE = 30; // captures drift well past the 25% default
+// Real captures jitter heavily (±~30%); the "WLP" signature + checksum make a
+// false match implausible, so we decode generously.
+const TOLERANCE = 35;
 
 export const WHIRLPOOL_MAGICOOL_STATE_LENGTH = 14;
+const DEFAULT_NONCE = 0x0c00; // bytes 11-12 as first observed on the remote
 
 // ---------------------------------------------------------------------------
 // Enumerations
@@ -55,11 +62,15 @@ export const WhirlpoolMagicoolMode = {
   Dry: 0x2,
   Cool: 0x3,
   Fan: 0x7,
+  /** Whirlpool "6th Sense" — auto-everything mode (cleared by changing mode). */
+  SixthSense: 0x8,
 } as const;
 export type WhirlpoolMagicoolModeValue = (typeof WhirlpoolMagicoolMode)[keyof typeof WhirlpoolMagicoolMode];
 
 export const WhirlpoolMagicoolFan = {
   Auto: 0,
+  /** Quiet "sleep" fan curve — the Sleep button selects this fan value. */
+  Sleep: 1,
   Low: 2,
   Med: 3,
   High: 5,
@@ -81,6 +92,13 @@ export type WhirlpoolMagicoolSwingValue = (typeof WhirlpoolMagicoolSwing)[keyof 
 const MIN_TEMP = 16;
 const MAX_TEMP = 30;
 
+const ECO_BIT = 0x40; // byte 4
+const SILENT_BIT = 0x80; // byte 4
+const POWER_BIT = 0x04; // byte 5
+const TURBO_BIT = 0x40; // byte 5 and byte 8
+const BYTE5_BASE = 0x20; // byte 5 constant bit
+const DISPLAY_BIT = 0x20; // byte 6
+
 // ---------------------------------------------------------------------------
 // State interface
 // ---------------------------------------------------------------------------
@@ -93,9 +111,18 @@ export interface WhirlpoolMagicoolState {
   temp?: number;
   fan?: WhirlpoolMagicoolFanValue;
   swing?: WhirlpoolMagicoolSwingValue;
+  /** Turbo / Jet boost (no off frame — cleared by changing mode). */
+  turbo?: boolean;
+  /** Eco / energy-saving. */
+  eco?: boolean;
+  /** Silent / quiet operation. */
+  silent?: boolean;
+  /** Display backlight lit. Defaults to true; the "Dim" button turns it off. */
+  light?: boolean;
   /**
-   * Byte-12 remote nonce/counter. The unit ignores it; preserved here so a
-   * decoded frame re-encodes byte-for-byte. Defaults to 0.
+   * Bytes 11–12 remote rolling counter/nonce (16-bit, big-endian). The unit
+   * ignores it; preserved here so a decoded frame re-encodes byte-for-byte.
+   * Defaults to 0x0c00.
    */
   remoteState?: number;
 }
@@ -125,25 +152,29 @@ const VALID_SWINGS = new Set<number>(Object.values(WhirlpoolMagicoolSwing));
 /**
  * Build the raw 14-byte Magicool state from a state object.
  *
- * Defaults: power on, Cool, 24 °C, fan Auto, swing Off, nonce 0.
+ * Defaults: power on, Cool, 24 °C, fan Auto, swing Off, display on, all
+ * features off, nonce 0x0c00.
  */
 export function buildWhirlpoolMagicoolRaw(state: WhirlpoolMagicoolState): Uint8Array {
   const raw = new Uint8Array(WHIRLPOOL_MAGICOOL_STATE_LENGTH);
-  // Constant signature / framing bytes.
+  // Constant signature byte.
   raw[0] = 0x57;
   raw[1] = 0x4c;
   raw[2] = 0x50;
-  raw[11] = 0x0c;
 
   const mode = VALID_MODES.has(state.mode as number) ? state.mode! : WhirlpoolMagicoolMode.Cool;
   const fan = VALID_FANS.has(state.fan as number) ? state.fan! : WhirlpoolMagicoolFan.Auto;
   const swing = VALID_SWINGS.has(state.swing as number) ? state.swing! : WhirlpoolMagicoolSwing.Off;
+  const turbo = state.turbo ?? false;
+  const nonce = (state.remoteState ?? DEFAULT_NONCE) & 0xffff;
 
-  raw[5] = 0x20 | ((state.power ?? true) ? 0x04 : 0x00);
-  raw[6] = 0x20 | mode;
+  raw[4] = (state.eco ?? false ? ECO_BIT : 0) | (state.silent ?? false ? SILENT_BIT : 0);
+  raw[5] = BYTE5_BASE | ((state.power ?? true) ? POWER_BIT : 0) | (turbo ? TURBO_BIT : 0);
+  raw[6] = ((state.light ?? true) ? DISPLAY_BIT : 0) | mode;
   raw[7] = 31 - clamp(Math.round(state.temp ?? 24), MIN_TEMP, MAX_TEMP);
-  raw[8] = (swing << 3) | fan;
-  raw[12] = (state.remoteState ?? 0) & 0xff;
+  raw[8] = (turbo ? TURBO_BIT : 0) | (swing << 3) | fan;
+  raw[11] = (nonce >> 8) & 0xff;
+  raw[12] = nonce & 0xff;
 
   raw[13] = sumBytes(raw, 0, 13) & 0xff;
   return raw;
@@ -179,24 +210,33 @@ export function sendWhirlpoolMagicool(state: WhirlpoolMagicoolState, repeat: num
 /** Parse a validated 14-byte Magicool state. */
 export function parseWhirlpoolMagicoolState(raw: Uint8Array): WhirlpoolMagicoolState {
   return {
-    power: !!(raw[5]! & 0x04),
+    power: !!(raw[5]! & POWER_BIT),
     mode: (raw[6]! & 0x0f) as WhirlpoolMagicoolModeValue,
     temp: 31 - raw[7]!,
     fan: (raw[8]! & 0x07) as WhirlpoolMagicoolFanValue,
     swing: ((raw[8]! >> 3) & 0x07) as WhirlpoolMagicoolSwingValue,
-    remoteState: raw[12]!,
+    turbo: !!(raw[5]! & TURBO_BIT),
+    eco: !!(raw[4]! & ECO_BIT),
+    silent: !!(raw[4]! & SILENT_BIT),
+    light: !!(raw[6]! & DISPLAY_BIT),
+    remoteState: (raw[11]! << 8) | raw[12]!,
   };
 }
 
-/** Reject frames whose constant signature/framing bytes don't match. */
+/** Reject frames whose constant/structural bytes don't match. */
 function structureOk(raw: Uint8Array): boolean {
   if (raw[0] !== 0x57 || raw[1] !== 0x4c || raw[2] !== 0x50) return false;
-  if (raw[3] !== 0x00 || raw[4] !== 0x00) return false;
-  if (raw[9] !== 0x00 || raw[10] !== 0x00 || raw[11] !== 0x0c) return false;
-  if ((raw[5]! & ~0x04) !== 0x20) return false; // byte 5 = 0x20 | power
-  if ((raw[6]! & 0xf0) !== 0x20) return false; // byte 6 high nibble
-  if ((raw[8]! & 0xc0) !== 0x00) return false; // byte 8 top 2 bits unused
+  if (raw[3] !== 0x00) return false;
+  if (raw[9] !== 0x00 || raw[10] !== 0x00) return false; // timer (bytes 9-10) not yet mapped
+  if ((raw[4]! & ~(ECO_BIT | SILENT_BIT)) !== 0) return false; // byte 4: only eco/silent bits
+  if ((raw[5]! & ~(POWER_BIT | TURBO_BIT)) !== BYTE5_BASE) return false; // byte 5: base + power/turbo
+  if ((raw[6]! & 0xd0) !== 0) return false; // byte 6: bits 4,6,7 unused
   if (!VALID_MODES.has(raw[6]! & 0x0f)) return false;
+  if ((raw[8]! & 0x80) !== 0) return false; // byte 8 bit 7 unused
+  if (!VALID_FANS.has(raw[8]! & 0x07)) return false;
+  if (!VALID_SWINGS.has((raw[8]! >> 3) & 0x07)) return false;
+  // Turbo is mirrored in byte 5 bit 6 and byte 8 bit 6 — they must agree.
+  if (((raw[5]! & TURBO_BIT) !== 0) !== ((raw[8]! & TURBO_BIT) !== 0)) return false;
   return true;
 }
 
