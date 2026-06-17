@@ -73,6 +73,7 @@ import { SharpAcMode, SharpAcFan, SharpAcSwingV, SharpAcModel } from "./protocol
 import { SanyoAcMode, SanyoAcFan, SanyoAcSwingV } from "./protocols/sanyo_ac.js";
 import { WhirlpoolAcMode, WhirlpoolAcFan, WhirlpoolAcModel } from "./protocols/whirlpool_ac.js";
 import { WhirlpoolMagicoolMode, WhirlpoolMagicoolFan, WhirlpoolMagicoolSwing } from "./protocols/whirlpool_magicool.js";
+import { WhirlpoolMagicool2Mode, WhirlpoolMagicool2Fan, WhirlpoolMagicool2Swing } from "./protocols/whirlpool_magicool2.js";
 import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH } from "./protocols/mitsubishi_heavy152.js";
 import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
 import { SanyoAc88Mode, SanyoAc88Fan } from "./protocols/sanyo_ac88.js";
@@ -1082,6 +1083,23 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "turbo", key: "turbo" },
       { kind: "boolean", canonical: "econo", key: "eco" },
       { kind: "boolean", canonical: "quiet", key: "silent" },
+      { kind: "boolean", canonical: "light", key: "light" },
+    ],
+  },
+
+  whirlpool_magicool2: {
+    power: { kind: "stateful" },
+    modes: { constants: WhirlpoolMagicool2Mode, map: { Cool: "cool", Dry: "dry", Fan: "fan" } },
+    fan: { constants: WhirlpoolMagicool2Fan, map: { Auto: "auto", High: "high", Low: "low", Med: "medium" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swing", kind: "position", positions: { constants: WhirlpoolMagicool2Swing, map: {
+      Pos1: "lowest", Pos2: "low", Pos3: "middle", Pos4: "high", Pos5: "highest", Full: "swing",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "smart_mode", key: "sixthSense" },
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "econo", key: "eco" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
       { kind: "boolean", canonical: "light", key: "light" },
     ],
   },

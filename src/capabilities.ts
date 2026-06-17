@@ -69,6 +69,7 @@ import { SanyoAcMode, SanyoAcFan, SanyoAcSwingV } from "./protocols/sanyo_ac.js"
 import { SanyoAc88Mode, SanyoAc88Fan } from "./protocols/sanyo_ac88.js";
 import { WhirlpoolAcMode, WhirlpoolAcFan } from "./protocols/whirlpool_ac.js";
 import { WhirlpoolMagicoolMode, WhirlpoolMagicoolFan, WhirlpoolMagicoolSwing } from "./protocols/whirlpool_magicool.js";
+import { WhirlpoolMagicool2Mode, WhirlpoolMagicool2Fan, WhirlpoolMagicool2Swing } from "./protocols/whirlpool_magicool2.js";
 import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH } from "./protocols/mitsubishi_heavy152.js";
 import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
 import { LloydMode, LloydFan, LloydSwingV } from "./protocols/lloyd.js";
@@ -456,6 +457,12 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     modes: named(WhirlpoolMagicoolMode), fans: named(WhirlpoolMagicoolFan),
     temp: { min: 16, max: 30, step: 1 },
     swingV: true, swingH: false, swingVOptions: named(WhirlpoolMagicoolSwing),
+  }),
+  // Whirlpool Magicool — NEC-style remote variant (15-byte/120-bit); RE'd.
+  info("whirlpool_magicool2", "whirlpool", "ac", {
+    modes: named(WhirlpoolMagicool2Mode), fans: named(WhirlpoolMagicool2Fan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: false, swingVOptions: named(WhirlpoolMagicool2Swing),
   }),
   // Simple remotes + raw byte carriers — no structured fields.
   info("sharp", "sharp", "simple"),

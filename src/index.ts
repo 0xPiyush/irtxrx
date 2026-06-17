@@ -779,6 +779,12 @@ export {
 } from "./protocols/whirlpool_magicool.js";
 export type { WhirlpoolMagicoolState, WhirlpoolMagicoolModeValue, WhirlpoolMagicoolFanValue, WhirlpoolMagicoolSwingValue } from "./protocols/whirlpool_magicool.js";
 export {
+  buildWhirlpoolMagicool2Raw, encodeWhirlpoolMagicool2Raw, sendWhirlpoolMagicool2, decodeWhirlpoolMagicool2,
+  parseWhirlpoolMagicool2State, whirlpoolMagicool2ValidChecksum,
+  WhirlpoolMagicool2Mode, WhirlpoolMagicool2Fan, WhirlpoolMagicool2Swing, WHIRLPOOL_MAGICOOL2_STATE_LENGTH,
+} from "./protocols/whirlpool_magicool2.js";
+export type { WhirlpoolMagicool2State, WhirlpoolMagicool2ModeValue, WhirlpoolMagicool2FanValue, WhirlpoolMagicool2SwingValue } from "./protocols/whirlpool_magicool2.js";
+export {
   buildMitsubishiHeavy152Raw, encodeMitsubishiHeavy152Raw, sendMitsubishiHeavy152, decodeMitsubishiHeavy152, parseMitsubishiHeavy152State,
   MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH,
 } from "./protocols/mitsubishi_heavy152.js";
