@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.20.2]
+
+### Fixed
+
+- **Decode recognises clipped Samsung A/C extended (3-section) captures.**
+  `decodeSamsungAc` identifies the final 7-byte section by the long
+  inter-message gap. Real captures often end right after the last footer mark
+  (zero-padded / buffer end) with no gap, so the last section matched as
+  "non-last" and decode returned `null` despite all 21 bytes being valid. A
+  section is now treated as the last when no real pulses remain after it.
+
 ## [0.20.1]
 
 ### Fixed
