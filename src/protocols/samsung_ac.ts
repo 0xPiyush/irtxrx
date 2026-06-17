@@ -573,6 +573,12 @@ export function parseSamsungAcExtended(raw: Uint8Array): SamsungAcState {
  *
  * @returns Decoded state, or null on mismatch / bad checksum.
  */
+/** True if no real pulses remain from `pos` (end of buffer or only zero padding). */
+function atEndOfData(timings: number[], pos: number): boolean {
+  for (let i = pos; i < timings.length; i++) if (timings[i] !== 0) return false;
+  return true;
+}
+
 export function decodeSamsungAc(
   timings: number[],
   offset: number = 0,
@@ -621,6 +627,10 @@ export function decodeSamsungAc(
     if (!sec) return null;
     for (const b of sec.data) bytes.push(b);
     pos += sec.used;
+    // A clipped capture ends right after the final section's footer mark (no
+    // trailing message gap, just zero padding / end of buffer), so the section
+    // matches as "non-last". If nothing else remains, it IS the last section.
+    if (!isLast && atEndOfData(timings, pos)) isLast = true;
     if (isLast) { matchedLast = true; break; }
   }
 

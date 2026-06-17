@@ -206,6 +206,17 @@ describe("extended message selection", () => {
     expect(r?.protocol).toBe("samsung_ac");
     expect((r?.state as SamsungAcState).extended).toBe(true);
   });
+  it("decodes a clipped extended capture (final message gap zero-padded)", () => {
+    // Real captures often end right after the last footer mark, then pad with
+    // zeros instead of the long inter-message gap — the last 3-section frame
+    // must still be recognised.
+    const state = { power: true, temp: 21, mode: SamsungAcMode.Cool, fan: SamsungAcFan.Auto, offTimer: 120 };
+    const clipped = [...sendSamsungAc(state).slice(0, -1), 0, 0]; // drop the gap, add padding
+    const d = decodeSamsungAc(clipped);
+    expect(d).not.toBeNull();
+    expect(d!.extended).toBe(true);
+    expect(toHex(buildSamsungAcExtendedRaw(d!))).toBe(toHex(buildSamsungAcExtendedRaw(state)));
+  });
 });
 
 describe("fixed extended power messages", () => {
