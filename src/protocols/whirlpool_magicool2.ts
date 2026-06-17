@@ -17,7 +17,8 @@
  * ```
  * - byte 0 = `0x56`, byte 2 = `0x00`, bytes 7, 9–13 = `0x00` — constant.
  * - byte 1 = `tempC + 0x5C` (16–30 °C; `0x6B`=15 appears as the 6th-Sense auto value).
- * - byte 3: bit 1 = **6th-Sense**, bit 3 = **Dim** (display dimmed), bit 4 = **Eco**.
+ * - byte 3: bit 0 = **Silent** (forces fan→Low), bit 1 = **6th-Sense**,
+ *   bit 3 = **Dim** (display dimmed), bit 4 = **Eco**.
  * - byte 4 = `(mode << 4) | fan` — mode Cool `2` / Dry `3` / Fan `5`,
  *   fan Auto `0` / High `1` / Low `2` / Med `3`.
  * - byte 5: bit 1 = **power** (1 = on), bits[4:2] = **swing** (1–5 = louvre steps
@@ -100,6 +101,8 @@ export interface WhirlpoolMagicool2State {
   turbo?: boolean;
   /** Eco / energy-saving. */
   eco?: boolean;
+  /** Silent / quiet operation (forces fan to Low). */
+  silent?: boolean;
   /** Sleep. */
   sleep?: boolean;
   /** Display backlight lit. Defaults to true; the "Dim" button turns it off. */
@@ -125,6 +128,7 @@ const VALID_FANS = new Set<number>(Object.values(WhirlpoolMagicool2Fan));
 const VALID_SWINGS = new Set<number>(Object.values(WhirlpoolMagicool2Swing));
 
 // byte 3
+const SILENT_BIT = 0x01;
 const SIXTH_BIT3 = 0x02;
 const DIM_BIT = 0x08;
 const ECO_BIT = 0x10;
@@ -158,7 +162,7 @@ export function buildWhirlpoolMagicool2Raw(state: WhirlpoolMagicool2State): Uint
   const power = state.power ?? true;
 
   raw[1] = clamp(Math.round(state.temp ?? 24), MIN_TEMP, MAX_TEMP) + TEMP_OFFSET;
-  raw[3] = (sixth ? SIXTH_BIT3 : 0) | (state.light ?? true ? 0 : DIM_BIT) | (state.eco ?? false ? ECO_BIT : 0);
+  raw[3] = (state.silent ?? false ? SILENT_BIT : 0) | (sixth ? SIXTH_BIT3 : 0) | (state.light ?? true ? 0 : DIM_BIT) | (state.eco ?? false ? ECO_BIT : 0);
   raw[4] = (mode << 4) | fan;
   raw[5] = power ? (POWER_BIT | (swing << 2) | (sixth ? SIXTH_BIT5 : 0)) : POWER_OFF_BYTE5;
   raw[6] = (sixth ? SIXTH_BIT6 : 0) | (state.sleep ?? false ? SLEEP_BIT : 0);
@@ -209,6 +213,7 @@ export function parseWhirlpoolMagicool2State(raw: Uint8Array): WhirlpoolMagicool
     sixthSense: !!(raw[3]! & SIXTH_BIT3),
     turbo: !!(raw[8]! & TURBO_BIT),
     eco: !!(raw[3]! & ECO_BIT),
+    silent: !!(raw[3]! & SILENT_BIT),
     sleep: !!(raw[6]! & SLEEP_BIT),
     light: !(raw[3]! & DIM_BIT),
   };
@@ -221,7 +226,7 @@ function structureOk(raw: Uint8Array): boolean {
   if (raw[11] !== 0x00 || raw[12] !== 0x00 || raw[13] !== 0x00) return false;
   if (raw[1]! < MIN_TEMP + TEMP_OFFSET || raw[1]! > MAX_TEMP + TEMP_OFFSET) return false;
   if (!VALID_MODES.has(raw[4]! >> 4) || !VALID_FANS.has(raw[4]! & 0x0f)) return false;
-  if ((raw[3]! & ~(SIXTH_BIT3 | DIM_BIT | ECO_BIT)) !== 0) return false;
+  if ((raw[3]! & ~(SILENT_BIT | SIXTH_BIT3 | DIM_BIT | ECO_BIT)) !== 0) return false;
   if ((raw[6]! & ~(SIXTH_BIT6 | SLEEP_BIT)) !== 0) return false;
   if ((raw[8]! & ~TURBO_BIT) !== 0) return false;
   // byte 5: either the power-off code, or power-on with valid swing and no stray bits.

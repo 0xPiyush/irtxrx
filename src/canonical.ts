@@ -1099,6 +1099,7 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "boolean", canonical: "smart_mode", key: "sixthSense" },
       { kind: "boolean", canonical: "turbo", key: "turbo" },
       { kind: "boolean", canonical: "econo", key: "eco" },
+      { kind: "boolean", canonical: "quiet", key: "silent" },
       { kind: "boolean", canonical: "sleep", key: "sleep" },
       { kind: "boolean", canonical: "light", key: "light" },
     ],
