@@ -255,8 +255,10 @@ export function matchGeneric(
     pos++;
   }
 
-  // Footer space
-  if (footerSpace && pos < end) {
+  // Footer space — a trailing 0 means the capture was clipped at the footer
+  // mark and zero-padded (a 0µs pulse is never real), so treat it as
+  // end-of-data rather than a mismatch.
+  if (footerSpace && pos < end && timings[pos] !== 0) {
     if (atLeast) {
       if (!matchAtLeast(timings[pos]!, footerSpace, tolerance)) return null;
     } else {
@@ -346,8 +348,10 @@ export function matchGenericBytes(
     pos++;
   }
 
-  // Footer space
-  if (footerSpace && pos < end) {
+  // Footer space — a trailing 0 means the capture was clipped at the footer
+  // mark and zero-padded (a 0µs pulse is never real), so treat it as
+  // end-of-data rather than a mismatch.
+  if (footerSpace && pos < end && timings[pos] !== 0) {
     if (atLeast) {
       if (!matchAtLeast(timings[pos]!, footerSpace, tolerance)) return null;
     } else {

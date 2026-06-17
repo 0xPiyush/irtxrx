@@ -81,6 +81,14 @@ describe("whirlpool_magicool2 round-trip", () => {
     const full = sendWhirlpoolMagicool2({ mode: M.Cool, temp: 22, fan: F.Med, swing: S.Pos2 });
     expect(decodeWhirlpoolMagicool2(full.slice(2), 0, true)).toMatchObject({ mode: M.Cool, temp: 22, fan: F.Med, swing: S.Pos2 });
   });
+
+  it("tolerates trailing zero padding (clipped capture)", () => {
+    // Real captures often arrive zero-padded to a fixed buffer length.
+    const s: WhirlpoolMagicool2State = { mode: M.Cool, temp: 24, fan: F.High, swing: S.Pos1 };
+    const padded = [...sendWhirlpoolMagicool2(s), 0, 0];
+    expect(decodeWhirlpoolMagicool2(padded)).toMatchObject(s);
+    expect(decode(padded)?.protocol).toBe("whirlpool_magicool2");
+  });
 });
 
 describe("whirlpool_magicool2 dispatch + rejection", () => {
