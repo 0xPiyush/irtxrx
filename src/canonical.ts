@@ -44,6 +44,7 @@ import { EcoclimMode, EcoclimFan } from "./protocols/ecoclim.js";
 import { CoronaAcMode, CoronaAcFan } from "./protocols/corona_ac.js";
 import { AirwellMode, AirwellFan } from "./protocols/airwell.js";
 import { ArgoMode, ArgoFan, ArgoFlap } from "./protocols/argo.js";
+import { ArgoWrem3Mode, ArgoWrem3Fan, ArgoWrem3Flap } from "./protocols/argo_wrem3.js";
 import { DaikinMode, DaikinFan } from "./protocols/daikin_common.js";
 import { Daikin64Mode, Daikin64Fan } from "./protocols/daikin64.js";
 import { Daikin128Mode, Daikin128Fan } from "./protocols/daikin128.js";
@@ -549,6 +550,27 @@ export const CAPABILITIES: CapabilitiesMap = {
     features: [
       { kind: "boolean", canonical: "turbo", key: "max" },
       { kind: "boolean", canonical: "sleep", key: "night" },
+      { kind: "boolean", canonical: "ifeel", key: "iFeel" },
+      { kind: "range", canonical: "sensor_temp", key: "roomTemp", min: 4, max: 35, step: 1 },
+    ],
+  },
+
+  argo_wrem3: {
+    power: { kind: "stateful" },
+    modes: { constants: ArgoWrem3Mode, map: { Cool: "cool", Dry: "dry", Heat: "heat", Fan: "fan", Auto: "auto" } },
+    // FAN_LOWER (2) has no canonical token → numeric fallback.
+    fan: { constants: ArgoWrem3Fan, map: { Auto: "auto", Lowest: "min", Low: "low", Medium: "medium", High: "high", Highest: "max" } },
+    temp: { min: 10, max: 32, step: 1 },
+    swingV: { key: "flap", kind: "position", positions: { constants: ArgoWrem3Flap, map: {
+      Auto: "auto", Pos1: "highest", Pos2: "high", Pos3: "middle_up", Pos4: "middle_down",
+      Pos5: "low", Pos6: "lowest", Full: "swing",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "max" },
+      { kind: "boolean", canonical: "sleep", key: "night" },
+      { kind: "boolean", canonical: "econo", key: "eco" },
+      { kind: "boolean", canonical: "filter", key: "filter" },
+      { kind: "boolean", canonical: "light", key: "light" },
       { kind: "boolean", canonical: "ifeel", key: "iFeel" },
       { kind: "range", canonical: "sensor_temp", key: "roomTemp", min: 4, max: 35, step: 1 },
     ],

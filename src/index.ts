@@ -394,6 +394,20 @@ export {
 } from "./protocols/argo.js";
 export type { ArgoState } from "./protocols/argo.js";
 export {
+  buildArgoWrem3Raw,
+  encodeArgoWrem3Raw,
+  sendArgoWrem3,
+  decodeArgoWrem3,
+  parseArgoWrem3State,
+  argoWrem3CalcChecksum,
+  argoWrem3ValidChecksum,
+  ArgoWrem3Mode,
+  ArgoWrem3Fan,
+  ArgoWrem3Flap,
+  ArgoWrem3TimerType,
+} from "./protocols/argo_wrem3.js";
+export type { ArgoWrem3State, ArgoWrem3MessageType } from "./protocols/argo_wrem3.js";
+export {
   buildKelonRaw,
   buildKelonBytes,
   encodeKelonRaw,

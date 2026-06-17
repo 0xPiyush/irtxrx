@@ -52,6 +52,8 @@ import { sendAirwell } from "./protocols/airwell.js";
 import type { AirwellState } from "./protocols/airwell.js";
 import { sendArgo } from "./protocols/argo.js";
 import type { ArgoState } from "./protocols/argo.js";
+import { sendArgoWrem3 } from "./protocols/argo_wrem3.js";
+import type { ArgoWrem3State } from "./protocols/argo_wrem3.js";
 import { sendKelon } from "./protocols/kelon.js";
 import type { KelonState } from "./protocols/kelon.js";
 import { sendKelon168 } from "./protocols/kelon168.js";
@@ -199,6 +201,7 @@ export interface ProtocolStateMap {
   corona_ac: CoronaAcState;
   airwell: AirwellState;
   argo: ArgoState;
+  argo_wrem3: ArgoWrem3State;
   kelon: KelonState;
   kelon168: Kelon168State;
   teco: TecoState;
@@ -300,6 +303,7 @@ const ENCODERS: EncoderMap = {
   // message unless an explicit repeat is requested.
   airwell: (s, r) => sendAirwell(s, r ?? 0),
   argo: (s, r) => sendArgo(s, r),
+  argo_wrem3: (s, r) => sendArgoWrem3(s, r),
   kelon: (s, r) => sendKelon(s, r),
   kelon168: (s, r) => sendKelon168(s, r),
   teco: (s, r) => sendTeco(s, r),

@@ -15,6 +15,7 @@
  * Output (daikin64):  raw_hex,timing1,timing2,...  (hex state + timings)
  */
 
+#include <set>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -1277,6 +1278,83 @@ int main(int argc, char* argv[]) {
         IRsendTest irsend(4); irsend.begin();
         irsend.sendArgo(data, nbytes, repeat);
         printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Argo WREM-3 (4 message types) -----
+    if (strcmp(fn, "argo3ac") == 0) {
+        // power temp mode fan flap roomTemp night eco max filter light ifeel channel
+        if (argc < 15) { fprintf(stderr, "Usage: runner argo3ac <power> <temp> <mode> <fan> <flap> <roomTemp> <night> <eco> <max> <filter> <light> <ifeel> <channel>\n"); return 1; }
+        IRArgoAC_WREM3 ac(4); ac.begin();
+        ac.setChannel(static_cast<uint8_t>(atoi(argv[14])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<argoMode_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<argoFan_t>(atoi(argv[5])));
+        ac.setFlap(static_cast<argoFlap_t>(atoi(argv[6])));
+        ac.setSensorTemp(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setNight(atoi(argv[8]) != 0);
+        ac.setEco(atoi(argv[9]) != 0);
+        ac.setMax(atoi(argv[10]) != 0);
+        ac.setFilter(atoi(argv[11]) != 0);
+        ac.setLight(atoi(argv[12]) != 0);
+        ac.setiFeel(atoi(argv[13]) != 0);
+        uint8_t* raw = ac.getRaw(); uint16_t len = ac.getRawByteLength();
+        for (int i = 0; i < len; i++) printf("%02X", raw[i]); printf("\n");
+        IRsendTest irsend(4); irsend.begin(); irsend.sendArgoWREM3(raw, len, 0); printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "argo3ifeel") == 0) {
+        // sensorTemp channel
+        if (argc < 4) { fprintf(stderr, "Usage: runner argo3ifeel <sensorTemp> <channel>\n"); return 1; }
+        IRArgoAC_WREM3 ac(4); ac.begin();
+        ac.setMessageType(argoIrMessageType_t::IFEEL_TEMP_REPORT);
+        ac.setChannel(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setSensorTemp(static_cast<uint8_t>(atoi(argv[2])));
+        uint8_t* raw = ac.getRaw(); uint16_t len = ac.getRawByteLength();
+        for (int i = 0; i < len; i++) printf("%02X", raw[i]); printf("\n");
+        IRsendTest irsend(4); irsend.begin(); irsend.sendArgoWREM3(raw, len, 0); printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "argo3config") == 0) {
+        // key value channel
+        if (argc < 5) { fprintf(stderr, "Usage: runner argo3config <key> <value> <channel>\n"); return 1; }
+        IRArgoAC_WREM3 ac(4); ac.begin();
+        ac.setMessageType(argoIrMessageType_t::CONFIG_PARAM_SET);
+        ac.setChannel(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setConfigEntry(static_cast<uint8_t>(atoi(argv[2])), static_cast<uint8_t>(atoi(argv[3])));
+        uint8_t* raw = ac.getRaw(); uint16_t len = ac.getRawByteLength();
+        for (int i = 0; i < len; i++) printf("%02X", raw[i]); printf("\n");
+        IRsendTest irsend(4); irsend.begin(); irsend.sendArgoWREM3(raw, len, 0); printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "argo3timer") == 0) {
+        // on type currentTime currentDay delay start stop activeDays channel
+        if (argc < 11) { fprintf(stderr, "Usage: runner argo3timer <on> <type> <curTime> <curDay> <delay> <start> <stop> <activeDays> <channel>\n"); return 1; }
+        IRArgoAC_WREM3 ac(4); ac.begin();
+        ac.setMessageType(argoIrMessageType_t::TIMER_COMMAND);
+        ac.setChannel(static_cast<uint8_t>(atoi(argv[10])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setTimerType(static_cast<argoTimerType_t>(atoi(argv[3])));
+        ac.setCurrentTimeMinutes(static_cast<uint16_t>(atoi(argv[4])));
+        ac.setCurrentDayOfWeek(static_cast<argoWeekday>(atoi(argv[5])));
+        ac.setDelayTimerMinutes(static_cast<uint16_t>(atoi(argv[6])));
+        ac.setScheduleTimerStartMinutes(static_cast<uint16_t>(atoi(argv[7])));
+        ac.setScheduleTimerStopMinutes(static_cast<uint16_t>(atoi(argv[8])));
+        { std::set<argoWeekday> days; int bm = atoi(argv[9]);
+          for (int d = 0; d < 7; d++) if (bm & (1 << d)) days.insert(static_cast<argoWeekday>(d));
+          ac.setScheduleTimerActiveDays(days); }
+        uint8_t* raw = ac.getRaw(); uint16_t len = ac.getRawByteLength();
+        for (int i = 0; i < len; i++) printf("%02X", raw[i]); printf("\n");
+        IRsendTest irsend(4); irsend.begin(); irsend.sendArgoWREM3(raw, len, 0); printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendArgoWREM3") == 0) {
+        if (argc < 4) { fprintf(stderr, "Usage: runner sendArgoWREM3 <hex> <nbytes> [repeat]\n"); return 1; }
+        const char* hex = argv[2]; int nbytes = atoi(argv[3]); uint8_t data[32];
+        for (int i = 0; i < nbytes && i < 32; i++) { unsigned int b; sscanf(hex+i*2,"%2x",&b); data[i]=(uint8_t)b; }
+        uint16_t repeat = argc > 4 ? (uint16_t)atoi(argv[4]) : 0;
+        IRsendTest irsend(4); irsend.begin(); irsend.sendArgoWREM3(data, nbytes, repeat); printTimings(irsend);
         return 0;
     }
 

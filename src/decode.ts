@@ -426,6 +426,8 @@ import { decodeAirwell } from "./protocols/airwell.js";
 import type { AirwellState } from "./protocols/airwell.js";
 import { decodeArgo } from "./protocols/argo.js";
 import type { ArgoState } from "./protocols/argo.js";
+import { decodeArgoWrem3 } from "./protocols/argo_wrem3.js";
+import type { ArgoWrem3State } from "./protocols/argo_wrem3.js";
 import { decodeKelon } from "./protocols/kelon.js";
 import type { KelonState } from "./protocols/kelon.js";
 import { decodeKelon168 } from "./protocols/kelon168.js";
@@ -548,7 +550,7 @@ export type ProtocolName =
   | "ecoclim"
   | "corona_ac"
   | "airwell"
-  | "argo"
+  | "argo" | "argo_wrem3"
   | "kelon" | "kelon168"
   | "teco"
   | "mitsubishi" | "mitsubishi2" | "mitsubishi_ac" | "mitsubishi136" | "mitsubishi112"
@@ -621,6 +623,7 @@ export type DecodeResult =
   | { protocol: "corona_ac"; brand: "corona"; type: "ac"; state: CoronaAcState; confidence: "checksum_valid" }
   | { protocol: "airwell"; brand: "airwell"; type: "ac"; state: AirwellState; confidence: "timing_match" }
   | { protocol: "argo"; brand: "argo"; type: "ac"; state: ArgoState; confidence: "checksum_valid" }
+  | { protocol: "argo_wrem3"; brand: "argo"; type: "ac"; state: ArgoWrem3State; confidence: "checksum_valid" }
   | { protocol: "kelon"; brand: "kelon"; type: "ac"; state: KelonState; confidence: "timing_match" }
   | { protocol: "kelon168"; brand: "kelon"; type: "ac"; state: Kelon168State; confidence: "checksum_valid" }
   | { protocol: "teco"; brand: "teco"; type: "ac"; state: TecoState; confidence: "timing_match" }
@@ -984,6 +987,15 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeArgo(timings, offset, ho);
       return s ? { protocol: "argo", brand: "argo", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Argo WREM-3 (4 message types, with footer): shares Argo timings but uses a
+  // 0b1011 preamble nibble; distinguished from WREM-2 by preamble + footer.
+  {
+    protocol: "argo_wrem3", brand: "argo", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeArgoWrem3(timings, offset, ho);
+      return s ? { protocol: "argo_wrem3", brand: "argo", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
   // Coolix48 has no checksum (timing match only) and shares Coolix's wire
