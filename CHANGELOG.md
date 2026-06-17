@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.20.1]
+
+### Fixed
+
+- **Decode tolerates trailing zero padding.** `matchGeneric` / `matchGenericBytes`
+  rejected an otherwise-valid frame whenever the footer-space slot held a `0` —
+  which happens whenever a capture buffer is zero-padded after the footer mark
+  (a `0µs` pulse is never real). A trailing `0` is now treated as end-of-data.
+  General fix for all byte- and value-based protocols; surfaced via
+  `whirlpool_magicool2` captures that arrived padded to a fixed length.
+
 ## [0.20.0]
 
 ### Added
