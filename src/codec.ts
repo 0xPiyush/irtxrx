@@ -17,6 +17,39 @@ import type { CoolixState } from "./protocols/coolix.js";
 import { encodeCoolix48 } from "./protocols/coolix48.js";
 import { sendGree } from "./protocols/gree.js";
 import type { GreeState } from "./protocols/gree.js";
+import { sendKelvinator } from "./protocols/kelvinator.js";
+import type { KelvinatorState } from "./protocols/kelvinator.js";
+import { sendMidea } from "./protocols/midea.js";
+import type { MideaState } from "./protocols/midea.js";
+import { encodeMidea24 } from "./protocols/midea24.js";
+import { sendElectraAc } from "./protocols/electra_ac.js";
+import type { ElectraAcState } from "./protocols/electra_ac.js";
+import { sendVestelAc } from "./protocols/vestel_ac.js";
+import type { VestelAcState } from "./protocols/vestel_ac.js";
+import { sendTrotec, sendTrotec3550 } from "./protocols/trotec.js";
+import type { TrotecState, Trotec3550State } from "./protocols/trotec.js";
+import { sendNeoclima } from "./protocols/neoclima.js";
+import type { NeoclimaState } from "./protocols/neoclima.js";
+import { sendAirton } from "./protocols/airton.js";
+import type { AirtonState } from "./protocols/airton.js";
+import { sendDelonghiAc } from "./protocols/delonghi_ac.js";
+import type { DelonghiAcState } from "./protocols/delonghi_ac.js";
+import { encodeGorenje } from "./protocols/gorenje.js";
+import { encodeWhynter } from "./protocols/whynter.js";
+import { sendTruma } from "./protocols/truma.js";
+import type { TrumaState } from "./protocols/truma.js";
+import { sendAmcor } from "./protocols/amcor.js";
+import type { AmcorState } from "./protocols/amcor.js";
+import { sendRhoss } from "./protocols/rhoss.js";
+import type { RhossState } from "./protocols/rhoss.js";
+import { sendTechnibelAc } from "./protocols/technibel_ac.js";
+import type { TechnibelAcState } from "./protocols/technibel_ac.js";
+import { sendEcoclim } from "./protocols/ecoclim.js";
+import type { EcoclimState } from "./protocols/ecoclim.js";
+import { sendCoronaAc } from "./protocols/corona_ac.js";
+import type { CoronaAcState } from "./protocols/corona_ac.js";
+import { sendAirwell } from "./protocols/airwell.js";
+import type { AirwellState } from "./protocols/airwell.js";
 import { sendKelon } from "./protocols/kelon.js";
 import type { KelonState } from "./protocols/kelon.js";
 import { sendKelon168 } from "./protocols/kelon168.js";
@@ -141,6 +174,28 @@ export interface ProtocolStateMap {
   /** Raw 48-bit Coolix48 code. */
   coolix48: bigint;
   gree: GreeState;
+  kelvinator: KelvinatorState;
+  midea: MideaState;
+  /** Raw 24-bit Midea24 code. */
+  midea24: bigint;
+  electra_ac: ElectraAcState;
+  vestel_ac: VestelAcState;
+  trotec: TrotecState;
+  trotec_3550: Trotec3550State;
+  neoclima: NeoclimaState;
+  airton: AirtonState;
+  delonghi_ac: DelonghiAcState;
+  /** Raw 8-bit Gorenje code. */
+  gorenje: bigint;
+  /** Raw 32-bit Whynter code. */
+  whynter: bigint;
+  truma: TrumaState;
+  amcor: AmcorState;
+  rhoss: RhossState;
+  technibel_ac: TechnibelAcState;
+  ecoclim: EcoclimState;
+  corona_ac: CoronaAcState;
+  airwell: AirwellState;
   kelon: KelonState;
   kelon168: Kelon168State;
   teco: TecoState;
@@ -220,6 +275,27 @@ const ENCODERS: EncoderMap = {
   coolix: (s, r) => sendCoolix(s, r),
   coolix48: (s, r) => encodeCoolix48(s, r),
   gree: (s, r) => sendGree(s, r),
+  kelvinator: (s, r) => sendKelvinator(s, r),
+  midea: (s, r) => sendMidea(s, r),
+  midea24: (s, r) => encodeMidea24(s, r),
+  electra_ac: (s, r) => sendElectraAc(s, r),
+  vestel_ac: (s, r) => sendVestelAc(s, r),
+  trotec: (s, r) => sendTrotec(s, r),
+  trotec_3550: (s, r) => sendTrotec3550(s, r),
+  neoclima: (s, r) => sendNeoclima(s, r),
+  airton: (s, r) => sendAirton(s, r),
+  delonghi_ac: (s, r) => sendDelonghiAc(s, r),
+  gorenje: (s, r) => encodeGorenje(s, r),
+  whynter: (s, r) => encodeWhynter(s, r),
+  truma: (s, r) => sendTruma(s, r),
+  amcor: (s, r) => sendAmcor(s, r),
+  rhoss: (s, r) => sendRhoss(s, r),
+  technibel_ac: (s, r) => sendTechnibelAc(s, r),
+  ecoclim: (s, r) => sendEcoclim(s, r),
+  corona_ac: (s, r) => sendCoronaAc(s, r),
+  // Airwell's natural send repeats twice; the codec emits a single (decodable)
+  // message unless an explicit repeat is requested.
+  airwell: (s, r) => sendAirwell(s, r ?? 0),
   kelon: (s, r) => sendKelon(s, r),
   kelon168: (s, r) => sendKelon168(s, r),
   teco: (s, r) => sendTeco(s, r),

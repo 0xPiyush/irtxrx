@@ -17,6 +17,21 @@ import type { ProtocolName, BrandName, ProtocolType } from "./decode.js";
 
 import { CoolixMode, CoolixFan } from "./protocols/coolix.js";
 import { GreeMode, GreeFan, GreeSwingV, GreeSwingH } from "./protocols/gree.js";
+import { KelvinatorMode, KelvinatorFan, KelvinatorSwingV } from "./protocols/kelvinator.js";
+import { MideaMode, MideaFan } from "./protocols/midea.js";
+import { ElectraAcMode, ElectraAcFan } from "./protocols/electra_ac.js";
+import { VestelAcMode, VestelAcFan } from "./protocols/vestel_ac.js";
+import { TrotecMode, TrotecFan } from "./protocols/trotec.js";
+import { NeoclimaMode, NeoclimaFan } from "./protocols/neoclima.js";
+import { AirtonMode, AirtonFan } from "./protocols/airton.js";
+import { DelonghiAcMode, DelonghiAcFan } from "./protocols/delonghi_ac.js";
+import { TrumaMode, TrumaFan } from "./protocols/truma.js";
+import { AmcorMode, AmcorFan } from "./protocols/amcor.js";
+import { RhossMode, RhossFan } from "./protocols/rhoss.js";
+import { TechnibelAcMode, TechnibelAcFan } from "./protocols/technibel_ac.js";
+import { EcoclimMode, EcoclimFan } from "./protocols/ecoclim.js";
+import { CoronaAcMode, CoronaAcFan } from "./protocols/corona_ac.js";
+import { AirwellMode, AirwellFan } from "./protocols/airwell.js";
 import { KelonMode, KelonFan } from "./protocols/kelon.js";
 import { Kelon168Mode, Kelon168Fan } from "./protocols/kelon168.js";
 import { TecoMode, TecoFan } from "./protocols/teco.js";
@@ -134,6 +149,91 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     swingV: true, swingH: true,
     swingVOptions: named(GreeSwingV), swingHOptions: named(GreeSwingH),
   }),
+  info("kelvinator", "kelvinator", "ac", {
+    modes: named(KelvinatorMode), fans: named(KelvinatorFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: true, swingVOptions: named(KelvinatorSwingV),
+  }),
+  info("midea", "midea", "ac", {
+    modes: named(MideaMode), fans: named(MideaFan),
+    temp: { min: 17, max: 30, step: 1 },
+    swingV: false, swingH: false,
+  }),
+  // Midea24 fan remote — opaque 24-bit value carrier, no structured fields.
+  info("midea24", "midea", "ac"),
+  info("electra_ac", "electra", "ac", {
+    modes: named(ElectraAcMode), fans: named(ElectraAcFan),
+    temp: { min: 16, max: 32, step: 1 },
+    swingV: true, swingH: true,
+  }),
+  info("vestel_ac", "vestel", "ac", {
+    modes: named(VestelAcMode), fans: named(VestelAcFan),
+    temp: { min: 18, max: 30, step: 1 },
+    swingV: true, swingH: false,
+  }),
+  info("trotec", "trotec", "ac", {
+    modes: named(TrotecMode), fans: named(TrotecFan),
+    temp: { min: 18, max: 32, step: 1 },
+    swingV: false, swingH: false,
+  }),
+  info("trotec_3550", "trotec", "ac", {
+    modes: named(TrotecMode), fans: named(TrotecFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: false,
+  }),
+  info("neoclima", "neoclima", "ac", {
+    modes: named(NeoclimaMode), fans: named(NeoclimaFan),
+    temp: { min: 16, max: 32, step: 1 },
+    swingV: true, swingH: true,
+  }),
+  info("airton", "airton", "ac", {
+    modes: named(AirtonMode), fans: named(AirtonFan),
+    temp: { min: 16, max: 31, step: 1 },
+    swingV: true, swingH: false,
+  }),
+  info("delonghi_ac", "delonghi", "ac", {
+    modes: named(DelonghiAcMode), fans: named(DelonghiAcFan),
+    temp: { min: 18, max: 32, step: 1 },
+    swingV: false, swingH: false,
+  }),
+  info("truma", "truma", "ac", {
+    modes: named(TrumaMode), fans: named(TrumaFan),
+    temp: { min: 16, max: 31, step: 1 },
+    swingV: false, swingH: false,
+  }),
+  info("amcor", "amcor", "ac", {
+    modes: named(AmcorMode), fans: named(AmcorFan),
+    temp: { min: 12, max: 32, step: 1 },
+    swingV: false, swingH: false,
+  }),
+  info("rhoss", "rhoss", "ac", {
+    modes: named(RhossMode), fans: named(RhossFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: false,
+  }),
+  info("technibel_ac", "technibel", "ac", {
+    modes: named(TechnibelAcMode), fans: named(TechnibelAcFan),
+    temp: { min: 16, max: 31, step: 1 },
+    swingV: true, swingH: false,
+  }),
+  info("ecoclim", "ecoclim", "ac", {
+    modes: named(EcoclimMode), fans: named(EcoclimFan),
+    temp: { min: 5, max: 36, step: 1 },
+    swingV: false, swingH: false,
+  }),
+  info("corona_ac", "corona", "ac", {
+    modes: named(CoronaAcMode), fans: named(CoronaAcFan),
+    temp: { min: 17, max: 30, step: 1 },
+    swingV: true, swingH: false,
+  }),
+  info("airwell", "airwell", "ac", {
+    modes: named(AirwellMode), fans: named(AirwellFan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: false, swingH: false,
+  }),
+  // Opaque value carriers — no structured fields.
+  info("gorenje", "gorenje", "simple"),
+  info("whynter", "whynter", "ac"),
   info("kelon168", "kelon", "ac", {
     modes: named(Kelon168Mode), fans: named(Kelon168Fan),
     temp: { min: 16, max: 31, step: 1 }, swingV: true, swingH: false,

@@ -23,6 +23,21 @@
 #include "ir_Daikin.h"
 #include "ir_Coolix.h"
 #include "ir_Gree.h"
+#include "ir_Kelvinator.h"
+#include "ir_Midea.h"
+#include "ir_Electra.h"
+#include "ir_Vestel.h"
+#include "ir_Trotec.h"
+#include "ir_Neoclima.h"
+#include "ir_Airton.h"
+#include "ir_Delonghi.h"
+#include "ir_Truma.h"
+#include "ir_Amcor.h"
+#include "ir_Rhoss.h"
+#include "ir_Technibel.h"
+#include "ir_Ecoclim.h"
+#include "ir_Corona.h"
+#include "ir_Airwell.h"
 #include "ir_Kelon.h"
 #include "ir_Teco.h"
 #include "ir_Voltas.h"
@@ -543,6 +558,684 @@ int main(int argc, char* argv[]) {
         uint8_t* raw = ac.getRaw();
         for (int i = 0; i < kGreeStateLength; i++) printf("%02X", raw[i]);
         printf("\n");
+        return 0;
+    }
+
+    // ----- Kelvinator A/C: class setters → raw bytes + timings -----
+
+    if (strcmp(fn, "kelvinator") == 0) {
+        // Args: power temp mode fan swingV swingH quiet ionFilter light xfan turbo
+        if (argc < 13) {
+            fprintf(stderr, "Usage: runner kelvinator <power> <temp> <mode> "
+                "<fan> <swingV> <swingH> <quiet> <ionFilter> <light> <xfan> "
+                "<turbo>\n");
+            return 1;
+        }
+        IRKelvinatorAC ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        {
+            uint8_t sv = static_cast<uint8_t>(atoi(argv[6]));
+            // The position implies its auto-ness (low bit + value membership).
+            bool autoPos = (sv == 1 || sv == 7 || sv == 9 || sv == 11);
+            ac.setSwingVertical(autoPos, sv);
+        }
+        ac.setSwingHorizontal(atoi(argv[7]) != 0);
+        ac.setQuiet(atoi(argv[8]) != 0);
+        ac.setIonFilter(atoi(argv[9]) != 0);
+        ac.setLight(atoi(argv[10]) != 0);
+        ac.setXFan(atoi(argv[11]) != 0);
+        ac.setTurbo(atoi(argv[12]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kKelvinatorStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendKelvinator(raw, kKelvinatorStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "sendKelvinator") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendKelvinator <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendKelvinator(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Midea A/C: class setters → 48-bit value + timings -----
+
+    if (strcmp(fn, "midea") == 0) {
+        // Args: power temp mode fan sleep celsius sensorTemp onTimer offTimer
+        // (sensorTemp/onTimer/offTimer = -1 means "not set"; temp & sensorTemp
+        // are in the unit selected by <celsius>).
+        if (argc < 11) {
+            fprintf(stderr, "Usage: runner midea <power> <temp> <mode> <fan> "
+                "<sleep> <celsius> <sensorTemp> <onTimer> <offTimer>\n");
+            return 1;
+        }
+        bool celsius = atoi(argv[7]) != 0;
+        IRMideaAC ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setUseCelsius(celsius);
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])), celsius);
+        ac.setSleep(atoi(argv[6]) != 0);
+        if (atoi(argv[8]) >= 0)
+            ac.setSensorTemp(static_cast<uint8_t>(atoi(argv[8])), celsius);
+        if (atoi(argv[9]) >= 0)
+            ac.setOnTimer(static_cast<uint16_t>(atoi(argv[9])));
+        if (atoi(argv[10]) >= 0)
+            ac.setOffTimer(static_cast<uint16_t>(atoi(argv[10])));
+
+        uint64_t raw = ac.getRaw();
+        printf("%012llX\n", static_cast<unsigned long long>(raw & 0xFFFFFFFFFFFFULL));
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendMidea(raw, kMideaBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "mideaSpecials") == 0) {
+        // Print the fixed one-shot toggle/quiet codes (order matches the TS map).
+        printf("%012llX\n", static_cast<unsigned long long>(kMideaACToggleSwingV));
+        printf("%012llX\n", static_cast<unsigned long long>(kMideaACToggleEcono));
+        printf("%012llX\n", static_cast<unsigned long long>(kMideaACToggleLight));
+        printf("%012llX\n", static_cast<unsigned long long>(kMideaACToggleTurbo));
+        printf("%012llX\n", static_cast<unsigned long long>(kMideaACToggleSelfClean));
+        printf("%012llX\n", static_cast<unsigned long long>(kMideaACToggle8CHeat));
+        printf("%012llX\n", static_cast<unsigned long long>(kMideaACQuietOn));
+        printf("%012llX\n", static_cast<unsigned long long>(kMideaACQuietOff));
+        return 0;
+    }
+    if (strcmp(fn, "sendMidea24") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendMidea24 <data_hex> [nbits] [repeat]\n");
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t nbits = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : kMidea24Bits;
+        uint16_t repeat = argc > 4 ? static_cast<uint16_t>(atoi(argv[4])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendMidea24(data, nbits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendMidea") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendMidea <value_hex> [repeat]\n");
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendMidea(data, kMideaBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Electra A/C: class setters → raw bytes + timings -----
+
+    if (strcmp(fn, "electraAc") == 0) {
+        // Args: power temp mode fan swingV swingH clean lightToggle turbo quiet
+        //       iFeel sensorUpdate sensorTemp
+        if (argc < 15) {
+            fprintf(stderr, "Usage: runner electraAc <power> <temp> <mode> "
+                "<fan> <swingV> <swingH> <clean> <lightToggle> <turbo> <quiet> "
+                "<iFeel> <sensorUpdate> <sensorTemp>\n");
+            return 1;
+        }
+        IRElectraAc ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingV(atoi(argv[6]) != 0);
+        ac.setSwingH(atoi(argv[7]) != 0);
+        ac.setClean(atoi(argv[8]) != 0);
+        ac.setTurbo(atoi(argv[10]) != 0);
+        ac.setQuiet(atoi(argv[11]) != 0);
+        ac.setSensorUpdate(atoi(argv[13]) != 0);
+        ac.setIFeel(atoi(argv[12]) != 0);
+        if (atoi(argv[12]) != 0 || atoi(argv[13]) != 0)
+            ac.setSensorTemp(static_cast<uint8_t>(atoi(argv[14])));
+        ac.setLightToggle(atoi(argv[9]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kElectraAcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendElectraAC(raw, kElectraAcStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendElectraAC") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendElectraAC <hex_bytes> [repeat]\n");
+            return 1;
+        }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) {
+            unsigned int byte;
+            sscanf(hex + i * 2, "%2x", &byte);
+            data[i] = static_cast<uint8_t>(byte);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendElectraAC(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Vestel A/C (56-bit value): command + time variants -----
+
+    if (strcmp(fn, "vestelCmd") == 0) {
+        // Args: power temp mode fan swing ion sleep turbo
+        if (argc < 10) {
+            fprintf(stderr, "Usage: runner vestelCmd <power> <temp> <mode> "
+                "<fan> <swing> <ion> <sleep> <turbo>\n");
+            return 1;
+        }
+        IRVestelAc ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwing(atoi(argv[6]) != 0);
+        ac.setIon(atoi(argv[7]) != 0);
+        if (atoi(argv[8]) != 0) ac.setSleep(true);
+        if (atoi(argv[9]) != 0) ac.setTurbo(true);
+
+        uint64_t raw = ac.getRaw() & ((1ULL << 56) - 1);
+        printf("%014llX\n", static_cast<unsigned long long>(raw));
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendVestelAc(raw, kVestelAcBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "vestelTime") == 0) {
+        // Args: clock onTimer offTimer  (-1 = leave unset)
+        if (argc < 5) {
+            fprintf(stderr, "Usage: runner vestelTime <clock> <onTimer> <offTimer>\n");
+            return 1;
+        }
+        IRVestelAc ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setTime(static_cast<uint16_t>(atoi(argv[2])));
+        if (atoi(argv[3]) >= 0) ac.setOnTimer(static_cast<uint16_t>(atoi(argv[3])));
+        if (atoi(argv[4]) >= 0) ac.setOffTimer(static_cast<uint16_t>(atoi(argv[4])));
+
+        uint64_t raw = ac.getRaw() & ((1ULL << 56) - 1);
+        printf("%014llX\n", static_cast<unsigned long long>(raw));
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendVestelAc(raw, kVestelAcBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendVestel") == 0) {
+        if (argc < 3) {
+            fprintf(stderr, "Usage: runner sendVestel <value_hex> [repeat]\n");
+            return 1;
+        }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendVestelAc(data, kVestelAcBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Trotec (PAC 3200) + Trotec3550 (PAC 3550 Pro) -----
+
+    if (strcmp(fn, "trotec") == 0) {
+        // Args: power temp mode fan sleep timer(hours)
+        if (argc < 8) {
+            fprintf(stderr, "Usage: runner trotec <power> <temp> <mode> <fan> "
+                "<sleep> <timer>\n");
+            return 1;
+        }
+        IRTrotecESP ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setSpeed(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSleep(atoi(argv[6]) != 0);
+        ac.setTimer(static_cast<uint8_t>(atoi(argv[7])));
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kTrotecStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendTrotec(raw, kTrotecStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendTrotec") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendTrotec <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2];
+        uint8_t data[16];
+        for (int i = 0; i < kTrotecStateLength; i++) {
+            unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendTrotec(data, kTrotecStateLength, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "trotec3550") == 0) {
+        // Args: power temp celsius mode fan swingV timer(mins)
+        if (argc < 9) {
+            fprintf(stderr, "Usage: runner trotec3550 <power> <temp> <celsius> "
+                "<mode> <fan> <swingV> <timer>\n");
+            return 1;
+        }
+        bool celsius = atoi(argv[4]) != 0;
+        IRTrotec3550 ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSwingV(atoi(argv[7]) != 0);
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])), celsius);
+        ac.setTimer(static_cast<uint16_t>(atoi(argv[8])));
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kTrotecStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendTrotec3550(raw, kTrotecStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendTrotec3550") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendTrotec3550 <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2];
+        uint8_t data[16];
+        for (int i = 0; i < kTrotecStateLength; i++) {
+            unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendTrotec3550(data, kTrotecStateLength, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Neoclima (12-byte) -----
+
+    if (strcmp(fn, "neoclima") == 0) {
+        // Args: power temp celsius mode fan swingV swingH sleep turbo econo
+        //       fresh hold ion light cheat eye button
+        if (argc < 19) {
+            fprintf(stderr, "Usage: runner neoclima <power> <temp> <celsius> "
+                "<mode> <fan> <swingV> <swingH> <sleep> <turbo> <econo> <fresh> "
+                "<hold> <ion> <light> <cheat> <eye> <button>\n");
+            return 1;
+        }
+        bool celsius = atoi(argv[4]) != 0;
+        IRNeoclimaAc ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])), celsius);
+        ac.setSwingV(atoi(argv[7]) != 0);
+        ac.setSwingH(atoi(argv[8]) != 0);
+        ac.setSleep(atoi(argv[9]) != 0);
+        ac.setTurbo(atoi(argv[10]) != 0);
+        ac.setEcono(atoi(argv[11]) != 0);
+        ac.setFresh(atoi(argv[12]) != 0);
+        ac.setHold(atoi(argv[13]) != 0);
+        ac.setIon(atoi(argv[14]) != 0);
+        ac.setLight(atoi(argv[15]) != 0);
+        ac.set8CHeat(atoi(argv[16]) != 0);
+        ac.setEye(atoi(argv[17]) != 0);
+        ac.setButton(static_cast<uint8_t>(strtoul(argv[18], nullptr, 16)));
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kNeoclimaStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4);
+        irsend.begin();
+        irsend.sendNeoclima(raw, kNeoclimaStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendNeoclima") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendNeoclima <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2];
+        uint8_t data[16];
+        for (int i = 0; i < kNeoclimaStateLength; i++) {
+            unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b);
+        }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendNeoclima(data, kNeoclimaStateLength, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Airton (56-bit value) -----
+    if (strcmp(fn, "airton") == 0) {
+        // Args: power temp mode fan turbo swingV econo sleep health light
+        if (argc < 12) { fprintf(stderr, "Usage: runner airton <power> <temp> <mode> <fan> <turbo> <swingV> <econo> <sleep> <health> <light>\n"); return 1; }
+        IRAirtonAc ac(4); ac.begin(); ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwingV(atoi(argv[7]) != 0);
+        ac.setEcono(atoi(argv[8]) != 0);
+        ac.setTurbo(atoi(argv[6]) != 0);
+        ac.setSleep(atoi(argv[9]) != 0);
+        ac.setHealth(atoi(argv[10]) != 0);
+        ac.setLight(atoi(argv[11]) != 0);
+        printf("%014llX\n", static_cast<unsigned long long>(ac.getRaw() & 0xFFFFFFFFFFFFFFULL));
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendAirton(ac.getRaw(), kAirtonBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendAirton") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendAirton <hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendAirton(data, kAirtonBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Delonghi A/C (64-bit value) -----
+    if (strcmp(fn, "delonghiAc") == 0) {
+        // Args: power temp celsius mode fan boost sleep onTimer offTimer
+        if (argc < 11) { fprintf(stderr, "Usage: runner delonghiAc <power> <temp> <celsius> <mode> <fan> <boost> <sleep> <onTimer> <offTimer>\n"); return 1; }
+        bool fahr = atoi(argv[4]) == 0;
+        IRDelonghiAc ac(4); ac.begin(); ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])), fahr);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setBoost(atoi(argv[7]) != 0);
+        ac.setSleep(atoi(argv[8]) != 0);
+        ac.setOnTimer(static_cast<uint16_t>(atoi(argv[9])));
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[10])));
+        printf("%016llX\n", static_cast<unsigned long long>(ac.getRaw()));
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendDelonghiAc(ac.getRaw(), kDelonghiAcBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendDelonghiAc") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendDelonghiAc <hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendDelonghiAc(data, kDelonghiAcBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    if (strcmp(fn, "sendGorenje") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendGorenje <hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendGorenje(data, kGorenjeBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendWhynter") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendWhynter <hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendWhynter(data, kWhynterBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Truma A/C (56-bit value) -----
+    if (strcmp(fn, "truma") == 0) {
+        // Args: power temp mode fan
+        if (argc < 6) { fprintf(stderr, "Usage: runner truma <power> <temp> <mode> <fan>\n"); return 1; }
+        IRTrumaAc ac(4); ac.begin(); ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        printf("%014llX\n", static_cast<unsigned long long>(ac.getRaw() & 0xFFFFFFFFFFFFFFULL));
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendTruma(ac.getRaw(), kTrumaBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendTruma") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendTruma <hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendTruma(data, kTrumaBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Amcor (8-byte) -----
+    if (strcmp(fn, "amcor") == 0) {
+        // Args: power temp mode fan max
+        if (argc < 7) { fprintf(stderr, "Usage: runner amcor <power> <temp> <mode> <fan> <max>\n"); return 1; }
+        IRAmcorAc ac(4); ac.begin(); ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setMax(atoi(argv[6]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kAmcorStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendAmcor(raw, kAmcorStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendAmcor") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendAmcor <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2]; uint8_t data[16];
+        for (int i = 0; i < kAmcorStateLength; i++) { unsigned int b; sscanf(hex+i*2,"%2x",&b); data[i]=(uint8_t)b; }
+        uint16_t repeat = argc > 3 ? (uint16_t)atoi(argv[3]) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendAmcor(data, kAmcorStateLength, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Rhoss (12-byte) -----
+    if (strcmp(fn, "rhoss") == 0) {
+        // Args: power temp mode fan swing
+        if (argc < 7) { fprintf(stderr, "Usage: runner rhoss <power> <temp> <mode> <fan> <swing>\n"); return 1; }
+        IRRhossAc ac(4); ac.begin(); ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwing(atoi(argv[6]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kRhossStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendRhoss(raw, kRhossStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendRhoss") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendRhoss <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2]; uint8_t data[16];
+        for (int i = 0; i < kRhossStateLength; i++) { unsigned int b; sscanf(hex+i*2,"%2x",&b); data[i]=(uint8_t)b; }
+        uint16_t repeat = argc > 3 ? (uint16_t)atoi(argv[3]) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendRhoss(data, kRhossStateLength, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Technibel A/C (56-bit value) -----
+    if (strcmp(fn, "technibel") == 0) {
+        // Args: power temp celsius mode fan swing sleep timer(mins)
+        if (argc < 10) { fprintf(stderr, "Usage: runner technibel <power> <temp> <celsius> <mode> <fan> <swing> <sleep> <timer>\n"); return 1; }
+        bool fahr = atoi(argv[4]) == 0;
+        IRTechnibelAc ac(4); ac.begin(); ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])), fahr);
+        ac.setFan(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setSwing(atoi(argv[7]) != 0);
+        ac.setSleep(atoi(argv[8]) != 0);
+        ac.setTimer(static_cast<uint16_t>(atoi(argv[9])));
+        printf("%014llX\n", static_cast<unsigned long long>(ac.getRaw() & 0xFFFFFFFFFFFFFFULL));
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendTechnibelAc(ac.getRaw(), kTechnibelAcBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendTechnibel") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendTechnibel <hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? (uint16_t)atoi(argv[3]) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendTechnibelAc(data, kTechnibelAcBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Ecoclim (56-bit value, 3 sections) -----
+    if (strcmp(fn, "ecoclim") == 0) {
+        // Args: power temp mode fan sensorTemp clock onTimer offTimer type
+        if (argc < 11) { fprintf(stderr, "Usage: runner ecoclim <power> <temp> <mode> <fan> <sensorTemp> <clock> <onTimer> <offTimer> <type>\n"); return 1; }
+        IREcoclimAc ac(4); ac.begin(); ac.stateReset();
+        ac.setType(static_cast<uint8_t>(atoi(argv[10])));
+        ac.setClock(static_cast<uint16_t>(atoi(argv[7])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setSensorTemp(static_cast<uint8_t>(atoi(argv[6])));
+        if (atoi(argv[8]) >= 0) ac.setOnTimer(static_cast<uint16_t>(atoi(argv[8])));
+        if (atoi(argv[9]) >= 0) ac.setOffTimer(static_cast<uint16_t>(atoi(argv[9])));
+        printf("%014llX\n", static_cast<unsigned long long>(ac.getRaw() & 0xFFFFFFFFFFFFFFULL));
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendEcoclim(ac.getRaw(), kEcoclimBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendEcoclim") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendEcoclim <hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? (uint16_t)atoi(argv[3]) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendEcoclim(data, kEcoclimBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Corona A/C (21-byte, 3 sections) -----
+    if (strcmp(fn, "corona") == 0) {
+        // Args: power temp mode fan econo swingV onTimer offTimer powerButton
+        if (argc < 11) { fprintf(stderr, "Usage: runner corona <power> <temp> <mode> <fan> <econo> <swingV> <onTimer> <offTimer> <powerButton>\n"); return 1; }
+        IRCoronaAc ac(4); ac.begin(); ac.stateReset();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setEcono(atoi(argv[6]) != 0);
+        ac.setSwingVToggle(atoi(argv[7]) != 0);
+        ac.setOnTimer(static_cast<uint16_t>(atoi(argv[8])));
+        ac.setOffTimer(static_cast<uint16_t>(atoi(argv[9])));
+        ac.setPowerButton(atoi(argv[10]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kCoronaAcStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendCoronaAc(raw, kCoronaAcStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendCorona") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendCorona <hex> [repeat]\n"); return 1; }
+        const char* hex = argv[2]; uint8_t data[32];
+        for (int i = 0; i < kCoronaAcStateLength; i++) { unsigned int b; sscanf(hex+i*2,"%2x",&b); data[i]=(uint8_t)b; }
+        uint16_t repeat = argc > 3 ? (uint16_t)atoi(argv[3]) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendCoronaAc(data, kCoronaAcStateLength, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Airwell (34-bit, Manchester) -----
+    if (strcmp(fn, "airwell") == 0) {
+        // Args: powerToggle temp mode fan
+        if (argc < 6) { fprintf(stderr, "Usage: runner airwell <powerToggle> <temp> <mode> <fan>\n"); return 1; }
+        IRAirwellAc ac(4); ac.begin(); ac.stateReset();
+        ac.setPowerToggle(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        uint64_t raw = ac.getRaw() & 0x3FFFFFFFFULL;
+        printf("%09llX\n", static_cast<unsigned long long>(raw));
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendAirwell(raw, kAirwellBits, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendAirwell") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendAirwell <hex> [repeat]\n"); return 1; }
+        uint64_t data = strtoull(argv[2], nullptr, 16);
+        uint16_t repeat = argc > 3 ? (uint16_t)atoi(argv[3]) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendAirwell(data, kAirwellBits, repeat);
+        printTimings(irsend);
         return 0;
     }
 

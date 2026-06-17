@@ -177,6 +177,207 @@ export {
 } from "./protocols/gree.js";
 export type { GreeState, GreeRawResult } from "./protocols/gree.js";
 export {
+  buildKelvinatorRaw,
+  encodeKelvinatorRaw,
+  sendKelvinator,
+  decodeKelvinator,
+  parseKelvinatorState,
+  kelvinatorValidChecksum,
+  KelvinatorMode,
+  KelvinatorFan,
+  KelvinatorSwingV,
+  KELVINATOR_STATE_LENGTH,
+} from "./protocols/kelvinator.js";
+export type { KelvinatorState } from "./protocols/kelvinator.js";
+export {
+  buildMideaRaw,
+  encodeMideaRaw,
+  sendMidea,
+  decodeMidea,
+  parseMideaState,
+  mideaCalcChecksum,
+  mideaValidChecksum,
+  MideaMode,
+  MideaFan,
+  MIDEA_SPECIALS,
+  MIDEA_BITS,
+} from "./protocols/midea.js";
+export type { MideaState, MideaSpecial } from "./protocols/midea.js";
+export {
+  encodeMidea24,
+  decodeMidea24,
+  MIDEA24_BITS,
+} from "./protocols/midea24.js";
+export {
+  buildElectraAcRaw,
+  encodeElectraAcRaw,
+  sendElectraAc,
+  decodeElectraAc,
+  parseElectraAcState,
+  electraAcValidChecksum,
+  ElectraAcMode,
+  ElectraAcFan,
+  ELECTRA_AC_STATE_LENGTH,
+} from "./protocols/electra_ac.js";
+export type { ElectraAcState } from "./protocols/electra_ac.js";
+export {
+  buildVestelAcRaw,
+  encodeVestelAcRaw,
+  sendVestelAc,
+  decodeVestelAc,
+  parseVestelAcState,
+  vestelAcCalcChecksum,
+  vestelAcValidChecksum,
+  VestelAcMode,
+  VestelAcFan,
+  VESTEL_AC_BITS,
+} from "./protocols/vestel_ac.js";
+export type { VestelAcState } from "./protocols/vestel_ac.js";
+export {
+  buildTrotecRaw,
+  encodeTrotecRaw,
+  sendTrotec,
+  decodeTrotec,
+  parseTrotecState,
+  trotecValidChecksum,
+  buildTrotec3550Raw,
+  encodeTrotec3550Raw,
+  sendTrotec3550,
+  decodeTrotec3550,
+  parseTrotec3550State,
+  trotec3550ValidChecksum,
+  TrotecMode,
+  TrotecFan,
+  TROTEC_STATE_LENGTH,
+} from "./protocols/trotec.js";
+export type { TrotecState, Trotec3550State } from "./protocols/trotec.js";
+export {
+  buildNeoclimaRaw,
+  encodeNeoclimaRaw,
+  sendNeoclima,
+  decodeNeoclima,
+  parseNeoclimaState,
+  neoclimaValidChecksum,
+  NeoclimaMode,
+  NeoclimaFan,
+  NeoclimaButton,
+  NEOCLIMA_STATE_LENGTH,
+} from "./protocols/neoclima.js";
+export type { NeoclimaState } from "./protocols/neoclima.js";
+export {
+  buildAirtonRaw,
+  encodeAirtonRaw,
+  sendAirton,
+  decodeAirton,
+  parseAirtonState,
+  airtonCalcChecksum,
+  airtonValidChecksum,
+  AirtonMode,
+  AirtonFan,
+  AIRTON_BITS,
+} from "./protocols/airton.js";
+export type { AirtonState } from "./protocols/airton.js";
+export {
+  buildDelonghiAcRaw,
+  encodeDelonghiAcRaw,
+  sendDelonghiAc,
+  decodeDelonghiAc,
+  parseDelonghiAcState,
+  delonghiAcCalcChecksum,
+  delonghiAcValidChecksum,
+  DelonghiAcMode,
+  DelonghiAcFan,
+  DELONGHI_AC_BITS,
+} from "./protocols/delonghi_ac.js";
+export type { DelonghiAcState } from "./protocols/delonghi_ac.js";
+export { encodeGorenje, decodeGorenje, GORENJE_BITS } from "./protocols/gorenje.js";
+export { encodeWhynter, decodeWhynter, WHYNTER_BITS } from "./protocols/whynter.js";
+export {
+  buildTrumaRaw,
+  encodeTrumaRaw,
+  sendTruma,
+  decodeTruma,
+  parseTrumaState,
+  trumaCalcChecksum,
+  trumaValidChecksum,
+  TrumaMode,
+  TrumaFan,
+  TRUMA_BITS,
+} from "./protocols/truma.js";
+export type { TrumaState } from "./protocols/truma.js";
+export {
+  buildAmcorRaw,
+  encodeAmcorRaw,
+  sendAmcor,
+  decodeAmcor,
+  parseAmcorState,
+  amcorValidChecksum,
+  AmcorMode,
+  AmcorFan,
+  AMCOR_STATE_LENGTH,
+} from "./protocols/amcor.js";
+export type { AmcorState } from "./protocols/amcor.js";
+export {
+  buildRhossRaw,
+  encodeRhossRaw,
+  sendRhoss,
+  decodeRhoss,
+  parseRhossState,
+  rhossValidChecksum,
+  RhossMode,
+  RhossFan,
+  RHOSS_STATE_LENGTH,
+} from "./protocols/rhoss.js";
+export type { RhossState } from "./protocols/rhoss.js";
+export {
+  buildTechnibelAcRaw,
+  encodeTechnibelAcRaw,
+  sendTechnibelAc,
+  decodeTechnibelAc,
+  parseTechnibelAcState,
+  technibelAcCalcChecksum,
+  technibelAcValidChecksum,
+  TechnibelAcMode,
+  TechnibelAcFan,
+  TECHNIBEL_AC_BITS,
+} from "./protocols/technibel_ac.js";
+export type { TechnibelAcState } from "./protocols/technibel_ac.js";
+export {
+  buildEcoclimRaw,
+  encodeEcoclimRaw,
+  sendEcoclim,
+  decodeEcoclim,
+  parseEcoclimState,
+  EcoclimMode,
+  EcoclimFan,
+  EcoclimType,
+  ECOCLIM_BITS,
+} from "./protocols/ecoclim.js";
+export type { EcoclimState } from "./protocols/ecoclim.js";
+export {
+  buildCoronaAcRaw,
+  encodeCoronaAcRaw,
+  sendCoronaAc,
+  decodeCoronaAc,
+  parseCoronaAcState,
+  coronaAcValidSection,
+  CoronaAcMode,
+  CoronaAcFan,
+  CORONA_AC_STATE_LENGTH,
+} from "./protocols/corona_ac.js";
+export type { CoronaAcState } from "./protocols/corona_ac.js";
+export {
+  buildAirwellRaw,
+  encodeAirwellRaw,
+  sendAirwell,
+  decodeAirwell,
+  parseAirwellState,
+  AirwellMode,
+  AirwellFan,
+  AIRWELL_BITS,
+} from "./protocols/airwell.js";
+export type { AirwellState } from "./protocols/airwell.js";
+export {
   buildKelonRaw,
   buildKelonBytes,
   encodeKelonRaw,

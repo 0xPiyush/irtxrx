@@ -31,6 +31,44 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_COOLIX48=false \
             -DSEND_GREE=true \
             -DDECODE_GREE=false \
+            -DSEND_KELVINATOR=true \
+            -DDECODE_KELVINATOR=true \
+            -DSEND_MIDEA=true \
+            -DDECODE_MIDEA=true \
+            -DSEND_MIDEA24=true \
+            -DDECODE_MIDEA24=true \
+            -DSEND_ELECTRA_AC=true \
+            -DDECODE_ELECTRA_AC=true \
+            -DSEND_VESTEL_AC=true \
+            -DDECODE_VESTEL_AC=true \
+            -DSEND_TROTEC=true \
+            -DDECODE_TROTEC=true \
+            -DSEND_TROTEC_3550=true \
+            -DDECODE_TROTEC_3550=true \
+            -DSEND_NEOCLIMA=true \
+            -DDECODE_NEOCLIMA=true \
+            -DSEND_AIRTON=true \
+            -DDECODE_AIRTON=true \
+            -DSEND_DELONGHI_AC=true \
+            -DDECODE_DELONGHI_AC=true \
+            -DSEND_GORENJE=true \
+            -DDECODE_GORENJE=true \
+            -DSEND_WHYNTER=true \
+            -DDECODE_WHYNTER=true \
+            -DSEND_TRUMA=true \
+            -DDECODE_TRUMA=true \
+            -DSEND_AMCOR=true \
+            -DDECODE_AMCOR=true \
+            -DSEND_RHOSS=true \
+            -DDECODE_RHOSS=true \
+            -DSEND_TECHNIBEL_AC=true \
+            -DDECODE_TECHNIBEL_AC=true \
+            -DSEND_ECOCLIM=true \
+            -DDECODE_ECOCLIM=true \
+            -DSEND_CORONA_AC=true \
+            -DDECODE_CORONA_AC=true \
+            -DSEND_AIRWELL=true \
+            -DDECODE_AIRWELL=true \
             -DSEND_KELON=true \
             -DDECODE_KELON=false \
             -DSEND_KELON168=true \
@@ -141,6 +179,22 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_Coolix.cpp \
         $(VENDOR)/src/ir_Gree.cpp \
         $(VENDOR)/src/ir_Kelvinator.cpp \
+        $(VENDOR)/src/ir_Midea.cpp \
+        $(VENDOR)/src/ir_Electra.cpp \
+        $(VENDOR)/src/ir_Vestel.cpp \
+        $(VENDOR)/src/ir_Trotec.cpp \
+        $(VENDOR)/src/ir_Neoclima.cpp \
+        $(VENDOR)/src/ir_Airton.cpp \
+        $(VENDOR)/src/ir_Delonghi.cpp \
+        $(VENDOR)/src/ir_Gorenje.cpp \
+        $(VENDOR)/src/ir_Whynter.cpp \
+        $(VENDOR)/src/ir_Truma.cpp \
+        $(VENDOR)/src/ir_Amcor.cpp \
+        $(VENDOR)/src/ir_Rhoss.cpp \
+        $(VENDOR)/src/ir_Technibel.cpp \
+        $(VENDOR)/src/ir_Ecoclim.cpp \
+        $(VENDOR)/src/ir_Corona.cpp \
+        $(VENDOR)/src/ir_Airwell.cpp \
         $(VENDOR)/src/ir_Kelon.cpp \
         $(VENDOR)/src/ir_Teco.cpp \
         $(VENDOR)/src/ir_Voltas.cpp \

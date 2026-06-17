@@ -391,6 +391,39 @@ import type { CoolixState } from "./protocols/coolix.js";
 import { decodeCoolix48 } from "./protocols/coolix48.js";
 import { decodeGree } from "./protocols/gree.js";
 import type { GreeState } from "./protocols/gree.js";
+import { decodeKelvinator } from "./protocols/kelvinator.js";
+import type { KelvinatorState } from "./protocols/kelvinator.js";
+import { decodeMidea } from "./protocols/midea.js";
+import type { MideaState } from "./protocols/midea.js";
+import { decodeMidea24 } from "./protocols/midea24.js";
+import { decodeElectraAc } from "./protocols/electra_ac.js";
+import type { ElectraAcState } from "./protocols/electra_ac.js";
+import { decodeVestelAc } from "./protocols/vestel_ac.js";
+import type { VestelAcState } from "./protocols/vestel_ac.js";
+import { decodeTrotec, decodeTrotec3550 } from "./protocols/trotec.js";
+import type { TrotecState, Trotec3550State } from "./protocols/trotec.js";
+import { decodeNeoclima } from "./protocols/neoclima.js";
+import type { NeoclimaState } from "./protocols/neoclima.js";
+import { decodeAirton } from "./protocols/airton.js";
+import type { AirtonState } from "./protocols/airton.js";
+import { decodeDelonghiAc } from "./protocols/delonghi_ac.js";
+import type { DelonghiAcState } from "./protocols/delonghi_ac.js";
+import { decodeGorenje } from "./protocols/gorenje.js";
+import { decodeWhynter } from "./protocols/whynter.js";
+import { decodeTruma } from "./protocols/truma.js";
+import type { TrumaState } from "./protocols/truma.js";
+import { decodeAmcor } from "./protocols/amcor.js";
+import type { AmcorState } from "./protocols/amcor.js";
+import { decodeRhoss } from "./protocols/rhoss.js";
+import type { RhossState } from "./protocols/rhoss.js";
+import { decodeTechnibelAc } from "./protocols/technibel_ac.js";
+import type { TechnibelAcState } from "./protocols/technibel_ac.js";
+import { decodeEcoclim } from "./protocols/ecoclim.js";
+import type { EcoclimState } from "./protocols/ecoclim.js";
+import { decodeCoronaAc } from "./protocols/corona_ac.js";
+import type { CoronaAcState } from "./protocols/corona_ac.js";
+import { decodeAirwell } from "./protocols/airwell.js";
+import type { AirwellState } from "./protocols/airwell.js";
 import { decodeKelon } from "./protocols/kelon.js";
 import type { KelonState } from "./protocols/kelon.js";
 import { decodeKelon168 } from "./protocols/kelon168.js";
@@ -497,6 +530,22 @@ export type ProtocolName =
   | "daikin176" | "daikin216" | "daikin" | "daikin2" | "daikin312"
   | "coolix" | "coolix48"
   | "gree"
+  | "kelvinator"
+  | "midea" | "midea24"
+  | "electra_ac"
+  | "vestel_ac"
+  | "trotec" | "trotec_3550"
+  | "neoclima"
+  | "airton"
+  | "delonghi_ac"
+  | "gorenje" | "whynter"
+  | "truma"
+  | "amcor"
+  | "rhoss"
+  | "technibel_ac"
+  | "ecoclim"
+  | "corona_ac"
+  | "airwell"
   | "kelon" | "kelon168"
   | "teco"
   | "mitsubishi" | "mitsubishi2" | "mitsubishi_ac" | "mitsubishi136" | "mitsubishi112"
@@ -528,7 +577,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar" | "goodweather" | "transcold" | "lloyd" | "fujitsu";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelvinator" | "midea" | "electra" | "vestel" | "trotec" | "neoclima" | "airton" | "delonghi" | "gorenje" | "whynter" | "truma" | "amcor" | "rhoss" | "technibel" | "ecoclim" | "corona" | "airwell" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar" | "goodweather" | "transcold" | "lloyd" | "fujitsu";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -549,6 +598,25 @@ export type DecodeResult =
   | { protocol: "coolix"; brand: "coolix"; type: "ac"; state: null; raw: number; confidence: "checksum_valid" }
   | { protocol: "coolix48"; brand: "coolix"; type: "ac"; state: null; raw: bigint; confidence: "timing_match" }
   | { protocol: "gree"; brand: "gree"; type: "ac"; state: GreeState; confidence: "checksum_valid" }
+  | { protocol: "kelvinator"; brand: "kelvinator"; type: "ac"; state: KelvinatorState; confidence: "checksum_valid" }
+  | { protocol: "midea"; brand: "midea"; type: "ac"; state: MideaState; confidence: "checksum_valid" }
+  | { protocol: "midea24"; brand: "midea"; type: "ac"; state: null; raw: bigint; confidence: "checksum_valid" }
+  | { protocol: "electra_ac"; brand: "electra"; type: "ac"; state: ElectraAcState; confidence: "checksum_valid" }
+  | { protocol: "vestel_ac"; brand: "vestel"; type: "ac"; state: VestelAcState; confidence: "checksum_valid" }
+  | { protocol: "trotec"; brand: "trotec"; type: "ac"; state: TrotecState; confidence: "checksum_valid" }
+  | { protocol: "trotec_3550"; brand: "trotec"; type: "ac"; state: Trotec3550State; confidence: "checksum_valid" }
+  | { protocol: "neoclima"; brand: "neoclima"; type: "ac"; state: NeoclimaState; confidence: "checksum_valid" }
+  | { protocol: "airton"; brand: "airton"; type: "ac"; state: AirtonState; confidence: "checksum_valid" }
+  | { protocol: "delonghi_ac"; brand: "delonghi"; type: "ac"; state: DelonghiAcState; confidence: "checksum_valid" }
+  | { protocol: "gorenje"; brand: "gorenje"; type: "simple"; state: null; raw: bigint; confidence: "timing_match" }
+  | { protocol: "whynter"; brand: "whynter"; type: "ac"; state: null; raw: bigint; confidence: "timing_match" }
+  | { protocol: "truma"; brand: "truma"; type: "ac"; state: TrumaState; confidence: "checksum_valid" }
+  | { protocol: "amcor"; brand: "amcor"; type: "ac"; state: AmcorState; confidence: "checksum_valid" }
+  | { protocol: "rhoss"; brand: "rhoss"; type: "ac"; state: RhossState; confidence: "checksum_valid" }
+  | { protocol: "technibel_ac"; brand: "technibel"; type: "ac"; state: TechnibelAcState; confidence: "checksum_valid" }
+  | { protocol: "ecoclim"; brand: "ecoclim"; type: "ac"; state: EcoclimState; confidence: "timing_match" }
+  | { protocol: "corona_ac"; brand: "corona"; type: "ac"; state: CoronaAcState; confidence: "checksum_valid" }
+  | { protocol: "airwell"; brand: "airwell"; type: "ac"; state: AirwellState; confidence: "timing_match" }
   | { protocol: "kelon"; brand: "kelon"; type: "ac"; state: KelonState; confidence: "timing_match" }
   | { protocol: "kelon168"; brand: "kelon"; type: "ac"; state: Kelon168State; confidence: "checksum_valid" }
   | { protocol: "teco"; brand: "teco"; type: "ac"; state: TecoState; confidence: "timing_match" }
@@ -760,6 +828,151 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
       return s ? { protocol: "tcl96", brand: "tcl", type: "ac", state: s, confidence: "timing_match" } : null;
     },
   },
+  // Midea (48-bit value sent normal + inverted): gated by the bit-inversion
+  // parity between the two phases plus a byte-0 checksum. Must precede Coolix48,
+  // whose near-identical bit timings would otherwise swallow Midea's first phase
+  // as an unstructured 48-bit code; a real Coolix48 frame lacks Midea's inverted
+  // second phase + checksum, so it falls through correctly.
+  {
+    protocol: "midea", brand: "midea", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeMidea(timings, offset, ho);
+      return s ? { protocol: "midea", brand: "midea", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Midea24 (fan remote): a 48-bit NEC-timed frame of byte/inverse-byte pairs.
+  // The inversion parity gates it; distinct NEC header keeps it clear of the
+  // 4480-header Midea/Coolix families. Placed before the generic `nec` entry.
+  {
+    protocol: "midea24", brand: "midea", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const raw = decodeMidea24(timings, offset, ho);
+      return raw !== null ? { protocol: "midea24", brand: "midea", type: "ac", state: null, raw, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Electra A/C (13-byte, LSB-first): distinctive 9166/4470 header + 0xC3 byte-0
+  // signature, gated by a modulo-256 byte sum.
+  {
+    protocol: "electra_ac", brand: "electra", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeElectraAc(timings, offset, ho);
+      return s ? { protocol: "electra_ac", brand: "electra", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Vestel A/C (56-bit value, LSB-first): distinctive 3110/9066 header, gated by
+  // its popcount checksum (bits 12–19). Command + time variants share the wire.
+  {
+    protocol: "vestel_ac", brand: "vestel", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeVestelAc(timings, offset, ho);
+      return s ? { protocol: "vestel_ac", brand: "vestel", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Trotec PAC 3200 / Duux (9-byte, LSB-first, 0x12/0x34 intro) and the 3550 Pro
+  // (9-byte, MSB-first, 0x55 intro). Distinct headers + intro bytes + checksums.
+  {
+    protocol: "trotec", brand: "trotec", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTrotec(timings, offset, ho);
+      return s ? { protocol: "trotec", brand: "trotec", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  {
+    protocol: "trotec_3550", brand: "trotec", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTrotec3550(timings, offset, ho);
+      return s ? { protocol: "trotec_3550", brand: "trotec", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Neoclima / Soleus Air (12-byte, LSB-first): 6112/7391 header + 0xA5 const
+  // byte, gated by a modulo-256 byte sum.
+  {
+    protocol: "neoclima", brand: "neoclima", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeNeoclima(timings, offset, ho);
+      return s ? { protocol: "neoclima", brand: "neoclima", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Airton (56-bit value, LSB-first): fixed 0x11D3 header bytes + a custom
+  // checksum gate.
+  {
+    protocol: "airton", brand: "airton", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeAirton(timings, offset, ho);
+      return s ? { protocol: "airton", brand: "airton", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Delonghi A/C (64-bit value, LSB-first): fixed 0x53 header byte + byte sum.
+  {
+    protocol: "delonghi_ac", brand: "delonghi", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeDelonghiAc(timings, offset, ho);
+      return s ? { protocol: "delonghi_ac", brand: "delonghi", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Truma (56-bit value, LSB-first): distinctive 20200µs leader + 0x81 header
+  // byte, gated by its byte-sum checksum.
+  {
+    protocol: "truma", brand: "truma", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTruma(timings, offset, ho);
+      return s ? { protocol: "truma", brand: "truma", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Amcor (8-byte, LSB-first, mark-encoded): 8200/4200 header + 0x01 byte-0,
+  // gated by a nibble-sum checksum.
+  {
+    protocol: "amcor", brand: "amcor", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeAmcor(timings, offset, ho);
+      return s ? { protocol: "amcor", brand: "amcor", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Rhoss (12-byte, LSB-first): 3042/4248 header + fixed 0xAA/0x60/0x54 bytes,
+  // gated by a byte-sum checksum.
+  {
+    protocol: "rhoss", brand: "rhoss", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeRhoss(timings, offset, ho);
+      return s ? { protocol: "rhoss", brand: "rhoss", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Technibel A/C (56-bit value, MSB-first): fixed 0x18 header byte + two's
+  // complement checksum.
+  {
+    protocol: "technibel_ac", brand: "technibel", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeTechnibelAc(timings, offset, ho);
+      return s ? { protocol: "technibel_ac", brand: "technibel", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // EcoClim (56-bit value, MSB-first, 3 identical sections): no checksum — gated
+  // on the three sections matching plus the fixed 0b010 low bits.
+  {
+    protocol: "ecoclim", brand: "ecoclim", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeEcoclim(timings, offset, ho);
+      return s ? { protocol: "ecoclim", brand: "ecoclim", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Corona A/C (21-byte, 3 sections): each section gated by fixed 0x28/0x61
+  // headers, a per-section label, and two byte inversions.
+  {
+    protocol: "corona_ac", brand: "corona", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeCoronaAc(timings, offset, ho);
+      return s ? { protocol: "corona_ac", brand: "corona", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Airwell (34-bit, Manchester-encoded): distinctive bi-phase 950µs half-periods
+  // + 2850 header; no checksum, gated by the strict Manchester bit structure.
+  {
+    protocol: "airwell", brand: "airwell", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeAirwell(timings, offset, ho);
+      return s ? { protocol: "airwell", brand: "airwell", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
   // Coolix48 has no checksum (timing match only) and shares Coolix's wire
   // length, so it must come after the inversion-validated `coolix` entry: a
   // genuine 24-bit Coolix frame is caught there first, leaving Coolix48 to
@@ -770,6 +983,16 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const raw = decodeCoolix48(timings, offset, ho);
       return raw !== null ? { protocol: "coolix48", brand: "coolix", type: "ac", state: null, raw, confidence: "timing_match" } : null;
+    },
+  },
+  // Kelvinator (16-byte, two command sequences with a 3-bit 0b010 block footer)
+  // — must precede Gree, which shares the same bit timings but is a shorter
+  // single-block frame; Kelvinator's two-header structure + checksum disambiguate.
+  {
+    protocol: "kelvinator", brand: "kelvinator", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeKelvinator(timings, offset, ho);
+      return s ? { protocol: "kelvinator", brand: "kelvinator", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
   {
@@ -1043,6 +1266,23 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeGodrej(timings, offset, ho);
       return s ? { protocol: "godrej", brand: "godrej", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
+  // Whynter (32-bit opaque value): distinctive pre-header + 2850 header.
+  {
+    protocol: "whynter", brand: "whynter", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const raw = decodeWhynter(timings, offset, ho);
+      return raw !== null ? { protocol: "whynter", brand: "whynter", type: "ac", state: null, raw, confidence: "timing_match" } : null;
+    },
+  },
+  // Gorenje (8-bit, headerless, opaque value): a greedy timing-only matcher, so
+  // it's placed near the end to avoid shadowing structured protocols.
+  {
+    protocol: "gorenje", brand: "gorenje", type: "simple",
+    tryDecode(timings, offset, ho) {
+      const raw = decodeGorenje(timings, offset, ho);
+      return raw !== null ? { protocol: "gorenje", brand: "gorenje", type: "simple", state: null, raw, confidence: "timing_match" } : null;
     },
   },
   // Simple protocols last

@@ -28,6 +28,21 @@ import type { ProtocolStateMap } from "./codec.js";
 
 import { CoolixMode, CoolixFan } from "./protocols/coolix.js";
 import { GreeMode, GreeFan, GreeSwingV, GreeSwingH, GreeDisplayTemp } from "./protocols/gree.js";
+import { KelvinatorMode, KelvinatorFan, KelvinatorSwingV } from "./protocols/kelvinator.js";
+import { MideaMode, MideaFan } from "./protocols/midea.js";
+import { ElectraAcMode, ElectraAcFan } from "./protocols/electra_ac.js";
+import { VestelAcMode, VestelAcFan } from "./protocols/vestel_ac.js";
+import { TrotecMode, TrotecFan } from "./protocols/trotec.js";
+import { NeoclimaMode, NeoclimaFan } from "./protocols/neoclima.js";
+import { AirtonMode, AirtonFan } from "./protocols/airton.js";
+import { DelonghiAcMode, DelonghiAcFan } from "./protocols/delonghi_ac.js";
+import { TrumaMode, TrumaFan } from "./protocols/truma.js";
+import { AmcorMode, AmcorFan } from "./protocols/amcor.js";
+import { RhossMode, RhossFan } from "./protocols/rhoss.js";
+import { TechnibelAcMode, TechnibelAcFan } from "./protocols/technibel_ac.js";
+import { EcoclimMode, EcoclimFan } from "./protocols/ecoclim.js";
+import { CoronaAcMode, CoronaAcFan } from "./protocols/corona_ac.js";
+import { AirwellMode, AirwellFan } from "./protocols/airwell.js";
 import { DaikinMode, DaikinFan } from "./protocols/daikin_common.js";
 import { Daikin64Mode, Daikin64Fan } from "./protocols/daikin64.js";
 import { Daikin128Mode, Daikin128Fan } from "./protocols/daikin128.js";
@@ -351,6 +366,220 @@ export const CAPABILITIES: CapabilitiesMap = {
       { kind: "range", canonical: "timer", key: "timerMinutes", min: 0, max: 1440, step: 30, unit: "minutes" },
       { kind: "enum", canonical: "display_temp", key: "displayTemp", constants: GreeDisplayTemp,
         map: { Off: "off", Set: "set", Inside: "inside", Outside: "outside" } },
+    ],
+  },
+
+  kelvinator: {
+    power: { kind: "stateful" },
+    modes: { constants: KelvinatorMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: KelvinatorFan, map: { Auto: "auto", Min: "min", Low: "low", Medium: "medium", High: "high", Max: "max" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "position", positions: { constants: KelvinatorSwingV, map: {
+      Off: "off", Auto: "auto", Highest: "highest", UpperMiddle: "middle_up", Middle: "middle",
+      LowerMiddle: "middle_down", Lowest: "lowest", LowAuto: "down_auto", MiddleAuto: "middle_auto", HighAuto: "up_auto",
+    } } },
+    swingH: { key: "swingH", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "light", key: "light" },
+      { kind: "boolean", canonical: "purify", key: "ionFilter" },
+      { kind: "boolean", canonical: "xfan", key: "xfan" },
+    ],
+  },
+
+  midea: {
+    power: { kind: "stateful" },
+    modes: { constants: MideaMode, map: { Cool: "cool", Dry: "dry", Auto: "auto", Heat: "heat", Fan: "fan" } },
+    fan: { constants: MideaFan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 17, max: 30, step: 1 },
+    features: [
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "range", canonical: "sensor_temp", key: "sensorTemp", min: 0, max: 37, step: 1 },
+      { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 1440, step: 30, unit: "minutes" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 1440, step: 30, unit: "minutes" },
+      { kind: "boolean", canonical: "swing_toggle", key: "swingVToggle" },
+      { kind: "boolean", canonical: "econo", key: "econoToggle" },
+      { kind: "boolean", canonical: "turbo", key: "turboToggle" },
+      { kind: "boolean", canonical: "light", key: "lightToggle" },
+      { kind: "boolean", canonical: "clean", key: "cleanToggle" },
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+    ],
+  },
+
+  electra_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: ElectraAcMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Heat: "heat", Fan: "fan" } },
+    fan: { constants: ElectraAcFan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 16, max: 32, step: 1 },
+    swingV: { key: "swingV", kind: "bool" },
+    swingH: { key: "swingH", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+      { kind: "boolean", canonical: "clean", key: "clean" },
+      { kind: "boolean", canonical: "light", key: "lightToggle" },
+      { kind: "boolean", canonical: "ifeel", key: "iFeel" },
+      { kind: "range", canonical: "sensor_temp", key: "sensorTemp", min: 0, max: 50, step: 1 },
+    ],
+  },
+
+  vestel_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: VestelAcMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: VestelAcFan, map: { Auto: "auto", Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 18, max: 30, step: 1 },
+    swingV: { key: "swing", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "purify", key: "ion" },
+    ],
+  },
+
+  trotec: {
+    power: { kind: "stateful" },
+    modes: { constants: TrotecMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan" } },
+    fan: { constants: TrotecFan, map: { Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 18, max: 32, step: 1 },
+    features: [
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "range", canonical: "timer", key: "timer", min: 0, max: 23, step: 1 },
+    ],
+  },
+
+  trotec_3550: {
+    power: { kind: "stateful" },
+    modes: { constants: TrotecMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan" } },
+    fan: { constants: TrotecFan, map: { Low: "low", Med: "medium", High: "high" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swingV", kind: "bool" },
+    features: [
+      { kind: "range", canonical: "timer", key: "timer", min: 0, max: 480, step: 60, unit: "minutes" },
+    ],
+  },
+
+  neoclima: {
+    power: { kind: "stateful" },
+    modes: { constants: NeoclimaMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: NeoclimaFan, map: { Auto: "auto", High: "high", Med: "medium", Low: "low" } },
+    temp: { min: 16, max: 32, step: 1 },
+    swingV: { key: "swingV", kind: "bool" },
+    swingH: { key: "swingH", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "econo", key: "econo" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "light", key: "light" },
+      { kind: "boolean", canonical: "purify", key: "ion" },
+      { kind: "boolean", canonical: "fresh_air", key: "fresh" },
+      { kind: "boolean", canonical: "eye", key: "eye" },
+    ],
+  },
+
+  airton: {
+    power: { kind: "stateful" },
+    modes: { constants: AirtonMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: AirtonFan, map: { Auto: "auto", Min: "min", Low: "low", Med: "medium", High: "high", Max: "max" } },
+    temp: { min: 16, max: 31, step: 1 },
+    swingV: { key: "swingV", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "econo", key: "econo" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "health", key: "health" },
+      { kind: "boolean", canonical: "light", key: "light" },
+    ],
+  },
+
+  delonghi_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: DelonghiAcMode, map: { Cool: "cool", Dry: "dry", Fan: "fan", Auto: "auto" } },
+    fan: { constants: DelonghiAcFan, map: { Auto: "auto", High: "high", Medium: "medium", Low: "low" } },
+    temp: { min: 18, max: 32, step: 1 },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "boost" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 1439, step: 1, unit: "minutes" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 1439, step: 1, unit: "minutes" },
+    ],
+  },
+
+  truma: {
+    power: { kind: "stateful" },
+    modes: { constants: TrumaMode, map: { Auto: "auto", Cool: "cool", Fan: "fan" } },
+    fan: { constants: TrumaFan, map: { Quiet: "quiet", High: "high", Med: "medium", Low: "low" } },
+    temp: { min: 16, max: 31, step: 1 },
+    features: [],
+  },
+
+  amcor: {
+    power: { kind: "stateful" },
+    modes: { constants: AmcorMode, map: { Cool: "cool", Heat: "heat", Fan: "fan", Dry: "dry", Auto: "auto" } },
+    fan: { constants: AmcorFan, map: { Min: "min", Med: "medium", Max: "max", Auto: "auto" } },
+    temp: { min: 12, max: 32, step: 1 },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "max" },
+    ],
+  },
+
+  rhoss: {
+    power: { kind: "stateful" },
+    modes: { constants: RhossMode, map: { Heat: "heat", Cool: "cool", Dry: "dry", Fan: "fan", Auto: "auto" } },
+    fan: { constants: RhossFan, map: { Auto: "auto", Min: "min", Med: "medium", Max: "max" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swing", kind: "bool" },
+    features: [],
+  },
+
+  airwell: {
+    power: { kind: "toggle", key: "powerToggle" },
+    modes: { constants: AirwellMode, map: { Cool: "cool", Heat: "heat", Auto: "auto", Dry: "dry", Fan: "fan" } },
+    fan: { constants: AirwellFan, map: { Low: "low", Medium: "medium", High: "high", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    features: [],
+  },
+
+  corona_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: CoronaAcMode, map: { Heat: "heat", Dry: "dry", Cool: "cool", Fan: "fan" } },
+    fan: { constants: CoronaAcFan, map: { Auto: "auto", Low: "low", Medium: "medium", High: "high" } },
+    temp: { min: 17, max: 30, step: 1 },
+    features: [
+      { kind: "boolean", canonical: "econo", key: "econo" },
+      { kind: "boolean", canonical: "swing_toggle", key: "swingVToggle" },
+      { kind: "boolean", canonical: "power_toggle", key: "powerButton" },
+      { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 720, step: 1, unit: "minutes" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 720, step: 1, unit: "minutes" },
+    ],
+  },
+
+  ecoclim: {
+    power: { kind: "stateful" },
+    // Recycle/Sleep have no canonical mode token; expose only the standard five.
+    modes: {
+      constants: { Auto: EcoclimMode.Auto, Cool: EcoclimMode.Cool, Dry: EcoclimMode.Dry, Fan: EcoclimMode.Fan, Heat: EcoclimMode.Heat },
+      map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" },
+    },
+    fan: { constants: EcoclimFan, map: { Min: "min", Med: "medium", Max: "max", Auto: "auto" } },
+    temp: { min: 5, max: 36, step: 1 },
+    features: [
+      { kind: "range", canonical: "sensor_temp", key: "sensorTemp", min: 5, max: 36, step: 1 },
+      { kind: "range", canonical: "clock", key: "clock", min: 0, max: 1439, unit: "minutes" },
+      { kind: "range", canonical: "timer_on", key: "onTimer", min: 0, max: 1439, step: 10, unit: "minutes" },
+      { kind: "range", canonical: "timer_off", key: "offTimer", min: 0, max: 1439, step: 10, unit: "minutes" },
+    ],
+  },
+
+  technibel_ac: {
+    power: { kind: "stateful" },
+    modes: { constants: TechnibelAcMode, map: { Cool: "cool", Dry: "dry", Fan: "fan", Heat: "heat" } },
+    fan: { constants: TechnibelAcFan, map: { Low: "low", Medium: "medium", High: "high" } },
+    temp: { min: 16, max: 31, step: 1 },
+    swingV: { key: "swing", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "range", canonical: "timer", key: "timer", min: 0, max: 1440, step: 60, unit: "minutes" },
     ],
   },
 
