@@ -43,6 +43,7 @@ import { TechnibelAcMode, TechnibelAcFan } from "./protocols/technibel_ac.js";
 import { EcoclimMode, EcoclimFan } from "./protocols/ecoclim.js";
 import { CoronaAcMode, CoronaAcFan } from "./protocols/corona_ac.js";
 import { AirwellMode, AirwellFan } from "./protocols/airwell.js";
+import { ArgoMode, ArgoFan, ArgoFlap } from "./protocols/argo.js";
 import { DaikinMode, DaikinFan } from "./protocols/daikin_common.js";
 import { Daikin64Mode, Daikin64Fan } from "./protocols/daikin64.js";
 import { Daikin128Mode, Daikin128Fan } from "./protocols/daikin128.js";
@@ -530,6 +531,27 @@ export const CAPABILITIES: CapabilitiesMap = {
     temp: { min: 16, max: 30, step: 1 },
     swingV: { key: "swing", kind: "bool" },
     features: [],
+  },
+
+  argo: {
+    power: { kind: "stateful" },
+    // HeatAuto has no canonical token; Off is the wire "fan" mode.
+    modes: {
+      constants: { Cool: ArgoMode.Cool, Dry: ArgoMode.Dry, Auto: ArgoMode.Auto, Off: ArgoMode.Off, Heat: ArgoMode.Heat },
+      map: { Cool: "cool", Dry: "dry", Auto: "auto", Off: "fan", Heat: "heat" },
+    },
+    fan: { constants: ArgoFan, map: { Auto: "auto", Min: "min", Med: "medium", Max: "max" } },
+    temp: { min: 10, max: 32, step: 1 },
+    swingV: { key: "flap", kind: "position", positions: { constants: ArgoFlap, map: {
+      Auto: "auto", Pos1: "highest", Pos2: "high", Pos3: "middle_up", Pos4: "middle_down",
+      Pos5: "low", Pos6: "lowest", Full: "swing",
+    } } },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "max" },
+      { kind: "boolean", canonical: "sleep", key: "night" },
+      { kind: "boolean", canonical: "ifeel", key: "iFeel" },
+      { kind: "range", canonical: "sensor_temp", key: "roomTemp", min: 4, max: 35, step: 1 },
+    ],
   },
 
   airwell: {

@@ -38,6 +38,7 @@
 #include "ir_Ecoclim.h"
 #include "ir_Corona.h"
 #include "ir_Airwell.h"
+#include "ir_Argo.h"
 #include "ir_Kelon.h"
 #include "ir_Teco.h"
 #include "ir_Voltas.h"
@@ -1235,6 +1236,46 @@ int main(int argc, char* argv[]) {
         uint16_t repeat = argc > 3 ? (uint16_t)atoi(argv[3]) : 0;
         IRsendTest irsend(4); irsend.begin();
         irsend.sendAirwell(data, kAirwellBits, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Argo WREM-2 (12-byte AC control + 4-byte iFeel) -----
+    if (strcmp(fn, "argo") == 0) {
+        // Args: power temp mode fan flap roomTemp max night ifeel
+        if (argc < 11) { fprintf(stderr, "Usage: runner argo <power> <temp> <mode> <fan> <flap> <roomTemp> <max> <night> <ifeel>\n"); return 1; }
+        IRArgoAC ac(4); ac.begin();
+        ac.setPower(atoi(argv[2]) != 0);
+        ac.setMode(static_cast<uint8_t>(atoi(argv[4])));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])));
+        ac.setFan(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setFlap(static_cast<uint8_t>(atoi(argv[6])));
+        ac.setSensorTemp(static_cast<uint8_t>(atoi(argv[7])));
+        ac.setMax(atoi(argv[8]) != 0);
+        ac.setNight(atoi(argv[9]) != 0);
+        ac.setiFeel(atoi(argv[10]) != 0);
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kArgoStateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendArgo(raw, kArgoStateLength, 0);
+        printTimings(irsend);
+        return 0;
+    }
+    if (strcmp(fn, "argoSensor") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner argoSensor <degrees>\n"); return 1; }
+        IRArgoAC ac(4); ac.begin();
+        ac.sendSensorTemp(static_cast<uint8_t>(atoi(argv[2])), 0);
+        printTimings(ac._irsend);
+        return 0;
+    }
+    if (strcmp(fn, "sendArgo") == 0) {
+        if (argc < 4) { fprintf(stderr, "Usage: runner sendArgo <hex> <nbytes> [repeat]\n"); return 1; }
+        const char* hex = argv[2]; int nbytes = atoi(argv[3]); uint8_t data[32];
+        for (int i = 0; i < nbytes && i < 32; i++) { unsigned int b; sscanf(hex+i*2,"%2x",&b); data[i]=(uint8_t)b; }
+        uint16_t repeat = argc > 4 ? (uint16_t)atoi(argv[4]) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendArgo(data, nbytes, repeat);
         printTimings(irsend);
         return 0;
     }

@@ -32,6 +32,7 @@ import { TechnibelAcMode, TechnibelAcFan } from "./protocols/technibel_ac.js";
 import { EcoclimMode, EcoclimFan } from "./protocols/ecoclim.js";
 import { CoronaAcMode, CoronaAcFan } from "./protocols/corona_ac.js";
 import { AirwellMode, AirwellFan } from "./protocols/airwell.js";
+import { ArgoMode, ArgoFan, ArgoFlap } from "./protocols/argo.js";
 import { KelonMode, KelonFan } from "./protocols/kelon.js";
 import { Kelon168Mode, Kelon168Fan } from "./protocols/kelon168.js";
 import { TecoMode, TecoFan } from "./protocols/teco.js";
@@ -230,6 +231,11 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     modes: named(AirwellMode), fans: named(AirwellFan),
     temp: { min: 16, max: 30, step: 1 },
     swingV: false, swingH: false,
+  }),
+  info("argo", "argo", "ac", {
+    modes: named(ArgoMode), fans: named(ArgoFan),
+    temp: { min: 10, max: 32, step: 1 },
+    swingV: true, swingH: false, swingVOptions: named(ArgoFlap),
   }),
   // Opaque value carriers — no structured fields.
   info("gorenje", "gorenje", "simple"),

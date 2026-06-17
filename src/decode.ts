@@ -424,6 +424,8 @@ import { decodeCoronaAc } from "./protocols/corona_ac.js";
 import type { CoronaAcState } from "./protocols/corona_ac.js";
 import { decodeAirwell } from "./protocols/airwell.js";
 import type { AirwellState } from "./protocols/airwell.js";
+import { decodeArgo } from "./protocols/argo.js";
+import type { ArgoState } from "./protocols/argo.js";
 import { decodeKelon } from "./protocols/kelon.js";
 import type { KelonState } from "./protocols/kelon.js";
 import { decodeKelon168 } from "./protocols/kelon168.js";
@@ -546,6 +548,7 @@ export type ProtocolName =
   | "ecoclim"
   | "corona_ac"
   | "airwell"
+  | "argo"
   | "kelon" | "kelon168"
   | "teco"
   | "mitsubishi" | "mitsubishi2" | "mitsubishi_ac" | "mitsubishi136" | "mitsubishi112"
@@ -577,7 +580,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelvinator" | "midea" | "electra" | "vestel" | "trotec" | "neoclima" | "airton" | "delonghi" | "gorenje" | "whynter" | "truma" | "amcor" | "rhoss" | "technibel" | "ecoclim" | "corona" | "airwell" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar" | "goodweather" | "transcold" | "lloyd" | "fujitsu";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelvinator" | "midea" | "electra" | "vestel" | "trotec" | "neoclima" | "airton" | "delonghi" | "gorenje" | "whynter" | "truma" | "amcor" | "rhoss" | "technibel" | "ecoclim" | "corona" | "airwell" | "argo" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar" | "goodweather" | "transcold" | "lloyd" | "fujitsu";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -617,6 +620,7 @@ export type DecodeResult =
   | { protocol: "ecoclim"; brand: "ecoclim"; type: "ac"; state: EcoclimState; confidence: "timing_match" }
   | { protocol: "corona_ac"; brand: "corona"; type: "ac"; state: CoronaAcState; confidence: "checksum_valid" }
   | { protocol: "airwell"; brand: "airwell"; type: "ac"; state: AirwellState; confidence: "timing_match" }
+  | { protocol: "argo"; brand: "argo"; type: "ac"; state: ArgoState; confidence: "checksum_valid" }
   | { protocol: "kelon"; brand: "kelon"; type: "ac"; state: KelonState; confidence: "timing_match" }
   | { protocol: "kelon168"; brand: "kelon"; type: "ac"; state: Kelon168State; confidence: "checksum_valid" }
   | { protocol: "teco"; brand: "teco"; type: "ac"; state: TecoState; confidence: "timing_match" }
@@ -971,6 +975,15 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     tryDecode(timings, offset, ho) {
       const s = decodeAirwell(timings, offset, ho);
       return s ? { protocol: "airwell", brand: "airwell", type: "ac", state: s, confidence: "timing_match" } : null;
+    },
+  },
+  // Argo WREM-2 (12-byte, LSB-first, no footer): fixed 0xAC/0xF5 preamble +
+  // a byte-sum checksum.
+  {
+    protocol: "argo", brand: "argo", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeArgo(timings, offset, ho);
+      return s ? { protocol: "argo", brand: "argo", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
   // Coolix48 has no checksum (timing match only) and shares Coolix's wire

@@ -378,6 +378,22 @@ export {
 } from "./protocols/airwell.js";
 export type { AirwellState } from "./protocols/airwell.js";
 export {
+  buildArgoRaw,
+  buildArgoSensorRaw,
+  encodeArgoRaw,
+  sendArgo,
+  sendArgoSensorTemp,
+  decodeArgo,
+  parseArgoState,
+  argoCalcChecksum,
+  argoValidChecksum,
+  ArgoMode,
+  ArgoFan,
+  ArgoFlap,
+  ARGO_STATE_LENGTH,
+} from "./protocols/argo.js";
+export type { ArgoState } from "./protocols/argo.js";
+export {
   buildKelonRaw,
   buildKelonBytes,
   encodeKelonRaw,

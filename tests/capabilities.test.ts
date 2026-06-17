@@ -94,7 +94,7 @@ describe("capabilities registry", () => {
     expect(getProtocolsForBrand("goodweather").map((p) => p.protocol)).toEqual(["goodweather"]);
     expect(getProtocolsForBrand("transcold").map((p) => p.protocol)).toEqual(["transcold"]);
     expect(getProtocolsForBrand("sony")).toEqual([]); // unknown brand → empty
-    expect(listBrands().sort()).toEqual(["airton", "airwell", "amcor", "bluestar", "carrier", "coolix", "corona", "daikin", "delonghi", "ecoclim", "electra", "fujitsu", "godrej", "goodweather", "gorenje", "gree", "haier", "hitachi", "kelon", "kelvinator", "lg", "lloyd", "midea", "mitsubishi", "mitsubishi_heavy", "nec", "neoclima", "panasonic", "rhoss", "samsung", "sanyo", "sharp", "tcl", "technibel", "teco", "teknopoint", "toshiba", "transcold", "trotec", "truma", "vestel", "voltas", "whirlpool", "whynter"]);
+    expect(listBrands().sort()).toEqual(["airton", "airwell", "amcor", "argo", "bluestar", "carrier", "coolix", "corona", "daikin", "delonghi", "ecoclim", "electra", "fujitsu", "godrej", "goodweather", "gorenje", "gree", "haier", "hitachi", "kelon", "kelvinator", "lg", "lloyd", "midea", "mitsubishi", "mitsubishi_heavy", "nec", "neoclima", "panasonic", "rhoss", "samsung", "sanyo", "sharp", "tcl", "technibel", "teco", "teknopoint", "toshiba", "transcold", "trotec", "truma", "vestel", "voltas", "whirlpool", "whynter"]);
   });
 
   it("getProtocolInfo returns undefined for unknown protocols", () => {

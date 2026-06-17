@@ -69,6 +69,8 @@ CPPFLAGS := -DUNIT_TEST \
             -DDECODE_CORONA_AC=true \
             -DSEND_AIRWELL=true \
             -DDECODE_AIRWELL=true \
+            -DSEND_ARGO=true \
+            -DDECODE_ARGO=true \
             -DSEND_KELON=true \
             -DDECODE_KELON=false \
             -DSEND_KELON168=true \
@@ -195,6 +197,7 @@ SRCS := runner.cpp \
         $(VENDOR)/src/ir_Ecoclim.cpp \
         $(VENDOR)/src/ir_Corona.cpp \
         $(VENDOR)/src/ir_Airwell.cpp \
+        $(VENDOR)/src/ir_Argo.cpp \
         $(VENDOR)/src/ir_Kelon.cpp \
         $(VENDOR)/src/ir_Teco.cpp \
         $(VENDOR)/src/ir_Voltas.cpp \
