@@ -70,6 +70,13 @@ describe("Trotec decode", () => {
     expect(decodeTrotec(encodeTrotecRaw(bad))).toBeNull();
     expect(trotecValidChecksum(buildTrotecRaw(tCases[3]!.state))).toBe(true);
   });
+  it("timer round-trips losslessly (Timer bit derives from Hours)", () => {
+    for (const timer of [0, 1, 5, 23, 24]) {
+      const built = buildTrotecRaw({ timer });
+      const decoded = decodeTrotec(encodeTrotecRaw(built));
+      expect(toHex(buildTrotecRaw(decoded!))).toBe(toHex(built));
+    }
+  });
 });
 
 // ===== Trotec3550 (PAC 3550 Pro) =====

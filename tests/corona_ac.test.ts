@@ -67,4 +67,11 @@ describe("Corona decode", () => {
     expect(decodeCoronaAc(encodeCoronaAcRaw(bad))).toBeNull();
     expect(coronaAcValidSection(buildCoronaAcRaw(cases[1]!.state), 0)).toBe(true);
   });
+  it("round-trips a frame carrying both On and Off timers", () => {
+    const built = buildCoronaAcRaw({ power: true, onTimer: 120, offTimer: 90 });
+    const decoded = decodeCoronaAc(encodeCoronaAcRaw(built))!;
+    expect(decoded.onTimer).toBe(120);
+    expect(decoded.offTimer).toBe(90);
+    expect(toHex(buildCoronaAcRaw(decoded))).toBe(toHex(built));
+  });
 });

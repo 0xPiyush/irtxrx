@@ -129,12 +129,13 @@ export function buildCoronaAcRaw(state: CoronaAcState): Uint8Array {
     setBits(raw, section * SECTION_BYTES + 3, 0, 8, hsecs & 0xff); // Data0
     if (hsecs !== TIMER_OFF) { setPowerBit(true); setPowerButton(false); }
   };
-  const getTimer = (section: number): number => {
-    const hsecs = (raw[section * SECTION_BYTES + 5]! << 8) | raw[section * SECTION_BYTES + 3]!;
-    return hsecs === TIMER_OFF ? 0 : Math.floor(hsecs / TIMER_UNITS_PER_MIN);
-  };
-  const setOnTimer = (mins: number): void => { setTimer(1, mins); if (getTimer(1)) setTimer(2, TIMER_OFF); };
-  const setOffTimer = (mins: number): void => { setTimer(2, mins); if (getTimer(2)) setTimer(1, TIMER_OFF); };
+  // Note: the class's setOnTimer/setOffTimer mutually clear each other, but as a
+  // pure builder we write each section's timer exactly as given so that decoding
+  // a frame carrying both timer sections re-encodes losslessly. For the single-
+  // timer states the class produces this is identical (clearing an already-off
+  // timer is a no-op).
+  const setOnTimer = (mins: number): void => { setTimer(1, mins); };
+  const setOffTimer = (mins: number): void => { setTimer(2, mins); };
   const setPower = (on: boolean): void => { setPowerBit(on); if (on) setOnTimer(TIMER_OFF); else setOffTimer(TIMER_OFF); };
 
   // stateReset defaults then the setter sequence.

@@ -82,9 +82,12 @@ export function buildTrotecRaw(state: TrotecState): Uint8Array {
   setBits(raw, 2, 4, 2, Math.min(state.fan ?? TrotecFan.Med, TrotecFan.High));
   setBits(raw, 3, 0, 4, clamp(state.temp ?? TEMP_DEF, TEMP_MIN, TEMP_MAX) - TEMP_MIN);
   setBits(raw, 3, 7, 1, (state.sleep ?? false) ? 1 : 0);
-  const timer = state.timer ?? 0;
-  setBits(raw, 5, 6, 1, timer & 1); // Timer bit mirrors the class's `_.Timer = timer`
-  raw[6] = Math.min(timer, MAX_TIMER); // Hours
+  raw[6] = Math.min(state.timer ?? 0, MAX_TIMER); // Hours
+  // The class sets `_.Timer = timer` (the input's LSB). For inputs within the
+  // valid 0..23 range that equals Hours & 1; deriving it from the (clamped)
+  // Hours — the only field decode reads back — keeps decode→build lossless for
+  // every reachable frame (and stays deterministic above the range).
+  setBits(raw, 5, 6, 1, raw[6]! & 1); // Timer
   raw[8] = sumBytes(raw, 2, TROTEC_STATE_LENGTH - 1) & 0xff;
   return raw;
 }
