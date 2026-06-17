@@ -4,6 +4,30 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.19.0]
+
+### Added
+
+- **20 new A/C protocols**, each a full port of the corresponding
+  IRremoteESP8266 class (every send/decode path, setter, and message variant),
+  cross-validated byte-for-byte against the vendored C++ and wired through the
+  decode registry, codec, capabilities, and canonical capability model:
+  - **Kelvinator**, **Midea** (+ **Midea24**), **Electra**, **Vestel**,
+    **Trotec** (+ **Trotec 3550**), **Neoclima**, **Airton**, **Delonghi**,
+    **Gorenje**, **Whynter**, **Truma**, **Amcor**, **Rhoss**, **Technibel**,
+    **Ecoclim**, **Corona**, **Airwell**.
+  - **Argo** — both the **WREM-2** (`argo`) and **WREM-3** (`argo_wrem3`)
+    remote families, including iFeel/sensor, config, and timer message types.
+
+### Fixed
+
+- **Trotec** — the byte-5 Timer bit is now derived from the (clamped) Hours
+  field that decode reads back, so every reachable frame re-encodes
+  byte-for-byte.
+- **Corona** — `buildCoronaAcRaw` writes each timer section exactly as given
+  instead of mutually clearing On/Off, so a decoded frame carrying both timers
+  round-trips losslessly (single-timer states are unchanged).
+
 ## [0.6.0]
 
 ### Added
