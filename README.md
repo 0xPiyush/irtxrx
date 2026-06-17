@@ -138,7 +138,7 @@ if (canEncode(protocol)) {
 
 ## Supported protocols
 
-The protocols below span 27 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
+The protocols below span 45 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 | Protocol | Bits | Brand | Type | Features |
 |----------|------|-------|------|----------|
@@ -208,6 +208,26 @@ The protocols below span 27 brands. See [CHANGELOG.md](CHANGELOG.md) for release
 | Transcold | 24 | Transcold | AC | 24-bit value, normal + inverted bytes (Coolix-style) |
 | Lloyd | 120 | Lloyd | AC | Power, mode, fan, temp, turbo, sleep, eco, swing V (positional) / H, display; reverse-engineered, one's-complement checksum. **Partial — timer/clock not yet mapped.** |
 | FujitsuAC | 48–128 | Fujitsu | AC | 6 models (ARRAH2E/ARDB1/ARREB1E/ARJW2/ARRY4/ARREW4E, incl. Fujitsu General & OGeneral); power, mode, temp (°C/°F on ARREW4E), fan, swing V/H, clean, filter, outside-quiet, 10°C heat, timers, special commands; variable-length frame (6/7/15/16 bytes), `0x14 0x63` header + size-specific checksum |
+| Kelvinator | 128 | Kelvinator | AC | Temp, mode, fan, swing V/H, turbo, quiet, light, ion, xfan, on/off timers; 16-byte two-sequence frame, nibble checksums |
+| Midea | 48 | Midea | AC | Temp (°C/°F), mode, fan, sleep, plus toggle / timer / FollowMe message types; inverted-repeat frame, byte-0 checksum |
+| Midea24 | 48 | Midea | AC | Opaque 24-bit fan-remote code (byte/inverse parity, NEC timings; no decodable state) |
+| Electra | 104 | Electra | AC | Temp, mode, fan, swing V/H, iFeel, sensor, turbo, light, clean; 13-byte, `0xC3` signature + byte-sum |
+| Vestel | 56 | Vestel | AC | Command (power/mode/temp/fan/swing/ion/sleep/turbo) + Time (clock/timers) messages; popcount checksum |
+| Trotec | 72 | Trotec | AC | PAC 3200: power, temp, mode, fan, sleep, timer; plus the Trotec 3550 variant (°C/°F, swing V, minute timer); 9-byte, byte-sum |
+| Neoclima | 96 | Neoclima | AC | Temp, mode, fan, swing V/H, turbo, econo, light, sleep, ion, self-clean, follow-me, button marker, timer; 12-byte, byte-sum |
+| Airton | 56 | Airton | AC | Power, mode, temp, fan, swing V, turbo, econo, sleep, light, health; XOR'd byte-sum, order-dependent setters |
+| Delonghi | 64 | Delonghi | AC | Power, mode, temp (°C/°F), fan, boost, sleep, on/off timers; `0x53` header + byte-sum |
+| Truma | 56 | Truma | AC | Power, mode (auto/cool/fan), temp, fan (quiet/low/med/high); long 20.2ms leader, checksum |
+| Amcor | 64 | Amcor | AC | Mode, temp, fan, max/boost, vent (Fan mode); 8-byte mark-encoded, nibble-sum checksum |
+| Rhoss | 96 | Rhoss | AC | Power, mode, temp, fan, swing; 12-byte, fixed signature bytes + byte-sum |
+| Technibel | 56 | Technibel | AC | Power, mode, temp (°C/°F), fan, swing, sleep, timer (hours); MSB-first, two's-complement checksum |
+| Ecoclim | 56 | Ecoclim | AC | Mode (incl. recycle/sleep), temp, fan, clock, on/off timers; three identical sections, no checksum |
+| Corona | 168 | Corona | AC | Power, mode, temp, fan, econo, swing V toggle, mutually-exclusive on/off timers; 21-byte, 3-section inverted-pair |
+| Airwell | 34 | Airwell | AC | Power toggle, mode, temp, fan; Manchester (bi-phase) encoded, no checksum |
+| Argo | 96 | Argo | AC | WREM-2 (Ulisse 13 DCI): power, mode, temp, room-temp/iFeel, fan, flap, max, eco, night, timers; straddling fields, byte-sum |
+| ArgoWrem3 | 16–72 | Argo | AC | WREM-3 (Ulisse Eco): four message types — AC control, iFeel report, timer, config; preamble nibble + 2-bit IR channel |
+| Gorenje | 8 | Gorenje | Simple | Opaque 8-bit cooker-hood button code (headerless, timing match) |
+| Whynter | 32 | Whynter | Simple | Opaque 32-bit code (pre-header + fixed ~108ms length, timing match) |
 
 ### Discovering protocols at runtime
 
