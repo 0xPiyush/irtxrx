@@ -26,7 +26,7 @@
  */
 
 import { sendGenericBytes } from "../encode.js";
-import { matchGenericBytes, matchMark, matchSpace } from "../decode.js";
+import { matchGenericBytes, matchSpace } from "../decode.js";
 
 // ---------------------------------------------------------------------------
 // Timing constants — must match ir_Samsung.cpp exactly
@@ -589,9 +589,13 @@ export function decodeSamsungAc(
   // Message header — mark matched loosely (the 690µs mark sits within the
   // bit-mark tolerance window, mirroring the C++ decoder).
   let hasHeader = false;
-  // C++ decodeSamsungAC pins mark-excess to 0 (not the global 50µs).
+  // The leading header mark is frequently truncated by the receiver (we've seen
+  // 366–690µs), so identify the message header by its unmistakable ~17.8ms
+  // space and only require the preceding value to be a (short) mark. The space
+  // plus the downstream section/checksum validation make this unambiguous.
   if (pos + 1 < timings.length &&
-      matchMark(timings[pos]!, BIT_MARK, undefined, 0) && matchSpace(timings[pos + 1]!, HDR_SPACE, undefined, 0)) {
+      timings[pos]! > 0 && timings[pos]! < HDR_SPACE / 2 &&
+      matchSpace(timings[pos + 1]!, HDR_SPACE, undefined, 0)) {
     pos += 2;
     hasHeader = true;
   }

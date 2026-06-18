@@ -206,6 +206,15 @@ describe("extended message selection", () => {
     expect(r?.protocol).toBe("samsung_ac");
     expect((r?.state as SamsungAcState).extended).toBe(true);
   });
+  it("decodes despite a truncated leading header mark", () => {
+    // The receiver often shortens the first mark (we've seen 366µs vs the
+    // nominal 690µs); the header is keyed on its ~17.8ms space, not the mark.
+    const state = { power: true, temp: 23, mode: SamsungAcMode.Cool, fan: SamsungAcFan.Auto };
+    const timings = sendSamsungAc(state);
+    timings[0] = 366; // truncate the leading header mark
+    expect(decodeSamsungAc(timings)).not.toBeNull();
+    expect(decode(timings)?.protocol).toBe("samsung_ac");
+  });
   it("decodes a clipped extended capture (final message gap zero-padded)", () => {
     // Real captures often end right after the last footer mark, then pad with
     // zeros instead of the long inter-message gap — the last 3-section frame
