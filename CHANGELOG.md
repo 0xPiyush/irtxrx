@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.20.3]
+
+### Fixed
+
+- **Decode tolerates a truncated Samsung A/C leading header mark.** Receivers
+  frequently shorten the first mark of a frame (observed `366µs` vs the nominal
+  `690µs`), so the message header failed to match and decode returned `null`.
+  The header is now identified by its unmistakable ~17.8 ms space, requiring
+  only that the preceding value be a short mark.
+
 ## [0.20.2]
 
 ### Fixed
