@@ -382,7 +382,7 @@ import { decodeDaikin160 } from "./protocols/daikin160.js";
 import type { Daikin160State } from "./protocols/daikin160.js";
 import { decodeDaikin176 } from "./protocols/daikin176.js";
 import type { Daikin176State } from "./protocols/daikin176.js";
-import { decodeDaikin216 } from "./protocols/daikin216.js";
+import { decodeDaikin216, decodeDaikin216Section2 } from "./protocols/daikin216.js";
 import type { Daikin216State } from "./protocols/daikin216.js";
 import { decodeDaikinESP } from "./protocols/daikin.js";
 import type { DaikinESPState } from "./protocols/daikin.js";
@@ -526,6 +526,8 @@ import type { MitsubishiHeavy152State } from "./protocols/mitsubishi_heavy152.js
 import { decodeMitsubishiHeavy88 } from "./protocols/mitsubishi_heavy88.js";
 import type { MitsubishiHeavy88State } from "./protocols/mitsubishi_heavy88.js";
 import { decodeBluestarHeavy } from "./protocols/bluestar_heavy.js";
+import { decodeBluestar } from "./protocols/bluestar.js";
+import type { BluestarState } from "./protocols/bluestar.js";
 import { decodeGoodweather } from "./protocols/goodweather.js";
 import type { GoodweatherState } from "./protocols/goodweather.js";
 import { decodeTranscold } from "./protocols/transcold.js";
@@ -573,7 +575,7 @@ export type ProtocolName =
   | "whirlpool_ac"
   | "whirlpool_magicool"
   | "whirlpool_magicool2"
-  | "mitsubishi_heavy152" | "mitsubishi_heavy88" | "bluestar_heavy"
+  | "mitsubishi_heavy152" | "mitsubishi_heavy88" | "bluestar_heavy" | "bluestar"
   | "goodweather" | "transcold"
   | "lloyd"
   | "fujitsu_ac"
@@ -672,6 +674,7 @@ export type DecodeResult =
   | { protocol: "mitsubishi_heavy152"; brand: "mitsubishi_heavy"; type: "ac"; state: MitsubishiHeavy152State; confidence: "checksum_valid" }
   | { protocol: "mitsubishi_heavy88"; brand: "mitsubishi_heavy"; type: "ac"; state: MitsubishiHeavy88State; confidence: "checksum_valid" }
   | { protocol: "bluestar_heavy"; brand: "bluestar"; type: "ac"; state: Uint8Array; confidence: "timing_match" }
+  | { protocol: "bluestar"; brand: "bluestar"; type: "ac"; state: BluestarState; confidence: "checksum_valid" }
   | { protocol: "goodweather"; brand: "goodweather"; type: "ac"; state: GoodweatherState; confidence: "checksum_valid" }
   | { protocol: "transcold"; brand: "transcold"; type: "ac"; state: TranscoldState; confidence: "checksum_valid" }
   | { protocol: "lloyd"; brand: "lloyd"; type: "ac"; state: LloydState; confidence: "checksum_valid" }
@@ -1275,6 +1278,13 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
       return s ? { protocol: "bluestar_heavy", brand: "bluestar", type: "ac", state: s, confidence: "timing_match" } : null;
     },
   },
+  {
+    protocol: "bluestar", brand: "bluestar", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodeBluestar(timings, offset, ho);
+      return s ? { protocol: "bluestar", brand: "bluestar", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
   // Sanyo AC152 is a raw 19-byte payload with no checksum; keep it after the
   // checksummed Sanyo decoders.
   {
@@ -1485,6 +1495,28 @@ export function decode(
   for (const entry of candidates) {
     const result = entry.tryDecode(timings, 0, true);
     if (result) return result;
+  }
+
+  // Tier 4: hint-gated recovery for front-clipped Daikin216 captures.
+  //
+  // When photodiode wake-up latency clips the front of a capture, Daikin216's
+  // section 1 (a stateless constant) is lost but section 2 — which carries all
+  // AC state plus its own checksum — survives. A standalone section 2 is
+  // byte-identical to a Daikin152 frame, so this recovery would false-positive
+  // in a blind scan; it runs only when the caller explicitly asserts the
+  // protocol via a `daikin216` hint. Section 2 begins the whole capture (its
+  // own header optional) or follows the inter-section gap (header required).
+  if (options?.protocol === "daikin216") {
+    const s0 = decodeDaikin216Section2(timings, 0, true);
+    if (s0) return { protocol: "daikin216", brand: "daikin", type: "ac", state: s0, confidence: "checksum_valid" };
+    for (let i = 1; i < timings.length - 1; i += 1) {
+      if (timings[i]! >= GAP_THRESHOLD) {
+        const afterGap = i + 1;
+        if (afterGap >= timings.length) continue;
+        const s = decodeDaikin216Section2(timings, afterGap, false);
+        if (s) return { protocol: "daikin216", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" };
+      }
+    }
   }
 
   return null;

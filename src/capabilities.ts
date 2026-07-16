@@ -73,6 +73,7 @@ import { WhirlpoolMagicool2Mode, WhirlpoolMagicool2Fan, WhirlpoolMagicool2Swing 
 import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV, MitsubishiHeavy152SwingH } from "./protocols/mitsubishi_heavy152.js";
 import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
 import { LloydMode, LloydFan, LloydSwingV } from "./protocols/lloyd.js";
+import { BluestarMode, BluestarFan } from "./protocols/bluestar.js";
 import { FujitsuMode, FujitsuFan } from "./protocols/fujitsu.js";
 
 // ---------------------------------------------------------------------------
@@ -497,6 +498,13 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
   }),
   // Blue Star — raw byte carrier, no structured fields.
   info("bluestar_heavy", "bluestar", "ac"),
+  info("bluestar", "bluestar", "ac", {
+    modes: named(BluestarMode),
+    // `None` (0) only appears in feature-only frames; not a user-selectable fan.
+    fans: named(BluestarFan).filter((f) => f.name !== "None"),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: false,
+  }),
 ];
 
 // ---------------------------------------------------------------------------

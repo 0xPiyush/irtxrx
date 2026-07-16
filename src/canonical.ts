@@ -85,6 +85,7 @@ import { HitachiAc344SwingH } from "./protocols/hitachi344.js";
 import { HitachiAc424Mode, HitachiAc424Fan } from "./protocols/hitachi424.js";
 import { LloydMode, LloydFan } from "./protocols/lloyd.js";
 import { FujitsuModel, FujitsuMode, FujitsuFan } from "./protocols/fujitsu.js";
+import { BluestarMode, BluestarFan } from "./protocols/bluestar.js";
 
 // ===========================================================================
 // Layer 1 — canonical vocabulary
@@ -885,6 +886,20 @@ export const CAPABILITIES: CapabilitiesMap = {
         ARRAH2E: "arrah2e", ARDB1: "ardb1", ARREB1E: "arreb1e",
         ARJW2: "arjw2", ARRY4: "arry4", ARREW4E: "arrew4e",
       } },
+    ],
+  },
+
+  bluestar: {
+    power: { kind: "stateful" },
+    modes: { constants: BluestarMode, map: { Auto: "auto", Cool: "cool", Dry: "dry", Fan: "fan" } },
+    fan: { constants: BluestarFan, map: { Auto: "auto", Low: "low", Medium: "medium", High: "high" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swing", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "turbo" },
+      { kind: "boolean", canonical: "sleep", key: "sleep" },
+      { kind: "boolean", canonical: "light", key: "light" },
+      { kind: "boolean", canonical: "timer", key: "timer" },
     ],
   },
 

@@ -90,7 +90,7 @@ describe("capabilities registry", () => {
     expect(getProtocolsForBrand("sanyo").map((p) => p.protocol)).toEqual(["sanyo_ac", "sanyo_ac88", "sanyo_lc7461", "sanyo_ac152"]);
     expect(getProtocolsForBrand("whirlpool").map((p) => p.protocol)).toEqual(["whirlpool_ac", "whirlpool_magicool", "whirlpool_magicool2"]);
     expect(getProtocolsForBrand("mitsubishi_heavy").map((p) => p.protocol)).toEqual(["mitsubishi_heavy152", "mitsubishi_heavy88"]);
-    expect(getProtocolsForBrand("bluestar").map((p) => p.protocol)).toEqual(["bluestar_heavy"]);
+    expect(getProtocolsForBrand("bluestar").map((p) => p.protocol)).toEqual(["bluestar_heavy", "bluestar"]);
     expect(getProtocolsForBrand("goodweather").map((p) => p.protocol)).toEqual(["goodweather"]);
     expect(getProtocolsForBrand("transcold").map((p) => p.protocol)).toEqual(["transcold"]);
     expect(getProtocolsForBrand("sony")).toEqual([]); // unknown brand → empty

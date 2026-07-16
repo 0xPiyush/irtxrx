@@ -795,6 +795,8 @@ export {
 } from "./protocols/mitsubishi_heavy88.js";
 export type { MitsubishiHeavy88State, MitsubishiHeavy88ModeValue, MitsubishiHeavy88FanValue, MitsubishiHeavy88SwingVValue, MitsubishiHeavy88SwingHValue } from "./protocols/mitsubishi_heavy88.js";
 export { encodeBluestarHeavyRaw, sendBluestarHeavy, decodeBluestarHeavy, BLUESTAR_HEAVY_STATE_LENGTH } from "./protocols/bluestar_heavy.js";
+export { buildBluestarRaw, encodeBluestarRaw, sendBluestar, decodeBluestar, BluestarMode, BluestarFan, BLUESTAR_STATE_LENGTH, BLUESTAR_MIN_TEMP, BLUESTAR_MAX_TEMP } from "./protocols/bluestar.js";
+export type { BluestarState, BluestarModeValue, BluestarFanValue } from "./protocols/bluestar.js";
 export { encodeGoodweatherRaw, sendGoodweather, decodeGoodweather, GOODWEATHER_BITS } from "./protocols/goodweather.js";
 export type { GoodweatherState } from "./protocols/goodweather.js";
 export { encodeTranscoldRaw, sendTranscold, decodeTranscold, TRANSCOLD_BITS } from "./protocols/transcold.js";
