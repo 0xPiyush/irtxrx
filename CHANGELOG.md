@@ -4,6 +4,28 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [0.21.0]
+
+### Added
+
+- **Blue Star A/C (`bluestar`).** New protocol reverse-engineered from labelled
+  hardware captures (no IRremoteESP8266 reference). A 10-byte (80-bit) MSB-first
+  main frame followed by an inter-section gap and an 11-bit trailer in its own
+  modulation. Carries a one's-complement checksum (all 10 bytes sum to `0xFF`).
+  The trailer is a command/button code preserved verbatim as `commandCode` for
+  a lossless roundtrip. Decoding requires the trailer, since the base modulation
+  and 10-byte layout are shared with Voltas.
+- **Panasonic Window A/C (`panasonic_ac168`).** New 21-byte (168-bit)
+  two-section Panasonic variant reverse-engineered from labelled captures (no
+  IRremoteESP8266 reference). Shares Panasonic's timing and `02 20 E0 04`
+  section signatures with `panasonic_ac`, but section 2 is 13 bytes with a
+  distinct field layout, so the 27-byte decoder rejects it. Section-2 checksum
+  is the sum of bytes 8–19.
+- **Panasonic A/C short (128-bit) command frame.** Some remotes emit a 16-byte
+  (8+8) command frame (e.g. sleep/powerful/convertible) instead of the full
+  27-byte state. `decodePanasonicAcShort` now decodes it, surfaced as a raw
+  `panasonic_ac` result; the full 27-byte decode still takes precedence.
+
 ## [0.20.3]
 
 ### Fixed
