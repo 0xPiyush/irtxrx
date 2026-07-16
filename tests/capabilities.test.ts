@@ -80,7 +80,7 @@ describe("capabilities registry", () => {
     );
     expect(getProtocolsForBrand("godrej").map((p) => p.protocol)).toEqual(["godrej"]);
     expect(getProtocolsForBrand("teknopoint").map((p) => p.protocol)).toEqual(["teknopoint"]);
-    expect(getProtocolsForBrand("panasonic").map((p) => p.protocol)).toEqual(["panasonic", "panasonic_ac", "panasonic_ac32"]);
+    expect(getProtocolsForBrand("panasonic").map((p) => p.protocol)).toEqual(["panasonic", "panasonic_ac", "panasonic_ac32", "panasonic_ac168"]);
     expect(getProtocolsForBrand("samsung").map((p) => p.protocol)).toEqual(["samsung_ac", "samsung", "samsung36"]);
     expect(getProtocolsForBrand("lg").map((p) => p.protocol)).toEqual(["lg_ac", "lg"]);
     expect(getProtocolsForBrand("carrier").map((p) => p.protocol)).toEqual(["carrier_ac64", "carrier_ac", "carrier_ac40", "carrier_ac84", "carrier_ac128"]);

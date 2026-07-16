@@ -74,6 +74,7 @@ import { MitsubishiHeavy152Mode, MitsubishiHeavy152Fan, MitsubishiHeavy152SwingV
 import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, MitsubishiHeavy88SwingH } from "./protocols/mitsubishi_heavy88.js";
 import { LloydMode, LloydFan, LloydSwingV } from "./protocols/lloyd.js";
 import { BluestarMode, BluestarFan } from "./protocols/bluestar.js";
+import { PanasonicAc168Mode, PanasonicAc168Fan } from "./protocols/panasonic_ac168.js";
 import { FujitsuMode, FujitsuFan } from "./protocols/fujitsu.js";
 
 // ---------------------------------------------------------------------------
@@ -385,6 +386,11 @@ export const PROTOCOLS: readonly ProtocolInfo[] = [
     modes: named(PanasonicAc32Mode), fans: named(PanasonicAc32Fan),
     temp: { min: 16, max: 30, step: 1 },
     swingV: true, swingH: true, swingVOptions: named(PanasonicAc32SwingV),
+  }),
+  info("panasonic_ac168", "panasonic", "ac", {
+    modes: named(PanasonicAc168Mode), fans: named(PanasonicAc168Fan),
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: true, swingH: false,
   }),
   // LG A/C — swing/light are separate command codes (out of scope here).
   info("lg_ac", "lg", "ac", {

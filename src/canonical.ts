@@ -86,6 +86,7 @@ import { HitachiAc424Mode, HitachiAc424Fan } from "./protocols/hitachi424.js";
 import { LloydMode, LloydFan } from "./protocols/lloyd.js";
 import { FujitsuModel, FujitsuMode, FujitsuFan } from "./protocols/fujitsu.js";
 import { BluestarMode, BluestarFan } from "./protocols/bluestar.js";
+import { PanasonicAc168Mode, PanasonicAc168Fan } from "./protocols/panasonic_ac168.js";
 
 // ===========================================================================
 // Layer 1 — canonical vocabulary
@@ -1286,6 +1287,17 @@ export const CAPABILITIES: CapabilitiesMap = {
     } } },
     swingH: { key: "swingH", kind: "bool" },
     features: [],
+  },
+
+  panasonic_ac168: {
+    power: { kind: "stateful" },
+    modes: { constants: PanasonicAc168Mode, map: { Cool: "cool", Dry: "dry", Fan: "fan" } },
+    fan: { constants: PanasonicAc168Fan, map: { Low: "low", Medium: "medium", High: "high", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    swingV: { key: "swing", kind: "bool" },
+    features: [
+      { kind: "boolean", canonical: "turbo", key: "powerful" },
+    ],
   },
 
   hitachi_ac: {

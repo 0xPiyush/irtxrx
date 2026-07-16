@@ -476,6 +476,8 @@ import { decodePanasonicAc32 } from "./protocols/panasonic_ac32.js";
 import type { PanasonicAc32State } from "./protocols/panasonic_ac32.js";
 import { decodePanasonicAc, decodePanasonicAcShort } from "./protocols/panasonic_ac.js";
 import type { PanasonicAcState } from "./protocols/panasonic_ac.js";
+import { decodePanasonicAc168 } from "./protocols/panasonic_ac168.js";
+import type { PanasonicAc168State } from "./protocols/panasonic_ac168.js";
 import { decodeSamsung } from "./protocols/samsung.js";
 import type { SamsungState } from "./protocols/samsung.js";
 import { decodeSamsung36 } from "./protocols/samsung36.js";
@@ -564,7 +566,7 @@ export type ProtocolName =
   | "kelon" | "kelon168"
   | "teco"
   | "mitsubishi" | "mitsubishi2" | "mitsubishi_ac" | "mitsubishi136" | "mitsubishi112"
-  | "panasonic" | "panasonic_ac" | "panasonic_ac32"
+  | "panasonic" | "panasonic_ac" | "panasonic_ac32" | "panasonic_ac168"
   | "samsung" | "samsung36" | "samsung_ac"
   | "lg" | "lg_ac"
   | "carrier_ac" | "carrier_ac40" | "carrier_ac64" | "carrier_ac84" | "carrier_ac128"
@@ -648,6 +650,7 @@ export type DecodeResult =
   | { protocol: "panasonic_ac"; brand: "panasonic"; type: "ac"; state: PanasonicAcState; confidence: "checksum_valid" }
   | { protocol: "panasonic_ac"; brand: "panasonic"; type: "ac"; state: null; raw: Uint8Array; confidence: "checksum_valid" }
   | { protocol: "panasonic_ac32"; brand: "panasonic"; type: "ac"; state: PanasonicAc32State; confidence: "timing_match" }
+  | { protocol: "panasonic_ac168"; brand: "panasonic"; type: "ac"; state: PanasonicAc168State; confidence: "checksum_valid" }
   | { protocol: "samsung"; brand: "samsung"; type: "simple"; state: SamsungState; confidence: "timing_match" }
   | { protocol: "samsung36"; brand: "samsung"; type: "simple"; state: Samsung36State; confidence: "timing_match" }
   | { protocol: "samsung_ac"; brand: "samsung"; type: "ac"; state: SamsungAcState; confidence: "checksum_valid" }
@@ -1113,6 +1116,13 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
       const raw = decodePanasonicAcShort(timings, offset, ho);
       if (raw) return { protocol: "panasonic_ac", brand: "panasonic", type: "ac", state: null, raw, confidence: "checksum_valid" };
       return null;
+    },
+  },
+  {
+    protocol: "panasonic_ac168", brand: "panasonic", type: "ac",
+    tryDecode(timings, offset, ho) {
+      const s = decodePanasonicAc168(timings, offset, ho);
+      return s ? { protocol: "panasonic_ac168", brand: "panasonic", type: "ac", state: s, confidence: "checksum_valid" } : null;
     },
   },
   // Panasonic AC32: distinctive 3543/3450 header + 13946 section gaps; no

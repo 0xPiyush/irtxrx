@@ -656,6 +656,8 @@ export {
   PanasonicAcModel,
 } from "./protocols/panasonic_ac.js";
 export type { PanasonicAcState, PanasonicAcModeValue, PanasonicAcFanValue, PanasonicAcSwingVValue, PanasonicAcSwingHValue, PanasonicAcModelValue } from "./protocols/panasonic_ac.js";
+export { buildPanasonicAc168Raw, encodePanasonicAc168Raw, sendPanasonicAc168, decodePanasonicAc168, PanasonicAc168Mode, PanasonicAc168Fan, PANASONIC_AC168_STATE_LENGTH, PANASONIC_AC168_MIN_TEMP, PANASONIC_AC168_MAX_TEMP } from "./protocols/panasonic_ac168.js";
+export type { PanasonicAc168State, PanasonicAc168ModeValue, PanasonicAc168FanValue } from "./protocols/panasonic_ac168.js";
 export {
   encodeSamsungData,
   encodeSamsungRaw,
