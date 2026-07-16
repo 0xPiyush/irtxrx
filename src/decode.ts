@@ -382,7 +382,7 @@ import { decodeDaikin160 } from "./protocols/daikin160.js";
 import type { Daikin160State } from "./protocols/daikin160.js";
 import { decodeDaikin176 } from "./protocols/daikin176.js";
 import type { Daikin176State } from "./protocols/daikin176.js";
-import { decodeDaikin216, decodeDaikin216Section2 } from "./protocols/daikin216.js";
+import { decodeDaikin216 } from "./protocols/daikin216.js";
 import type { Daikin216State } from "./protocols/daikin216.js";
 import { decodeDaikinESP } from "./protocols/daikin.js";
 import type { DaikinESPState } from "./protocols/daikin.js";
@@ -1510,28 +1510,6 @@ export function decode(
   for (const entry of candidates) {
     const result = entry.tryDecode(timings, 0, true);
     if (result) return result;
-  }
-
-  // Tier 4: hint-gated recovery for front-clipped Daikin216 captures.
-  //
-  // When photodiode wake-up latency clips the front of a capture, Daikin216's
-  // section 1 (a stateless constant) is lost but section 2 — which carries all
-  // AC state plus its own checksum — survives. A standalone section 2 is
-  // byte-identical to a Daikin152 frame, so this recovery would false-positive
-  // in a blind scan; it runs only when the caller explicitly asserts the
-  // protocol via a `daikin216` hint. Section 2 begins the whole capture (its
-  // own header optional) or follows the inter-section gap (header required).
-  if (options?.protocol === "daikin216") {
-    const s0 = decodeDaikin216Section2(timings, 0, true);
-    if (s0) return { protocol: "daikin216", brand: "daikin", type: "ac", state: s0, confidence: "checksum_valid" };
-    for (let i = 1; i < timings.length - 1; i += 1) {
-      if (timings[i]! >= GAP_THRESHOLD) {
-        const afterGap = i + 1;
-        if (afterGap >= timings.length) continue;
-        const s = decodeDaikin216Section2(timings, afterGap, false);
-        if (s) return { protocol: "daikin216", brand: "daikin", type: "ac", state: s, confidence: "checksum_valid" };
-      }
-    }
   }
 
   return null;
