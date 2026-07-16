@@ -33,6 +33,12 @@ const MESSAGE_GAP = 100000; // kDefaultMessageGap
 const TOLERANCE = 40; // kPanasonicAcTolerance — much higher than usual (issue #540)
 
 const STATE_LENGTH = 27;
+/** Short "command" frame: section 1 (8 bytes) + an 8-byte section 2. Used for
+ *  one-shot commands (e.g. sleep/powerful/convertible on some remotes). Shares
+ *  section 1, the section signatures, timing, and the byte-sum checksum with
+ *  the full 27-byte frame — only the length differs. Like the vendor's
+ *  IRPanasonicAc, its section-2 payload is treated as an opaque command. */
+const SHORT_STATE_LENGTH = 16;
 const SECTION1_LENGTH = 8;
 const CHECKSUM_INIT = 0xf4;
 
@@ -488,4 +494,50 @@ export function decodePanasonicAc(
   if (raw[STATE_LENGTH - 1] !== calcChecksum(raw)) return null;
 
   return parsePanasonicAcState(raw);
+}
+
+/**
+ * Decode a Panasonic AC *short* (128-bit / 16-byte) command frame.
+ *
+ * This is the same two-section structure as {@link decodePanasonicAc} but with
+ * an 8-byte section 2. The section-2 payload is a one-shot command whose fields
+ * are not modelled (the vendor library leaves it opaque too), so the validated
+ * 16-byte frame is returned verbatim. Re-encode with {@link encodePanasonicAcRaw}.
+ *
+ * @returns The raw 16-byte frame, or null on mismatch / failed compliance.
+ */
+export function decodePanasonicAcShort(
+  timings: number[],
+  offset: number = 0,
+  headerOptional: boolean = false,
+): Uint8Array | null {
+  // Section 1 — 8 bytes, closed by the 10ms section gap (exact match).
+  const s1 = matchGenericBytes(
+    timings, offset, timings.length - offset, SECTION1_LENGTH,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
+    BIT_MARK, SECTION_GAP,
+    false, TOLERANCE, 0, false, headerOptional,
+  );
+  if (!s1) return null;
+
+  // Section 2 — remaining 8 bytes, closed by the inter-message gap (atLeast).
+  const s2 = matchGenericBytes(
+    timings, offset + s1.used, timings.length - offset - s1.used, SHORT_STATE_LENGTH - SECTION1_LENGTH,
+    HDR_MARK, HDR_SPACE,
+    BIT_MARK, ONE_SPACE, BIT_MARK, ZERO_SPACE,
+    BIT_MARK, MESSAGE_GAP,
+    true, TOLERANCE, 0, false, false,
+  );
+  if (!s2) return null;
+
+  const raw = new Uint8Array(SHORT_STATE_LENGTH);
+  raw.set(s1.data, 0);
+  raw.set(s2.data, SECTION1_LENGTH);
+
+  // Section signatures + checksum gate false matches.
+  if (raw[0] !== 0x02 || raw[1] !== 0x20 || raw[8] !== 0x02 || raw[9] !== 0x20) return null;
+  if (raw[SHORT_STATE_LENGTH - 1] !== calcChecksum(raw, SHORT_STATE_LENGTH)) return null;
+
+  return raw;
 }

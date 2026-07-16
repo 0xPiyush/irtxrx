@@ -6,6 +6,7 @@ import {
   encodePanasonicAcRaw,
   sendPanasonicAc,
   decodePanasonicAc,
+  decodePanasonicAcShort,
   PanasonicAcMode,
   PanasonicAcFan,
   PanasonicAcSwingV,
@@ -14,6 +15,7 @@ import {
 } from "../src/protocols/panasonic_ac";
 import type { PanasonicAcState } from "../src/protocols/panasonic_ac";
 import { decode } from "../src/decode";
+import { PANASONIC_SHORT_CAPTURES } from "./fixtures/panasonic-ac-short-captures";
 
 const RUNNER = `${import.meta.dir}/cpp/runner`;
 
@@ -144,5 +146,60 @@ describe("decodePanasonicAc rejection", () => {
     raw[0] = 0x99;
     raw[26] = (Array.from(raw.subarray(0, 26)).reduce((a, b) => a + b, 0xf4)) & 0xff;
     expect(decodePanasonicAc(encodePanasonicAcRaw(raw, 0))).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Short (128-bit / 16-byte) command frame — e.g. sleep/powerful/convertible on
+// some remotes. identify.cpp decodes these as PANASONIC_AC 128-bit; irtxrx
+// returns the validated 16-byte frame verbatim (fields are not modelled).
+// ---------------------------------------------------------------------------
+
+const hex = (u: Uint8Array) =>
+  Array.from(u).map((x) => x.toString(16).padStart(2, "0").toUpperCase()).join("");
+
+describe("Panasonic AC short (128-bit) command frame", () => {
+  it("decodes each real short capture to the expected 16 bytes", () => {
+    for (const c of PANASONIC_SHORT_CAPTURES) {
+      const raw = decodePanasonicAcShort(c.edges);
+      expect(raw, c.id).not.toBeNull();
+      expect(raw!.length).toBe(16);
+      expect(hex(raw!), c.id).toBe(c.hex);
+    }
+  });
+
+  it("is surfaced by the blind decode() dispatcher as a raw panasonic_ac frame", () => {
+    for (const c of PANASONIC_SHORT_CAPTURES) {
+      const r = decode(c.edges);
+      expect(r, c.id).not.toBeNull();
+      expect(r!.protocol).toBe("panasonic_ac");
+      // Short frames come back as the raw variant (no structured state).
+      expect((r as any).state).toBeNull();
+      expect(hex((r as any).raw), c.id).toBe(c.hex);
+    }
+  });
+
+  it("round-trips a short frame through encode → decode", () => {
+    for (const c of PANASONIC_SHORT_CAPTURES) {
+      const raw = decodePanasonicAcShort(c.edges)!;
+      const reDecoded = decodePanasonicAcShort(encodePanasonicAcRaw(raw));
+      expect(reDecoded, c.id).not.toBeNull();
+      expect(hex(reDecoded!), c.id).toBe(c.hex);
+    }
+  });
+
+  it("rejects a short frame with a corrupted checksum", () => {
+    const raw = decodePanasonicAcShort(PANASONIC_SHORT_CAPTURES[0]!.edges)!;
+    raw[15] = (raw[15]! ^ 0xff) & 0xff;
+    expect(decodePanasonicAcShort(encodePanasonicAcRaw(raw))).toBeNull();
+  });
+
+  it("does not confuse a full 27-byte frame for a short frame", () => {
+    // A full state encodes to a 216-bit frame; the short decoder must reject it.
+    const full = sendPanasonicAc({ power: true, mode: PanasonicAcMode.Cool, temp: 24 });
+    expect(decodePanasonicAcShort(full)).toBeNull();
+    // And the full decoder still wins in the dispatcher.
+    expect(decode(full)!.protocol).toBe("panasonic_ac");
+    expect((decode(full) as any).state).not.toBeNull();
   });
 });

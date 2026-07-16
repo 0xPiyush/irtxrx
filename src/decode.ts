@@ -474,7 +474,7 @@ import { decodePanasonic } from "./protocols/panasonic.js";
 import type { PanasonicState } from "./protocols/panasonic.js";
 import { decodePanasonicAc32 } from "./protocols/panasonic_ac32.js";
 import type { PanasonicAc32State } from "./protocols/panasonic_ac32.js";
-import { decodePanasonicAc } from "./protocols/panasonic_ac.js";
+import { decodePanasonicAc, decodePanasonicAcShort } from "./protocols/panasonic_ac.js";
 import type { PanasonicAcState } from "./protocols/panasonic_ac.js";
 import { decodeSamsung } from "./protocols/samsung.js";
 import type { SamsungState } from "./protocols/samsung.js";
@@ -646,6 +646,7 @@ export type DecodeResult =
   | { protocol: "mitsubishi2"; brand: "mitsubishi"; type: "simple"; state: Mitsubishi2State; confidence: "timing_match" }
   | { protocol: "panasonic"; brand: "panasonic"; type: "simple"; state: PanasonicState; confidence: "checksum_valid" }
   | { protocol: "panasonic_ac"; brand: "panasonic"; type: "ac"; state: PanasonicAcState; confidence: "checksum_valid" }
+  | { protocol: "panasonic_ac"; brand: "panasonic"; type: "ac"; state: null; raw: Uint8Array; confidence: "checksum_valid" }
   | { protocol: "panasonic_ac32"; brand: "panasonic"; type: "ac"; state: PanasonicAc32State; confidence: "timing_match" }
   | { protocol: "samsung"; brand: "samsung"; type: "simple"; state: SamsungState; confidence: "timing_match" }
   | { protocol: "samsung36"; brand: "samsung"; type: "simple"; state: Samsung36State; confidence: "timing_match" }
@@ -1107,7 +1108,11 @@ const PROTOCOL_REGISTRY: ProtocolEntry[] = [
     protocol: "panasonic_ac", brand: "panasonic", type: "ac",
     tryDecode(timings, offset, ho) {
       const s = decodePanasonicAc(timings, offset, ho);
-      return s ? { protocol: "panasonic_ac", brand: "panasonic", type: "ac", state: s, confidence: "checksum_valid" } : null;
+      if (s) return { protocol: "panasonic_ac", brand: "panasonic", type: "ac", state: s, confidence: "checksum_valid" };
+      // Fall back to the short (128-bit) command frame, returned as raw bytes.
+      const raw = decodePanasonicAcShort(timings, offset, ho);
+      if (raw) return { protocol: "panasonic_ac", brand: "panasonic", type: "ac", state: null, raw, confidence: "checksum_valid" };
+      return null;
     },
   },
   // Panasonic AC32: distinctive 3543/3450 header + 13946 section gaps; no

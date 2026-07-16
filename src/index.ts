@@ -646,6 +646,7 @@ export {
   encodePanasonicAcRaw,
   sendPanasonicAc,
   decodePanasonicAc,
+  decodePanasonicAcShort,
   parsePanasonicAcState,
   detectPanasonicAcModel,
   PanasonicAcMode,
