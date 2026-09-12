@@ -138,7 +138,7 @@ if (canEncode(protocol)) {
 
 ## Supported protocols
 
-The protocols below span 45 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
+The protocols below span 46 brands. See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 | Protocol | Bits | Brand | Type | Features |
 |----------|------|-------|------|----------|
@@ -210,6 +210,7 @@ The protocols below span 45 brands. See [CHANGELOG.md](CHANGELOG.md) for release
 | Transcold | 24 | Transcold | AC | 24-bit value, normal + inverted bytes (Coolix-style) |
 | Lloyd | 120 | Lloyd | AC | Power, mode, fan, temp, turbo, sleep, eco, swing V (positional) / H, display; reverse-engineered, one's-complement checksum. **Partial — timer/clock not yet mapped.** |
 | FujitsuAC | 48–128 | Fujitsu | AC | 6 models (ARRAH2E/ARDB1/ARREB1E/ARJW2/ARRY4/ARREW4E, incl. Fujitsu General & OGeneral); power, mode, temp (°C/°F on ARREW4E), fan, swing V/H, clean, filter, outside-quiet, 10°C heat, timers, special commands; variable-length frame (6/7/15/16 bytes), `0x14 0x63` header + size-specific checksum |
+| Bosch144 | 144 | Bosch | AC | CL3000i / RG10A(G2S)BGEF + Durastar RG10R(M2S)/BGEFU1: power, mode, temp (16–30 °C or 60–86 °F), fan (5 speeds + auto), quiet; 3 × 6-byte Coolix-timed sections (tried before Coolix), inverted byte pairs + section-3 byte-sum checksum. Off is the 96-bit Coolix Off frame |
 | Kelvinator | 128 | Kelvinator | AC | Temp, mode, fan, swing V/H, turbo, quiet, light, ion, xfan, on/off timers; 16-byte two-sequence frame, nibble checksums |
 | Midea | 48 | Midea | AC | Temp (°C/°F), mode, fan, sleep, plus toggle / timer / FollowMe message types; inverted-repeat frame, byte-0 checksum |
 | Midea24 | 48 | Midea | AC | Opaque 24-bit fan-remote code (byte/inverse parity, NEC timings; no decodable state) |
@@ -259,7 +260,7 @@ A **brand** is the protocol's originating manufacturer — the true creator of t
 ```ts
 import { decode, getProtocolsForBrand, listBrands } from "irtxrx";
 
-listBrands();                          // → ["coolix", "gree", "kelon", "teco", "mitsubishi", "godrej", "daikin", "voltas", "hitachi", "tcl", "teknopoint", "nec", "samsung", "panasonic", "lg", "carrier", "haier", "toshiba", "sharp", "sanyo", "whirlpool", "goodweather", "transcold", "mitsubishi_heavy", "bluestar"]
+listBrands();                          // → ["coolix", "gree", "kelon", "teco", "mitsubishi", "godrej", "daikin", "voltas", "hitachi", "tcl", "teknopoint", "nec", "samsung", "panasonic", "lg", "carrier", "haier", "toshiba", "sharp", "sanyo", "whirlpool", "goodweather", "transcold", "mitsubishi_heavy", "bluestar", "bosch"]
 getProtocolsForBrand("coolix");        // → Coolix protocol variants (coolix, coolix48)
 decode(timings, { brand: "daikin" });  // → narrow the search to Daikin protocols
 ```

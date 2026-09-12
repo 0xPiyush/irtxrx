@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project adheres to
 semantic versioning (pre-1.0: minor versions may include breaking changes).
 
+## [Unreleased]
+
+### Added
+
+- **Bosch A/C (`bosch144`).** Port of IRremoteESP8266 `ir_Bosch` (Bosch CL3000i /
+  RG10A(G2S)BGEF and Durastar RG10R(M2S)/BGEFU1 remotes). An 18-byte (144-bit)
+  message sent as three Coolix-timed 6-byte sections, each with its own header
+  and footer. Mode, fan and temperature are split across sections 1/2 and 3 via
+  lookup tables; supports 16–30 °C or 60–86 °F set-points, five fan speeds plus
+  auto, and quiet mode. Sections 1–2 are valid Coolix frames, so the decoder is
+  registered ahead of Coolix (as upstream does); it validates the section
+  signatures, inverted byte pairs and section-3 checksum. Power off transmits the
+  96-bit Coolix Off frame, which the blind decoder reports as `coolix`.
+
 ## [0.21.0]
 
 ### Added

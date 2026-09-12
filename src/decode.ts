@@ -478,6 +478,8 @@ import { decodePanasonicAc, decodePanasonicAcShort } from "./protocols/panasonic
 import type { PanasonicAcState } from "./protocols/panasonic_ac.js";
 import { decodePanasonicAc168 } from "./protocols/panasonic_ac168.js";
 import type { PanasonicAc168State } from "./protocols/panasonic_ac168.js";
+import { decodeBosch144 } from "./protocols/bosch144.js";
+import type { Bosch144State } from "./protocols/bosch144.js";
 import { decodeSamsung } from "./protocols/samsung.js";
 import type { SamsungState } from "./protocols/samsung.js";
 import { decodeSamsung36 } from "./protocols/samsung36.js";
@@ -585,7 +587,8 @@ export type ProtocolName =
   | "voltas"
   | "hitachi_ac" | "hitachi_ac1" | "hitachi_ac424" | "hitachi_ac264" | "hitachi_ac344"
   | "hitachi_ac296" | "hitachi_ac3"
-  | "tcl112" | "teknopoint" | "tcl96";
+  | "tcl112" | "teknopoint" | "tcl96"
+  | "bosch144";
 
 /**
  * Brand groupings for hint-based filtering.
@@ -596,7 +599,7 @@ export type ProtocolName =
  * modelled: a captured frame can't be attributed to a specific reseller, so
  * the brand always names the protocol's creator.
  */
-export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelvinator" | "midea" | "electra" | "vestel" | "trotec" | "neoclima" | "airton" | "delonghi" | "gorenje" | "whynter" | "truma" | "amcor" | "rhoss" | "technibel" | "ecoclim" | "corona" | "airwell" | "argo" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar" | "goodweather" | "transcold" | "lloyd" | "fujitsu";
+export type BrandName = "nec" | "daikin" | "coolix" | "gree" | "kelvinator" | "midea" | "electra" | "vestel" | "trotec" | "neoclima" | "airton" | "delonghi" | "gorenje" | "whynter" | "truma" | "amcor" | "rhoss" | "technibel" | "ecoclim" | "corona" | "airwell" | "argo" | "kelon" | "teco" | "mitsubishi" | "godrej" | "voltas" | "hitachi" | "tcl" | "teknopoint" | "panasonic" | "samsung" | "lg" | "carrier" | "haier" | "toshiba" | "sharp" | "sanyo" | "whirlpool" | "mitsubishi_heavy" | "bluestar" | "goodweather" | "transcold" | "lloyd" | "fujitsu" | "bosch";
 
 /** Protocol type groupings. */
 export type ProtocolType = "ac" | "simple";
@@ -651,6 +654,7 @@ export type DecodeResult =
   | { protocol: "panasonic_ac"; brand: "panasonic"; type: "ac"; state: null; raw: Uint8Array; confidence: "checksum_valid" }
   | { protocol: "panasonic_ac32"; brand: "panasonic"; type: "ac"; state: PanasonicAc32State; confidence: "timing_match" }
   | { protocol: "panasonic_ac168"; brand: "panasonic"; type: "ac"; state: PanasonicAc168State; confidence: "checksum_valid" }
+  | { protocol: "bosch144"; brand: "bosch"; type: "ac"; state: Bosch144State; confidence: "checksum_valid" }
   | { protocol: "samsung"; brand: "samsung"; type: "simple"; state: SamsungState; confidence: "timing_match" }
   | { protocol: "samsung36"; brand: "samsung"; type: "simple"; state: Samsung36State; confidence: "timing_match" }
   | { protocol: "samsung_ac"; brand: "samsung"; type: "ac"; state: SamsungAcState; confidence: "checksum_valid" }
@@ -709,6 +713,26 @@ interface ProtocolEntry {
 const GAP_THRESHOLD = 3000;
 
 const PROTOCOL_REGISTRY: ProtocolEntry[] = [
+  // Bosch144 sections 1-2 are well-formed Coolix frames (0xB2 0x4D signature,
+  // inverted byte pairs, near-identical timings), so — exactly as upstream
+  // IRrecv::decode does — it must be attempted BEFORE Coolix. It only matches
+  // the strict three-section 144-bit form, so genuine Coolix frames (one or
+  // two sections) fall through untouched.
+  {
+    protocol: "bosch144", brand: "bosch", type: "ac",
+    tryDecode(timings, offset, ho) {
+      let s = decodeBosch144(timings, offset, ho);
+      // Front-clipped capture recovery. When section 1's header is missing,
+      // Tier 2 reaches the first inter-section gap (~5.2ms) before Tier 3 ever
+      // runs header-optional at offset 0 — and at that gap the Coolix decoder
+      // would happily claim section 2. So on the first post-gap attempt, also
+      // try the whole capture headerless from the start; the three-section
+      // structure, inverted pairs and checksum make a false positive
+      // implausible.
+      if (!s && !ho && offset > 0) s = decodeBosch144(timings, 0, true);
+      return s ? { protocol: "bosch144", brand: "bosch", type: "ac", state: s, confidence: "checksum_valid" } : null;
+    },
+  },
   // AC protocols first (more common use case)
   {
     protocol: "coolix", brand: "coolix", type: "ac",

@@ -59,6 +59,7 @@
 #include "ir_Goodweather.h"
 #include "ir_Transcold.h"
 #include "ir_Fujitsu.h"
+#include "ir_Bosch.h"
 #include "IRrecv.h"
 #include "IRutils.h"
 
@@ -3028,6 +3029,50 @@ int main(int argc, char* argv[]) {
 
     // ----- Generic decode: feed raw timings into IRrecv::decode -----
     // Prints "<PROTOCOL_NAME>\n<state_hex>" or "FAIL".
+
+    // ----- Bosch144 raw send -----
+
+    if (strcmp(fn, "sendBosch144") == 0) {
+        if (argc < 3) { fprintf(stderr, "Usage: runner sendBosch144 <hex_bytes> [repeat]\n"); return 1; }
+        const char* hex = argv[2];
+        uint16_t nbytes = static_cast<uint16_t>(strlen(hex) / 2);
+        uint8_t data[64];
+        for (uint16_t i = 0; i < nbytes && i < 64; i++) { unsigned int b; sscanf(hex + i * 2, "%2x", &b); data[i] = static_cast<uint8_t>(b); }
+        uint16_t repeat = argc > 3 ? static_cast<uint16_t>(atoi(argv[3])) : 0;
+        IRsendTest irsend(4); irsend.begin();
+        irsend.sendBosch144(data, nbytes, repeat);
+        printTimings(irsend);
+        return 0;
+    }
+
+    // ----- Bosch144 via class setters -----
+
+    if (strcmp(fn, "bosch144") == 0) {
+        // Args: power temp fahrenheit mode fan quiet
+        // fan = -1 leaves the fan at whatever setMode()/setQuiet() chose.
+        // Setter order (mode, quiet, fan, temp) matches buildBosch144Raw's
+        // defaulting rules so an explicit fan always wins.
+        if (argc < 8) {
+            fprintf(stderr, "Usage: runner bosch144 <power> <temp> <fahrenheit> <mode> <fan> <quiet>\n");
+            return 1;
+        }
+        IRBosch144AC ac(4);
+        ac.begin();
+        ac.stateReset();
+        ac.setMode(static_cast<uint8_t>(atoi(argv[5])));
+        ac.setQuiet(atoi(argv[7]) != 0);
+        int fan = atoi(argv[6]);
+        if (fan >= 0) ac.setFan(static_cast<uint16_t>(fan));
+        ac.setTemp(static_cast<uint8_t>(atoi(argv[3])), atoi(argv[4]) != 0);
+        ac.setPower(atoi(argv[2]) != 0);
+
+        uint8_t* raw = ac.getRaw();
+        for (int i = 0; i < kBosch144StateLength; i++) printf("%02X", raw[i]);
+        printf("\n");
+        ac.send();
+        printTimings(ac._irsend);
+        return 0;
+    }
 
     if (strcmp(fn, "decode") == 0) {
         if (argc < 3) {
