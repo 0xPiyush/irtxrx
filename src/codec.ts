@@ -171,6 +171,8 @@ import { sendBluestar } from "./protocols/bluestar.js";
 import type { BluestarState } from "./protocols/bluestar.js";
 import { sendPanasonicAc168 } from "./protocols/panasonic_ac168.js";
 import type { PanasonicAc168State } from "./protocols/panasonic_ac168.js";
+import { sendBosch144 } from "./protocols/bosch144.js";
+import type { Bosch144State } from "./protocols/bosch144.js";
 import { sendGoodweather } from "./protocols/goodweather.js";
 import type { GoodweatherState } from "./protocols/goodweather.js";
 import { sendTranscold } from "./protocols/transcold.js";
@@ -247,6 +249,7 @@ export interface ProtocolStateMap {
   panasonic_ac: PanasonicAcState;
   panasonic_ac32: PanasonicAc32State;
   panasonic_ac168: PanasonicAc168State;
+  bosch144: Bosch144State;
   samsung: SamsungState;
   samsung36: Samsung36State;
   samsung_ac: SamsungAcState;
@@ -350,6 +353,7 @@ const ENCODERS: EncoderMap = {
   panasonic_ac: (s, r) => sendPanasonicAc(s, r),
   panasonic_ac32: (s, r) => sendPanasonicAc32(s, r),
   panasonic_ac168: (s, r) => sendPanasonicAc168(s, r),
+  bosch144: (s, r) => sendBosch144(s, r),
   samsung: (s, r) => sendSamsung(s, r),
   samsung36: (s, r) => sendSamsung36(s, r),
   samsung_ac: (s, r) => sendSamsungAc(s, r),

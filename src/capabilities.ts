@@ -75,6 +75,7 @@ import { MitsubishiHeavy88Mode, MitsubishiHeavy88Fan, MitsubishiHeavy88SwingV, M
 import { LloydMode, LloydFan, LloydSwingV } from "./protocols/lloyd.js";
 import { BluestarMode, BluestarFan } from "./protocols/bluestar.js";
 import { PanasonicAc168Mode, PanasonicAc168Fan } from "./protocols/panasonic_ac168.js";
+import { Bosch144Mode, Bosch144Fan } from "./protocols/bosch144.js";
 import { FujitsuMode, FujitsuFan } from "./protocols/fujitsu.js";
 
 // ---------------------------------------------------------------------------
@@ -143,6 +144,12 @@ const HITACHI_TEMP = { min: 16, max: 32, step: 1 } as const;
 // ---------------------------------------------------------------------------
 
 export const PROTOCOLS: readonly ProtocolInfo[] = [
+  // Tried before Coolix by the dispatcher (its sections 1-2 are Coolix frames).
+  // Temp range is °C; with `fahrenheit: true` the state carries 60-86 °F.
+  info("bosch144", "bosch", "ac", {
+    modes: named(Bosch144Mode), fans: named(Bosch144Fan),
+    temp: { min: 16, max: 30, step: 1 }, swingV: false, swingH: false,
+  }),
   info("coolix", "coolix", "ac", {
     modes: named(CoolixMode), fans: named(CoolixFan),
     temp: { min: 17, max: 30, step: 1 }, swingV: false, swingH: false,

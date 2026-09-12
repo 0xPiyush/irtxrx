@@ -658,6 +658,8 @@ export {
 export type { PanasonicAcState, PanasonicAcModeValue, PanasonicAcFanValue, PanasonicAcSwingVValue, PanasonicAcSwingHValue, PanasonicAcModelValue } from "./protocols/panasonic_ac.js";
 export { buildPanasonicAc168Raw, encodePanasonicAc168Raw, sendPanasonicAc168, decodePanasonicAc168, PanasonicAc168Mode, PanasonicAc168Fan, PANASONIC_AC168_STATE_LENGTH, PANASONIC_AC168_MIN_TEMP, PANASONIC_AC168_MAX_TEMP } from "./protocols/panasonic_ac168.js";
 export type { PanasonicAc168State, PanasonicAc168ModeValue, PanasonicAc168FanValue } from "./protocols/panasonic_ac168.js";
+export { buildBosch144Raw, encodeBosch144Raw, sendBosch144, decodeBosch144, decodeBosch144Raw, parseBosch144State, isValidBosch144, bosch144Checksum, Bosch144Mode, Bosch144Fan, BOSCH144_OFF, BOSCH144_STATE_LENGTH, BOSCH144_BITS, BOSCH144_SECTIONS, BOSCH144_BYTES_PER_SECTION, BOSCH144_CELSIUS_MIN, BOSCH144_CELSIUS_MAX, BOSCH144_FAHRENHEIT_MIN, BOSCH144_FAHRENHEIT_MAX } from "./protocols/bosch144.js";
+export type { Bosch144State, Bosch144ModeValue, Bosch144FanValue } from "./protocols/bosch144.js";
 export {
   encodeSamsungData,
   encodeSamsungRaw,

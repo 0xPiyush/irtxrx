@@ -87,6 +87,7 @@ import { LloydMode, LloydFan } from "./protocols/lloyd.js";
 import { FujitsuModel, FujitsuMode, FujitsuFan } from "./protocols/fujitsu.js";
 import { BluestarMode, BluestarFan } from "./protocols/bluestar.js";
 import { PanasonicAc168Mode, PanasonicAc168Fan } from "./protocols/panasonic_ac168.js";
+import { Bosch144Mode, Bosch144Fan } from "./protocols/bosch144.js";
 
 // ===========================================================================
 // Layer 1 — canonical vocabulary
@@ -1297,6 +1298,20 @@ export const CAPABILITIES: CapabilitiesMap = {
     swingV: { key: "swing", kind: "bool" },
     features: [
       { kind: "boolean", canonical: "turbo", key: "powerful" },
+    ],
+  },
+
+  // Bosch144: `Auto0` (the Auto code emitted in Auto/Dry modes) has no distinct
+  // canonical token and falls back to `{ numeric }`. Temp is °C unless the
+  // `fahrenheit` feature is set, in which case the same field holds 60-86 °F.
+  bosch144: {
+    power: { kind: "stateful" },
+    modes: { constants: Bosch144Mode, map: { Cool: "cool", Dry: "dry", Auto: "auto", Heat: "heat", Fan: "fan" } },
+    fan: { constants: Bosch144Fan, map: { Fan20: "min", Fan40: "low", Fan60: "medium", Fan80: "high", Fan100: "max", Auto: "auto" } },
+    temp: { min: 16, max: 30, step: 1 },
+    features: [
+      { kind: "boolean", canonical: "quiet", key: "quiet" },
+      { kind: "boolean", canonical: "fahrenheit", key: "fahrenheit" },
     ],
   },
 
